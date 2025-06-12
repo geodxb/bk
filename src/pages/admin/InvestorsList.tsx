@@ -6,23 +6,6 @@ import Button from '../../components/common/Button';
 import AddInvestorModal from '../../components/admin/AddInvestorModal';
 import { useInvestors } from '../../hooks/useFirestore';
 import { useNavigate } from 'react-router-dom';
-import { 
-  UserPlus, 
-  Eye, 
-  Edit, 
-  Search, 
-  Filter,
-  TrendingUp, 
-  TrendingDown, 
-  CheckCircle, 
-  XCircle,
-  User,
-  MapPin,
-  Calendar,
-  DollarSign,
-  AlertTriangle,
-  Users
-} from 'lucide-react';
 
 const InvestorsListPage = () => {
   const navigate = useNavigate();
@@ -80,143 +63,123 @@ const InvestorsListPage = () => {
   const restrictedInvestors = investors.filter(inv => inv.accountStatus?.includes('Restricted')).length;
   const profitableInvestors = investors.filter(inv => inv.currentBalance > inv.initialDeposit).length;
 
-  // Refined industrial-style columns
+  // Clean industrial-style columns without excessive styling
   const columns = [
     {
-      key: 'profile',
-      header: 'Investor Profile',
+      key: 'name',
+      header: (
+        <button 
+          onClick={() => handleSort('name')}
+          className="text-left font-medium text-gray-700 hover:text-gray-900"
+        >
+          Investor Profile
+        </button>
+      ),
       render: (_: any, row: any) => (
-        <div className="flex items-center space-x-4">
-          <div className="w-12 h-12 bg-gray-100 border border-gray-300 flex items-center justify-center">
-            <span className="text-gray-700 font-semibold text-sm">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 bg-gray-100 border border-gray-300 flex items-center justify-center">
+            <span className="text-gray-700 font-medium text-sm">
               {row.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
             </span>
           </div>
           <div>
-            <p className="font-semibold text-gray-900 text-lg">{row.name}</p>
-            <div className="flex items-center space-x-3 text-sm text-gray-600 mt-1">
-              <div className="flex items-center space-x-1">
-                <MapPin size={12} />
-                <span>{row.country}</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <Calendar size={12} />
-                <span>
-                  {new Date(row.joinDate).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'short', 
-                    day: 'numeric' 
-                  })}
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2 mt-1">
-              <span className="text-xs text-gray-500">ID:</span>
-              <span className="text-xs font-mono bg-gray-100 px-2 py-1 border border-gray-300 text-gray-700">
-                {row.id.slice(-8)}
-              </span>
-            </div>
+            <p className="font-medium text-gray-900">{row.name}</p>
+            <p className="text-sm text-gray-600">{row.country}</p>
+            <p className="text-xs text-gray-500">ID: {row.id.slice(-8)}</p>
           </div>
         </div>
       )
     },
     {
-      key: 'portfolio',
-      header: 'Portfolio Metrics',
+      key: 'currentBalance',
+      header: (
+        <button 
+          onClick={() => handleSort('currentBalance')}
+          className="text-right font-medium text-gray-700 hover:text-gray-900 w-full"
+        >
+          Current Balance
+        </button>
+      ),
+      align: 'right' as 'right',
+      render: (value: number) => (
+        <div className="text-right">
+          <p className="font-bold text-lg text-gray-900">${value?.toLocaleString() || '0'}</p>
+          <p className="text-xs text-gray-500">USD</p>
+        </div>
+      )
+    },
+    {
+      key: 'performance',
+      header: 'Performance',
+      align: 'right' as 'right',
       render: (_: any, row: any) => {
         const performance = row.currentBalance - row.initialDeposit;
         const performancePercent = row.initialDeposit > 0 ? (performance / row.initialDeposit) * 100 : 0;
         const isPositive = performance >= 0;
         
         return (
-          <div className="bg-gray-50 p-4 border border-gray-200 rounded">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <p className="text-xs text-gray-600 mb-1">Current Balance</p>
-                <p className="font-bold text-lg text-gray-900">${row.currentBalance.toLocaleString()}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600 mb-1">Initial Deposit</p>
-                <p className="font-semibold text-gray-700">${row.initialDeposit.toLocaleString()}</p>
-              </div>
-              <div className="col-span-2 border-t border-gray-300 pt-2">
-                <p className="text-xs text-gray-600 mb-1">Performance</p>
-                <div className="flex items-center space-x-2">
-                  {isPositive ? (
-                    <TrendingUp size={14} className="text-green-600" />
-                  ) : (
-                    <TrendingDown size={14} className="text-red-600" />
-                  )}
-                  <span className={`font-semibold ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                    {isPositive ? '+' : ''}${performance.toLocaleString()}
-                  </span>
-                  <span className={`text-sm ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                    ({performancePercent.toFixed(1)}%)
-                  </span>
-                </div>
-              </div>
-            </div>
+          <div className="text-right">
+            <p className={`font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+              {isPositive ? '+' : ''}${performance.toLocaleString()}
+            </p>
+            <p className={`text-xs ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+              {isPositive ? '+' : ''}{performancePercent.toFixed(1)}%
+            </p>
           </div>
         );
       }
     },
     {
-      key: 'status',
-      header: 'Account Status',
-      render: (value: string, row: any) => {
+      key: 'accountStatus',
+      header: 'Status',
+      render: (value: string) => {
         const status = value || 'Active';
-        let bgColor = 'bg-green-100';
-        let textColor = 'text-green-800';
-        let borderColor = 'border-green-200';
-        let icon = <CheckCircle size={14} />;
+        let statusClass = 'bg-green-100 text-green-800';
         
         if (status.includes('Restricted')) {
-          bgColor = 'bg-amber-100';
-          textColor = 'text-amber-800';
-          borderColor = 'border-amber-200';
-          icon = <AlertTriangle size={14} />;
+          statusClass = 'bg-amber-100 text-amber-800';
         } else if (status.includes('Closed')) {
-          bgColor = 'bg-red-100';
-          textColor = 'text-red-800';
-          borderColor = 'border-red-200';
-          icon = <XCircle size={14} />;
+          statusClass = 'bg-red-100 text-red-800';
         }
         
         return (
-          <div className="space-y-3">
-            <div className={`inline-flex items-center px-3 py-2 border ${bgColor} ${textColor} ${borderColor} rounded`}>
-              {icon}
-              <span className="ml-2 font-medium text-sm">{status}</span>
-            </div>
-            {row.email && (
-              <div className="bg-gray-50 p-2 border border-gray-200 rounded">
-                <p className="text-xs text-gray-600 mb-1">Email</p>
-                <p className="text-xs font-mono text-gray-800">{row.email}</p>
-              </div>
-            )}
-            {row.phone && (
-              <div className="bg-gray-50 p-2 border border-gray-200 rounded">
-                <p className="text-xs text-gray-600 mb-1">Phone</p>
-                <p className="text-xs font-mono text-gray-800">{row.phone}</p>
-              </div>
-            )}
-          </div>
+          <span className={`px-2 py-1 text-xs rounded ${statusClass}`}>
+            {status.length > 15 ? status.substring(0, 15) + '...' : status}
+          </span>
         );
       }
+    },
+    {
+      key: 'joinDate',
+      header: (
+        <button 
+          onClick={() => handleSort('joinDate')}
+          className="text-left font-medium text-gray-700 hover:text-gray-900"
+        >
+          Join Date
+        </button>
+      ),
+      render: (value: string) => (
+        <div>
+          <p className="text-sm text-gray-900">{new Date(value).toLocaleDateString()}</p>
+          <p className="text-xs text-gray-500">
+            {Math.floor((new Date().getTime() - new Date(value).getTime()) / (1000 * 60 * 60 * 24))} days ago
+          </p>
+        </div>
+      )
     },
     {
       key: 'actions',
       header: 'Actions',
       align: 'center' as 'center',
       render: (_: any, row: any) => (
-        <div className="space-y-2">
+        <div className="space-y-1">
           <Button
             variant="outline"
             size="sm"
             onClick={() => navigate(`/admin/investor/${row.id}`)}
             className="w-full"
           >
-            <Eye size={14} className="mr-2" />
             View
           </Button>
           <Button
@@ -225,7 +188,6 @@ const InvestorsListPage = () => {
             onClick={() => navigate(`/admin/investor/${row.id}`)}
             className="w-full"
           >
-            <Edit size={14} className="mr-2" />
             Manage
           </Button>
         </div>
@@ -236,15 +198,10 @@ const InvestorsListPage = () => {
   if (error) {
     return (
       <DashboardLayout title="Holdings">
-        <Card title="Error Loading Investor Data" className="bg-white border border-red-300">
+        <Card title="Error Loading Data" className="bg-white border border-gray-300">
           <div className="text-center py-8">
-            <AlertTriangle size={48} className="mx-auto text-red-600 mb-4" />
             <p className="text-red-600 mb-4 font-medium">{error}</p>
-            <Button 
-              variant="outline" 
-              onClick={refetch}
-              className="border-red-300 text-red-600 hover:bg-red-50"
-            >
+            <Button variant="outline" onClick={refetch}>
               Retry Loading
             </Button>
           </div>
@@ -255,104 +212,82 @@ const InvestorsListPage = () => {
 
   return (
     <DashboardLayout title="Holdings">
-      {/* Refined Header */}
+      {/* Clean Header */}
       <div className="mb-8">
-        <div className="bg-white border border-gray-200 p-6 rounded-lg">
+        <div className="bg-white border border-gray-300 p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Investor Holdings</h2>
-              <p className="text-gray-600 mt-1">Portfolio management and performance monitoring</p>
+              <h2 className="text-2xl font-bold text-gray-900 uppercase tracking-wide">INVESTOR HOLDINGS</h2>
+              <p className="text-gray-600 uppercase tracking-wide text-sm">Portfolio management and performance monitoring</p>
             </div>
             <Button
               variant="primary"
               onClick={() => setAddInvestorModalOpen(true)}
             >
-              <UserPlus size={18} className="mr-2" />
               Add New Investor
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Refined Summary Statistics */}
+      {/* Clean Summary Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <Card className="bg-white border border-gray-200">
+        <Card className="bg-white border border-gray-300">
           <div className="p-6">
-            <div className="border-b border-gray-200 pb-3 mb-4">
-              <p className="text-gray-600 font-medium text-sm">Total AUM</p>
+            <div className="border-b border-gray-300 pb-3 mb-4">
+              <p className="text-gray-600 font-medium text-sm uppercase tracking-wider">TOTAL AUM</p>
             </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-900 text-2xl font-bold">${totalAUM.toLocaleString()}</p>
-                <p className="text-gray-500 text-xs mt-1">Assets Under Management</p>
-              </div>
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <DollarSign className="text-blue-600" size={20} />
-              </div>
+            <div>
+              <p className="text-gray-900 text-2xl font-bold">${totalAUM.toLocaleString()}</p>
+              <p className="text-gray-500 text-xs mt-1">Assets Under Management</p>
             </div>
           </div>
         </Card>
 
-        <Card className="bg-white border border-gray-200">
+        <Card className="bg-white border border-gray-300">
           <div className="p-6">
-            <div className="border-b border-gray-200 pb-3 mb-4">
-              <p className="text-gray-600 font-medium text-sm">Active Accounts</p>
+            <div className="border-b border-gray-300 pb-3 mb-4">
+              <p className="text-gray-600 font-medium text-sm uppercase tracking-wider">ACTIVE ACCOUNTS</p>
             </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-900 text-2xl font-bold">{activeInvestors}</p>
-                <p className="text-gray-500 text-xs mt-1">Operational Status</p>
-              </div>
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <CheckCircle className="text-green-600" size={20} />
-              </div>
+            <div>
+              <p className="text-gray-900 text-2xl font-bold">{activeInvestors}</p>
+              <p className="text-gray-500 text-xs mt-1">Operational Status</p>
             </div>
           </div>
         </Card>
 
-        <Card className="bg-white border border-gray-200">
+        <Card className="bg-white border border-gray-300">
           <div className="p-6">
-            <div className="border-b border-gray-200 pb-3 mb-4">
-              <p className="text-gray-600 font-medium text-sm">Profitable</p>
+            <div className="border-b border-gray-300 pb-3 mb-4">
+              <p className="text-gray-600 font-medium text-sm uppercase tracking-wider">PROFITABLE</p>
             </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-900 text-2xl font-bold">{profitableInvestors}</p>
-                <p className="text-gray-500 text-xs mt-1">Positive Performance</p>
-              </div>
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                <TrendingUp className="text-purple-600" size={20} />
-              </div>
+            <div>
+              <p className="text-gray-900 text-2xl font-bold">{profitableInvestors}</p>
+              <p className="text-gray-500 text-xs mt-1">Positive Performance</p>
             </div>
           </div>
         </Card>
 
-        <Card className="bg-white border border-gray-200">
+        <Card className="bg-white border border-gray-300">
           <div className="p-6">
-            <div className="border-b border-gray-200 pb-3 mb-4">
-              <p className="text-gray-600 font-medium text-sm">Restricted</p>
+            <div className="border-b border-gray-300 pb-3 mb-4">
+              <p className="text-gray-600 font-medium text-sm uppercase tracking-wider">RESTRICTED</p>
             </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-900 text-2xl font-bold">{restrictedInvestors}</p>
-                <p className="text-gray-500 text-xs mt-1">Compliance Review</p>
-              </div>
-              <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                <AlertTriangle className="text-amber-600" size={20} />
-              </div>
+            <div>
+              <p className="text-gray-900 text-2xl font-bold">{restrictedInvestors}</p>
+              <p className="text-gray-500 text-xs mt-1">Compliance Review</p>
             </div>
           </div>
         </Card>
       </div>
 
-      {/* Refined Filters and Search */}
-      <Card className="mb-8 bg-white border border-gray-200">
+      {/* Clean Filters */}
+      <Card className="mb-8 bg-white border border-gray-300">
         <div className="p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
             <div className="flex items-center space-x-6">
               <div className="flex items-center space-x-3">
-                <Filter size={16} className="text-gray-500" />
-                <span className="text-sm text-gray-700 font-medium">Status Filter:</span>
+                <span className="text-sm text-gray-700 font-medium uppercase tracking-wide">STATUS FILTER:</span>
               </div>
               <div className="flex space-x-2">
                 {[
@@ -364,9 +299,9 @@ const InvestorsListPage = () => {
                   <button
                     key={filter.key}
                     onClick={() => setStatusFilter(filter.key)}
-                    className={`px-3 py-2 text-sm font-medium border transition-colors ${
+                    className={`px-3 py-2 text-sm font-medium border transition-colors uppercase tracking-wide ${
                       statusFilter === filter.key
-                        ? 'bg-blue-600 text-white border-blue-600'
+                        ? 'bg-gray-900 text-white border-gray-900'
                         : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                     }`}
                   >
@@ -377,34 +312,30 @@ const InvestorsListPage = () => {
             </div>
 
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search investors..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-80"
+                className="px-4 py-2 border border-gray-300 text-sm focus:ring-1 focus:ring-gray-500 focus:border-gray-500 w-80 uppercase tracking-wide"
               />
             </div>
           </div>
         </div>
       </Card>
 
-      {/* Refined Investor Profiles Table */}
-      <Card title={`Investor Profiles (${sortedInvestors.length} records)`} className="bg-white border border-gray-200">
+      {/* Clean Investor Profiles Table */}
+      <Card title={`INVESTOR PROFILES (${sortedInvestors.length} RECORDS)`} className="bg-white border border-gray-300">
         {loading ? (
           <div className="text-center py-16">
-            <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-700 font-medium">Loading investor profiles from Firebase...</p>
-            <p className="text-gray-500 text-sm mt-2">Retrieving account data & transaction history</p>
+            <div className="w-8 h-8 border-2 border-gray-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-700 font-medium uppercase tracking-wide">LOADING INVESTOR PROFILES FROM FIREBASE...</p>
+            <p className="text-gray-500 text-sm mt-2 uppercase tracking-wide">Retrieving account data & transaction history</p>
           </div>
         ) : sortedInvestors.length === 0 ? (
           <div className="text-center py-16">
-            <div className="w-16 h-16 bg-gray-100 border border-gray-300 rounded-lg flex items-center justify-center mx-auto mb-6">
-              <Users size={32} className="text-gray-400" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">No Investor Profiles Found</h3>
-            <p className="text-gray-600 mb-8">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4 uppercase tracking-wide">NO INVESTOR PROFILES FOUND</h3>
+            <p className="text-gray-600 mb-8 uppercase tracking-wide text-sm">
               {searchTerm || statusFilter !== 'all' 
                 ? 'No investors match the current filter criteria'
                 : 'Get started by adding your first investor profile'
@@ -415,7 +346,6 @@ const InvestorsListPage = () => {
                 variant="primary"
                 onClick={() => setAddInvestorModalOpen(true)}
               >
-                <UserPlus size={18} className="mr-2" />
                 Add First Investor
               </Button>
             )}
@@ -425,12 +355,15 @@ const InvestorsListPage = () => {
             <div className="overflow-x-auto">
               <table className="min-w-full">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50">
+                  <tr className="border-b border-gray-300 bg-gray-50">
                     {columns.map((column) => (
                       <th 
                         key={column.key}
                         scope="col"
-                        className="px-6 py-4 text-sm font-semibold text-gray-700 text-left"
+                        className={`px-6 py-4 text-sm font-semibold text-gray-700 uppercase tracking-wide ${
+                          column.align === 'right' ? 'text-right' : 
+                          column.align === 'center' ? 'text-center' : 'text-left'
+                        }`}
                       >
                         {column.header}
                       </th>
@@ -446,7 +379,10 @@ const InvestorsListPage = () => {
                       {columns.map((column) => (
                         <td 
                           key={`${row.id || index}-${column.key}`}
-                          className="px-6 py-6 text-sm text-gray-700"
+                          className={`px-6 py-6 text-sm text-gray-700 ${
+                            column.align === 'right' ? 'text-right' : 
+                            column.align === 'center' ? 'text-center' : 'text-left'
+                          }`}
                         >
                           {column.render ? column.render(row[column.key as keyof typeof row], row) : row[column.key as keyof typeof row]}
                         </td>
@@ -457,34 +393,34 @@ const InvestorsListPage = () => {
               </table>
             </div>
 
-            {/* Refined Summary Footer */}
-            <div className="mt-6 p-6 bg-gray-50 border-t border-gray-200">
+            {/* Clean Summary Footer */}
+            <div className="mt-6 p-6 bg-gray-50 border-t border-gray-300">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="bg-white p-4 border border-gray-200 rounded">
-                  <p className="text-gray-600 mb-2 text-xs font-medium">Showing Results</p>
+                <div className="bg-white p-4 border border-gray-300">
+                  <p className="text-gray-600 mb-2 text-xs font-medium uppercase tracking-wide">SHOWING RESULTS</p>
                   <p className="font-bold text-gray-900 text-xl">{sortedInvestors.length}</p>
-                  <p className="text-gray-500 text-xs">Total Records</p>
+                  <p className="text-gray-500 text-xs uppercase tracking-wide">Total Records</p>
                 </div>
-                <div className="bg-white p-4 border border-gray-200 rounded">
-                  <p className="text-gray-600 mb-2 text-xs font-medium">Portfolio Value</p>
+                <div className="bg-white p-4 border border-gray-300">
+                  <p className="text-gray-600 mb-2 text-xs font-medium uppercase tracking-wide">PORTFOLIO VALUE</p>
                   <p className="font-bold text-gray-900 text-xl">
                     ${sortedInvestors.reduce((sum, inv) => sum + inv.currentBalance, 0).toLocaleString()}
                   </p>
-                  <p className="text-gray-500 text-xs">Combined AUM</p>
+                  <p className="text-gray-500 text-xs uppercase tracking-wide">Combined AUM</p>
                 </div>
-                <div className="bg-white p-4 border border-gray-200 rounded">
-                  <p className="text-gray-600 mb-2 text-xs font-medium">Average Size</p>
+                <div className="bg-white p-4 border border-gray-300">
+                  <p className="text-gray-600 mb-2 text-xs font-medium uppercase tracking-wide">AVERAGE SIZE</p>
                   <p className="font-bold text-gray-900 text-xl">
                     ${sortedInvestors.length > 0 ? Math.round(sortedInvestors.reduce((sum, inv) => sum + inv.currentBalance, 0) / sortedInvestors.length).toLocaleString() : '0'}
                   </p>
-                  <p className="text-gray-500 text-xs">Per Account</p>
+                  <p className="text-gray-500 text-xs uppercase tracking-wide">Per Account</p>
                 </div>
-                <div className="bg-white p-4 border border-gray-200 rounded">
-                  <p className="text-gray-600 mb-2 text-xs font-medium">Success Rate</p>
+                <div className="bg-white p-4 border border-gray-300">
+                  <p className="text-gray-600 mb-2 text-xs font-medium uppercase tracking-wide">SUCCESS RATE</p>
                   <p className="font-bold text-gray-900 text-xl">
                     {sortedInvestors.length > 0 ? ((sortedInvestors.filter(inv => inv.currentBalance > inv.initialDeposit).length / sortedInvestors.length) * 100).toFixed(1) : '0.0'}%
                   </p>
-                  <p className="text-gray-500 text-xs">Profitable</p>
+                  <p className="text-gray-500 text-xs uppercase tracking-wide">Profitable</p>
                 </div>
               </div>
             </div>

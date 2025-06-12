@@ -26,7 +26,7 @@ export class FirestoreService {
       
       const investors = querySnapshot.docs.map(doc => {
         const data = doc.data();
-        console.log(`📄 Processing investor document: ${doc.id}`);
+        console.log(`📄 Processing investor document: ${doc.id} - ${data.name || 'Unknown'}`);
         
         return {
           id: doc.id,
@@ -47,6 +47,12 @@ export class FirestoreService {
       }) as Investor[];
       
       console.log(`✅ Firestore: Successfully processed ${investors.length} investor records`);
+      
+      // Log each investor for debugging
+      investors.forEach(investor => {
+        console.log(`👤 Investor: ${investor.name} | Balance: $${investor.currentBalance.toLocaleString()} | Status: ${investor.accountStatus}`);
+      });
+      
       return investors;
     } catch (error) {
       console.error('❌ Firestore Error: Failed to fetch investors:', error);
