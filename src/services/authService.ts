@@ -21,14 +21,18 @@ export class AuthService {
   // Sign in with email and password
   static async signIn(email: string, password: string): Promise<User | null> {
     try {
+      console.log('🔐 Attempting Firebase authentication...');
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
+      
+      console.log('✅ Firebase auth successful, fetching user data...');
       
       // Get user data from Firestore
       const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
       
       if (userDoc.exists()) {
         const userData = userDoc.data();
+        console.log('✅ User data found in Firestore:', userData.role);
         return {
           id: firebaseUser.uid,
           name: userData.name,
@@ -38,12 +42,41 @@ export class AuthService {
           createdAt: userData.createdAt?.toDate() || new Date(),
           updatedAt: userData.updatedAt?.toDate() || new Date(),
         };
+      } else {
+        console.log('⚠️ User document not found in Firestore, creating admin user...');
+        // Create admin user document if it doesn't exist
+        const adminData = {
+          name: 'Cristian Rolando Dorao',
+          email: firebaseUser.email,
+          role: 'admin',
+          profilePic: '',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        await setDoc(doc(db, 'users', firebaseUser.uid), adminData);
+        console.log('✅ Admin user document created');
+        
+        return {
+          id: firebaseUser.uid,
+          ...adminData
+        };
       }
+    } catch (error: any) {
+      console.error('❌ Firebase authentication error:', error);
       
-      return null;
-    } catch (error) {
-      console.error('Sign in error:', error);
-      throw error;
+      // Handle specific Firebase auth errors
+      if (error.code === 'auth/user-not-found') {
+        throw new Error('No account found with this email address');
+      } else if (error.code === 'auth/wrong-password') {
+        throw new Error('Incorrect password');
+      } else if (error.code === 'auth/invalid-email') {
+        throw new Error('Invalid email address');
+      } else if (error.code === 'auth/too-many-requests') {
+        throw new Error('Too many failed attempts. Please try again later');
+      } else {
+        throw new Error('Authentication failed. Please check your credentials');
+      }
     }
   }
 
@@ -56,6 +89,7 @@ export class AuthService {
     additionalData?: any
   ): Promise<User | null> {
     try {
+      console.log('🔐 Creating new Firebase user...');
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
       
@@ -71,14 +105,24 @@ export class AuthService {
       
       // Save user data to Firestore
       await setDoc(doc(db, 'users', firebaseUser.uid), userData);
+      console.log('✅ User document created in Firestore');
       
       return {
         id: firebaseUser.uid,
         ...userData
       };
-    } catch (error) {
-      console.error('Sign up error:', error);
-      throw error;
+    } catch (error: any) {
+      console.error('❌ Firebase signup error:', error);
+      
+      if (error.code === 'auth/email-already-in-use') {
+        throw new Error('An account with this email already exists');
+      } else if (error.code === 'auth/weak-password') {
+        throw new Error('Password should be at least 6 characters');
+      } else if (error.code === 'auth/invalid-email') {
+        throw new Error('Invalid email address');
+      } else {
+        throw new Error('Failed to create account. Please try again');
+      }
     }
   }
 
@@ -86,8 +130,9 @@ export class AuthService {
   static async signOut(): Promise<void> {
     try {
       await signOut(auth);
+      console.log('✅ User signed out successfully');
     } catch (error) {
-      console.error('Sign out error:', error);
+      console.error('❌ Sign out error:', error);
       throw error;
     }
   }
@@ -115,7 +160,7 @@ export class AuthService {
       
       return null;
     } catch (error) {
-      console.error('Get current user error:', error);
+      console.error('❌ Get current user error:', error);
       return null;
     }
   }
@@ -124,9 +169,11 @@ export class AuthService {
   static onAuthStateChanged(callback: (user: User | null) => void): () => void {
     return onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
+        console.log('🔄 Auth state changed: User logged in');
         const user = await this.getCurrentUser();
         callback(user);
       } else {
+        console.log('🔄 Auth state changed: User logged out');
         callback(null);
       }
     });
@@ -141,7 +188,7 @@ export class AuthService {
       
       return !querySnapshot.empty;
     } catch (error) {
-      console.error('Check user exists error:', error);
+      console.error('❌ Check user exists error:', error);
       return false;
     }
   }
