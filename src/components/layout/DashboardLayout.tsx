@@ -334,30 +334,6 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
 
       {/* Main Content */}
       <div className="bg-gray-50 min-h-screen">
-        {/* Breadcrumb/Title Bar */}
-        <div className="bg-white border-b border-gray-200">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-xl font-medium text-gray-900">{title}</h1>
-                <div className="flex items-center space-x-2 text-sm text-gray-500 mt-1">
-                  <span>2025-01-07 to 2025-01-07</span>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div className="hidden lg:flex items-center space-x-4 text-sm text-gray-600">
-                  <span>Frequency: Daily</span>
-                  <span>Performance Measure: TWR</span>
-                  <span>Benchmark: Real-Time</span>
-                </div>
-                <button className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors">
-                  Configure Dashboard
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Page Content */}
         <main className="p-6">
           {children}
