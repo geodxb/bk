@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { FirestoreService } from '../services/firestoreService';
 import { Investor, Transaction, WithdrawalRequest } from '../types/user';
 
-// Hook for investors data
+// Hook for investors data with enhanced Firebase integration
 export const useInvestors = () => {
   const [investors, setInvestors] = useState<Investor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -12,13 +12,20 @@ export const useInvestors = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('FirestoreService: Fetching investors from Interactive Brokers...');
+      console.log('🔥 Firebase: Fetching all investors from Firestore...');
+      
       const data = await FirestoreService.getInvestors();
-      console.log('Interactive Brokers: Found', data.length, 'investors');
+      console.log('✅ Firebase: Successfully retrieved', data.length, 'investor profiles');
+      
+      // Log investor details for debugging
+      data.forEach(investor => {
+        console.log(`📊 Investor: ${investor.name} | Status: ${investor.accountStatus || 'Active'} | Balance: $${investor.currentBalance?.toLocaleString() || '0'}`);
+      });
+      
       setInvestors(data);
-    } catch (err) {
-      console.error('Error fetching investors from Interactive Brokers:', err);
-      setError('Failed to fetch investors');
+    } catch (err: any) {
+      console.error('❌ Firebase Error: Failed to fetch investors:', err);
+      setError(`Failed to load investor data: ${err.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -31,7 +38,7 @@ export const useInvestors = () => {
   return { investors, loading, error, refetch: fetchInvestors };
 };
 
-// Hook for transactions data
+// Hook for transactions data with enhanced Firebase integration
 export const useTransactions = (investorId?: string) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,13 +48,23 @@ export const useTransactions = (investorId?: string) => {
     try {
       setLoading(true);
       setError(null);
-      console.log('Interactive Brokers: Fetching transactions...', investorId ? `for investor ${investorId}` : 'all');
+      console.log('🔥 Firebase: Fetching transactions...', investorId ? `for investor ${investorId}` : 'all transactions');
+      
       const data = await FirestoreService.getTransactions(investorId);
-      console.log('Interactive Brokers: Found', data.length, 'transactions');
+      console.log('✅ Firebase: Successfully retrieved', data.length, 'transactions');
+      
+      // Log transaction summary for debugging
+      if (data.length > 0) {
+        const deposits = data.filter(tx => tx.type === 'Deposit').length;
+        const withdrawals = data.filter(tx => tx.type === 'Withdrawal').length;
+        const earnings = data.filter(tx => tx.type === 'Earnings').length;
+        console.log(`📈 Transaction Summary: ${deposits} deposits, ${withdrawals} withdrawals, ${earnings} earnings`);
+      }
+      
       setTransactions(data);
-    } catch (err) {
-      console.error('Error fetching transactions from Interactive Brokers:', err);
-      setError('Failed to fetch transactions');
+    } catch (err: any) {
+      console.error('❌ Firebase Error: Failed to fetch transactions:', err);
+      setError(`Failed to load transaction data: ${err.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -60,7 +77,7 @@ export const useTransactions = (investorId?: string) => {
   return { transactions, loading, error, refetch: fetchTransactions };
 };
 
-// Hook for withdrawal requests data
+// Hook for withdrawal requests data with enhanced Firebase integration
 export const useWithdrawalRequests = () => {
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,13 +87,23 @@ export const useWithdrawalRequests = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('Interactive Brokers: Fetching withdrawal requests...');
+      console.log('🔥 Firebase: Fetching withdrawal requests...');
+      
       const data = await FirestoreService.getWithdrawalRequests();
-      console.log('Interactive Brokers: Found', data.length, 'withdrawal requests');
+      console.log('✅ Firebase: Successfully retrieved', data.length, 'withdrawal requests');
+      
+      // Log withdrawal request summary for debugging
+      if (data.length > 0) {
+        const pending = data.filter(req => req.status === 'Pending').length;
+        const approved = data.filter(req => req.status === 'Approved').length;
+        const rejected = data.filter(req => req.status === 'Rejected').length;
+        console.log(`💰 Withdrawal Summary: ${pending} pending, ${approved} approved, ${rejected} rejected`);
+      }
+      
       setWithdrawalRequests(data);
-    } catch (err) {
-      console.error('Error fetching withdrawal requests from Interactive Brokers:', err);
-      setError('Failed to fetch withdrawal requests');
+    } catch (err: any) {
+      console.error('❌ Firebase Error: Failed to fetch withdrawal requests:', err);
+      setError(`Failed to load withdrawal data: ${err.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -89,7 +116,7 @@ export const useWithdrawalRequests = () => {
   return { withdrawalRequests, loading, error, refetch: fetchWithdrawalRequests };
 };
 
-// Hook for single investor data
+// Hook for single investor data with enhanced Firebase integration
 export const useInvestor = (investorId: string) => {
   const [investor, setInvestor] = useState<Investor | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,13 +126,21 @@ export const useInvestor = (investorId: string) => {
     try {
       setLoading(true);
       setError(null);
-      console.log('Interactive Brokers: Fetching investor:', investorId);
+      console.log('🔥 Firebase: Fetching investor profile:', investorId);
+      
       const data = await FirestoreService.getInvestorById(investorId);
-      console.log('Interactive Brokers: Found investor:', data?.name || 'Not found');
-      setInvestor(data);
-    } catch (err) {
-      console.error('Error fetching investor from Interactive Brokers:', err);
-      setError('Failed to fetch investor');
+      
+      if (data) {
+        console.log('✅ Firebase: Found investor profile:', data.name);
+        console.log(`📊 Account Details: Status: ${data.accountStatus || 'Active'} | Balance: $${data.currentBalance?.toLocaleString() || '0'}`);
+        setInvestor(data);
+      } else {
+        console.log('⚠️ Firebase: Investor profile not found for ID:', investorId);
+        setError('Investor profile not found');
+      }
+    } catch (err: any) {
+      console.error('❌ Firebase Error: Failed to fetch investor:', err);
+      setError(`Failed to load investor profile: ${err.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }

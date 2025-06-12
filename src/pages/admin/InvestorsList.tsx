@@ -19,7 +19,10 @@ import {
   User,
   MapPin,
   Calendar,
-  DollarSign
+  DollarSign,
+  AlertTriangle,
+  Activity,
+  Building
 } from 'lucide-react';
 
 const InvestorsListPage = () => {
@@ -78,63 +81,80 @@ const InvestorsListPage = () => {
   const restrictedInvestors = investors.filter(inv => inv.accountStatus?.includes('Restricted')).length;
   const profitableInvestors = investors.filter(inv => inv.currentBalance > inv.initialDeposit).length;
 
+  // Industrial-style columns
   const columns = [
     {
       key: 'profile',
-      header: 'Investor Profile',
+      header: 'INVESTOR PROFILE',
       render: (_: any, row: any) => (
         <div className="flex items-center space-x-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center border-2 border-blue-300">
-            <span className="text-blue-700 font-bold text-lg">
+          <div className="w-14 h-14 bg-gray-200 border-2 border-gray-400 flex items-center justify-center">
+            <span className="text-gray-700 font-bold text-lg">
               {row.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
             </span>
           </div>
           <div>
-            <p className="font-semibold text-gray-900 text-lg">{row.name}</p>
-            <div className="flex items-center space-x-3 text-sm text-gray-600">
+            <p className="font-bold text-gray-900 text-lg uppercase tracking-wide">{row.name}</p>
+            <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
               <div className="flex items-center space-x-1">
                 <MapPin size={12} />
-                <span>{row.country}</span>
+                <span className="uppercase tracking-wide">{row.country}</span>
               </div>
               <div className="flex items-center space-x-1">
                 <Calendar size={12} />
-                <span>Joined {new Date(row.joinDate).toLocaleDateString()}</span>
+                <span className="uppercase tracking-wide">
+                  {new Date(row.joinDate).toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}
+                </span>
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-1">ID: {row.id.slice(-8)}</p>
+            <div className="flex items-center space-x-2 mt-2">
+              <span className="text-xs text-gray-500 uppercase tracking-wider">ID:</span>
+              <span className="text-xs font-mono bg-gray-100 px-2 py-1 border border-gray-300">
+                {row.id.slice(-8)}
+              </span>
+            </div>
           </div>
         </div>
       )
     },
     {
       key: 'portfolio',
-      header: 'Portfolio Overview',
+      header: 'PORTFOLIO METRICS',
       render: (_: any, row: any) => {
         const performance = row.currentBalance - row.initialDeposit;
         const performancePercent = row.initialDeposit > 0 ? (performance / row.initialDeposit) * 100 : 0;
         const isPositive = performance >= 0;
         
         return (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Current Balance</span>
-              <span className="font-bold text-lg text-gray-900">${row.currentBalance.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Initial Deposit</span>
-              <span className="text-gray-700">${row.initialDeposit.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Performance</span>
-              <div className="flex items-center space-x-1">
-                {isPositive ? (
-                  <TrendingUp size={14} className="text-green-600" />
-                ) : (
-                  <TrendingDown size={14} className="text-red-600" />
-                )}
-                <span className={`font-semibold ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                  {isPositive ? '+' : ''}${performance.toLocaleString()} ({performancePercent.toFixed(1)}%)
-                </span>
+          <div className="bg-gray-50 p-4 border border-gray-300">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-gray-600 uppercase tracking-wider mb-1">CURRENT BALANCE</p>
+                <p className="font-bold text-xl text-gray-900">${row.currentBalance.toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-600 uppercase tracking-wider mb-1">INITIAL DEPOSIT</p>
+                <p className="font-semibold text-lg text-gray-700">${row.initialDeposit.toLocaleString()}</p>
+              </div>
+              <div className="col-span-2 border-t border-gray-300 pt-3">
+                <p className="text-xs text-gray-600 uppercase tracking-wider mb-1">PERFORMANCE</p>
+                <div className="flex items-center space-x-2">
+                  {isPositive ? (
+                    <TrendingUp size={16} className="text-gray-700" />
+                  ) : (
+                    <TrendingDown size={16} className="text-gray-700" />
+                  )}
+                  <span className={`font-bold text-lg ${isPositive ? 'text-gray-900' : 'text-gray-900'}`}>
+                    {isPositive ? '+' : ''}${performance.toLocaleString()}
+                  </span>
+                  <span className={`text-sm font-medium ${isPositive ? 'text-gray-700' : 'text-gray-700'}`}>
+                    ({performancePercent.toFixed(1)}%)
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -143,37 +163,43 @@ const InvestorsListPage = () => {
     },
     {
       key: 'status',
-      header: 'Account Status',
+      header: 'ACCOUNT STATUS',
       render: (value: string, row: any) => {
         const status = value || 'Active';
-        let bgColor = 'bg-green-100';
-        let textColor = 'text-green-800';
-        let borderColor = 'border-green-200';
+        let bgColor = 'bg-gray-100';
+        let textColor = 'text-gray-800';
+        let borderColor = 'border-gray-300';
         let icon = <CheckCircle size={14} />;
         
         if (status.includes('Restricted')) {
-          bgColor = 'bg-amber-100';
-          textColor = 'text-amber-800';
-          borderColor = 'border-amber-200';
-          icon = <XCircle size={14} />;
+          bgColor = 'bg-gray-200';
+          textColor = 'text-gray-900';
+          borderColor = 'border-gray-400';
+          icon = <AlertTriangle size={14} />;
         } else if (status.includes('Closed')) {
-          bgColor = 'bg-red-100';
-          textColor = 'text-red-800';
-          borderColor = 'border-red-200';
+          bgColor = 'bg-gray-300';
+          textColor = 'text-gray-900';
+          borderColor = 'border-gray-500';
           icon = <XCircle size={14} />;
         }
         
         return (
-          <div className="space-y-2">
-            <div className={`inline-flex items-center px-3 py-2 rounded-lg border ${bgColor} ${textColor} ${borderColor}`}>
+          <div className="space-y-3">
+            <div className={`inline-flex items-center px-4 py-2 border-2 ${bgColor} ${textColor} ${borderColor}`}>
               {icon}
-              <span className="ml-2 font-medium">{status}</span>
+              <span className="ml-2 font-bold uppercase tracking-wide text-sm">{status}</span>
             </div>
             {row.email && (
-              <p className="text-xs text-gray-500">{row.email}</p>
+              <div className="bg-gray-50 p-2 border border-gray-300">
+                <p className="text-xs text-gray-600 uppercase tracking-wider mb-1">EMAIL</p>
+                <p className="text-xs font-mono text-gray-800">{row.email}</p>
+              </div>
             )}
             {row.phone && (
-              <p className="text-xs text-gray-500">{row.phone}</p>
+              <div className="bg-gray-50 p-2 border border-gray-300">
+                <p className="text-xs text-gray-600 uppercase tracking-wider mb-1">PHONE</p>
+                <p className="text-xs font-mono text-gray-800">{row.phone}</p>
+              </div>
             )}
           </div>
         );
@@ -181,27 +207,27 @@ const InvestorsListPage = () => {
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: 'OPERATIONS',
       align: 'center' as 'center',
       render: (_: any, row: any) => (
-        <div className="flex space-x-2">
+        <div className="space-y-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => navigate(`/admin/investor/${row.id}`)}
-            className="flex items-center"
+            className="w-full border-2 border-gray-400 text-gray-800 hover:bg-gray-100 font-bold uppercase tracking-wide"
           >
-            <Eye size={14} className="mr-1" />
-            View
+            <Eye size={14} className="mr-2" />
+            VIEW
           </Button>
           <Button
             variant="primary"
             size="sm"
             onClick={() => navigate(`/admin/investor/${row.id}`)}
-            className="flex items-center"
+            className="w-full bg-gray-800 hover:bg-gray-900 border-2 border-gray-800 font-bold uppercase tracking-wide"
           >
-            <Edit size={14} className="mr-1" />
-            Manage
+            <Edit size={14} className="mr-2" />
+            MANAGE
           </Button>
         </div>
       )
@@ -211,11 +237,16 @@ const InvestorsListPage = () => {
   if (error) {
     return (
       <DashboardLayout title="Holdings">
-        <Card title="Error Loading Investor Profiles">
+        <Card title="SYSTEM ERROR - INVESTOR DATA" className="bg-white border-2 border-red-500">
           <div className="text-center py-8">
-            <p className="text-red-600 mb-4">{error}</p>
-            <Button variant="outline" onClick={refetch}>
-              Retry Loading
+            <AlertTriangle size={48} className="mx-auto text-red-600 mb-4" />
+            <p className="text-red-600 mb-4 font-bold uppercase tracking-wide">{error}</p>
+            <Button 
+              variant="outline" 
+              onClick={refetch}
+              className="border-2 border-red-500 text-red-600 hover:bg-red-50 font-bold uppercase tracking-wide"
+            >
+              RETRY LOADING
             </Button>
           </div>
         </Card>
@@ -225,185 +256,238 @@ const InvestorsListPage = () => {
 
   return (
     <DashboardLayout title="Holdings">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800">Investor Holdings</h2>
-            <p className="text-gray-600">Manage investor profiles and monitor portfolio performance</p>
+      {/* Industrial Header */}
+      <div className="mb-8">
+        <div className="bg-gray-100 border-2 border-gray-400 p-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 uppercase tracking-wide">INVESTOR HOLDINGS</h2>
+              <p className="text-gray-700 uppercase tracking-wide text-sm mt-2">PORTFOLIO MANAGEMENT & PERFORMANCE MONITORING</p>
+            </div>
+            <Button
+              variant="primary"
+              onClick={() => setAddInvestorModalOpen(true)}
+              className="bg-gray-800 hover:bg-gray-900 border-2 border-gray-800 font-bold uppercase tracking-wide"
+            >
+              <UserPlus size={18} className="mr-2" />
+              ADD NEW INVESTOR
+            </Button>
           </div>
-          <Button
-            variant="primary"
-            onClick={() => setAddInvestorModalOpen(true)}
-            className="flex items-center"
-          >
-            <UserPlus size={18} className="mr-2" />
-            Add New Investor
-          </Button>
         </div>
       </div>
 
-      {/* Summary Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-blue-700 font-semibold text-sm">Total AUM</p>
-              <p className="text-blue-900 text-2xl font-bold">${totalAUM.toLocaleString()}</p>
-              <p className="text-blue-600 text-xs mt-1">Assets Under Management</p>
+      {/* Industrial Summary Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <Card className="bg-gray-100 border-2 border-gray-400">
+          <div className="p-6">
+            <div className="border-b-2 border-gray-400 pb-3 mb-4">
+              <p className="text-gray-700 font-bold text-sm uppercase tracking-wider">TOTAL AUM</p>
             </div>
-            <div className="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center">
-              <DollarSign className="text-blue-700" size={24} />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-green-700 font-semibold text-sm">Active Investors</p>
-              <p className="text-green-900 text-2xl font-bold">{activeInvestors}</p>
-              <p className="text-green-600 text-xs mt-1">Currently active accounts</p>
-            </div>
-            <div className="w-12 h-12 bg-green-200 rounded-full flex items-center justify-center">
-              <CheckCircle className="text-green-700" size={24} />
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-900 text-3xl font-bold">${totalAUM.toLocaleString()}</p>
+                <p className="text-gray-600 text-xs mt-1 uppercase tracking-wide">ASSETS UNDER MANAGEMENT</p>
+              </div>
+              <div className="w-12 h-12 bg-gray-300 border-2 border-gray-500 flex items-center justify-center">
+                <DollarSign className="text-gray-700" size={24} />
+              </div>
             </div>
           </div>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-purple-700 font-semibold text-sm">Profitable</p>
-              <p className="text-purple-900 text-2xl font-bold">{profitableInvestors}</p>
-              <p className="text-purple-600 text-xs mt-1">Accounts in profit</p>
+        <Card className="bg-gray-100 border-2 border-gray-400">
+          <div className="p-6">
+            <div className="border-b-2 border-gray-400 pb-3 mb-4">
+              <p className="text-gray-700 font-bold text-sm uppercase tracking-wider">ACTIVE ACCOUNTS</p>
             </div>
-            <div className="w-12 h-12 bg-purple-200 rounded-full flex items-center justify-center">
-              <TrendingUp className="text-purple-700" size={24} />
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-900 text-3xl font-bold">{activeInvestors}</p>
+                <p className="text-gray-600 text-xs mt-1 uppercase tracking-wide">OPERATIONAL STATUS</p>
+              </div>
+              <div className="w-12 h-12 bg-gray-300 border-2 border-gray-500 flex items-center justify-center">
+                <CheckCircle className="text-gray-700" size={24} />
+              </div>
             </div>
           </div>
         </Card>
 
-        <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-amber-700 font-semibold text-sm">Restricted</p>
-              <p className="text-amber-900 text-2xl font-bold">{restrictedInvestors}</p>
-              <p className="text-amber-600 text-xs mt-1">Accounts with restrictions</p>
+        <Card className="bg-gray-100 border-2 border-gray-400">
+          <div className="p-6">
+            <div className="border-b-2 border-gray-400 pb-3 mb-4">
+              <p className="text-gray-700 font-bold text-sm uppercase tracking-wider">PROFITABLE</p>
             </div>
-            <div className="w-12 h-12 bg-amber-200 rounded-full flex items-center justify-center">
-              <XCircle className="text-amber-700" size={24} />
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-900 text-3xl font-bold">{profitableInvestors}</p>
+                <p className="text-gray-600 text-xs mt-1 uppercase tracking-wide">POSITIVE PERFORMANCE</p>
+              </div>
+              <div className="w-12 h-12 bg-gray-300 border-2 border-gray-500 flex items-center justify-center">
+                <TrendingUp className="text-gray-700" size={24} />
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="bg-gray-100 border-2 border-gray-400">
+          <div className="p-6">
+            <div className="border-b-2 border-gray-400 pb-3 mb-4">
+              <p className="text-gray-700 font-bold text-sm uppercase tracking-wider">RESTRICTED</p>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-900 text-3xl font-bold">{restrictedInvestors}</p>
+                <p className="text-gray-600 text-xs mt-1 uppercase tracking-wide">COMPLIANCE REVIEW</p>
+              </div>
+              <div className="w-12 h-12 bg-gray-300 border-2 border-gray-500 flex items-center justify-center">
+                <AlertTriangle className="text-gray-700" size={24} />
+              </div>
             </div>
           </div>
         </Card>
       </div>
 
-      {/* Filters and Search */}
-      <Card className="mb-6 bg-white border border-gray-200">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Filter size={16} className="text-gray-500" />
-              <span className="text-sm text-gray-700">Status:</span>
+      {/* Industrial Filters and Search */}
+      <Card className="mb-8 bg-gray-100 border-2 border-gray-400">
+        <div className="p-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+            <div className="flex items-center space-x-6">
+              <div className="flex items-center space-x-3">
+                <Filter size={16} className="text-gray-700" />
+                <span className="text-sm text-gray-700 font-bold uppercase tracking-wide">STATUS FILTER:</span>
+              </div>
+              <div className="flex space-x-2">
+                {[
+                  { key: 'all', label: 'ALL', count: investors.length },
+                  { key: 'active', label: 'ACTIVE', count: activeInvestors },
+                  { key: 'restricted', label: 'RESTRICTED', count: restrictedInvestors },
+                  { key: 'closed', label: 'CLOSED', count: investors.filter(inv => inv.accountStatus?.includes('Closed')).length }
+                ].map(filter => (
+                  <button
+                    key={filter.key}
+                    onClick={() => setStatusFilter(filter.key)}
+                    className={`px-4 py-2 text-sm font-bold uppercase tracking-wide border-2 transition-colors ${
+                      statusFilter === filter.key
+                        ? 'bg-gray-800 text-white border-gray-800'
+                        : 'bg-gray-200 text-gray-800 border-gray-400 hover:bg-gray-300'
+                    }`}
+                  >
+                    {filter.label} ({filter.count})
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="flex space-x-1">
-              {[
-                { key: 'all', label: 'All', count: investors.length },
-                { key: 'active', label: 'Active', count: activeInvestors },
-                { key: 'restricted', label: 'Restricted', count: restrictedInvestors },
-                { key: 'closed', label: 'Closed', count: investors.filter(inv => inv.accountStatus?.includes('Closed')).length }
-              ].map(filter => (
-                <button
-                  key={filter.key}
-                  onClick={() => setStatusFilter(filter.key)}
-                  className={`px-3 py-1 text-sm rounded transition-colors ${
-                    statusFilter === filter.key
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {filter.label} ({filter.count})
-                </button>
-              ))}
-            </div>
-          </div>
 
-          <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search investors..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 pr-4 py-2 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 w-64"
-            />
+            <div className="relative">
+              <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+              <input
+                type="text"
+                placeholder="SEARCH INVESTORS..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-3 border-2 border-gray-400 bg-white text-sm font-bold uppercase tracking-wide focus:ring-0 focus:border-gray-600 w-80"
+              />
+            </div>
           </div>
         </div>
       </Card>
 
-      {/* Investor Profiles Table */}
-      <Card title={`Investor Profiles (${sortedInvestors.length})`} className="bg-white border border-gray-200">
+      {/* Industrial Investor Profiles Table */}
+      <Card title={`INVESTOR PROFILES DATABASE (${sortedInvestors.length} RECORDS)`} className="bg-white border-2 border-gray-400">
         {loading ? (
-          <div className="text-center py-12">
-            <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading investor profiles from Firebase...</p>
+          <div className="text-center py-16">
+            <div className="w-12 h-12 border-4 border-gray-400 border-t-gray-800 rounded-full animate-spin mx-auto mb-6"></div>
+            <p className="text-gray-700 font-bold uppercase tracking-wide">LOADING INVESTOR PROFILES FROM FIREBASE...</p>
+            <p className="text-gray-600 text-sm mt-2 uppercase tracking-wide">RETRIEVING ACCOUNT DATA & TRANSACTION HISTORY</p>
           </div>
         ) : sortedInvestors.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <User size={32} className="text-gray-400" />
+          <div className="text-center py-16">
+            <div className="w-20 h-20 bg-gray-200 border-2 border-gray-400 flex items-center justify-center mx-auto mb-6">
+              <User size={40} className="text-gray-600" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Investor Profiles Found</h3>
-            <p className="text-gray-600 mb-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4 uppercase tracking-wide">NO INVESTOR PROFILES FOUND</h3>
+            <p className="text-gray-700 mb-8 uppercase tracking-wide text-sm">
               {searchTerm || statusFilter !== 'all' 
-                ? 'No investors match your current filters. Try adjusting your search criteria.'
-                : 'Get started by adding your first investor profile to the platform.'
+                ? 'NO INVESTORS MATCH CURRENT FILTER CRITERIA'
+                : 'INITIALIZE SYSTEM BY ADDING FIRST INVESTOR PROFILE'
               }
             </p>
             {!searchTerm && statusFilter === 'all' && (
               <Button
                 variant="primary"
                 onClick={() => setAddInvestorModalOpen(true)}
-                className="flex items-center mx-auto"
+                className="bg-gray-800 hover:bg-gray-900 border-2 border-gray-800 font-bold uppercase tracking-wide"
               >
                 <UserPlus size={18} className="mr-2" />
-                Add First Investor
+                ADD FIRST INVESTOR
               </Button>
             )}
           </div>
         ) : (
           <>
-            <Table 
-              columns={columns} 
-              data={sortedInvestors}
-              isLoading={loading}
-              emptyMessage="No investor profiles found"
-            />
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead>
+                  <tr className="border-b-2 border-gray-400 bg-gray-100">
+                    {columns.map((column) => (
+                      <th 
+                        key={column.key}
+                        scope="col"
+                        className="px-6 py-4 text-sm font-bold text-gray-800 uppercase tracking-wider text-left"
+                      >
+                        {column.header}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y-2 divide-gray-300">
+                  {sortedInvestors.map((row, index) => (
+                    <tr 
+                      key={row.id || index}
+                      className="hover:bg-gray-50 transition-colors border-b border-gray-200"
+                    >
+                      {columns.map((column) => (
+                        <td 
+                          key={`${row.id || index}-${column.key}`}
+                          className="px-6 py-6 text-sm text-gray-700"
+                        >
+                          {column.render ? column.render(row[column.key as keyof typeof row], row) : row[column.key as keyof typeof row]}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-            {/* Summary Footer */}
-            <div className="mt-6 p-4 bg-gray-50 rounded-xl border-t border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-500 mb-1">Showing Results</p>
-                  <p className="font-bold text-gray-900 text-lg">{sortedInvestors.length}</p>
+            {/* Industrial Summary Footer */}
+            <div className="mt-8 p-6 bg-gray-100 border-t-2 border-gray-400">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="bg-white p-4 border-2 border-gray-400">
+                  <p className="text-gray-600 mb-2 text-xs uppercase tracking-wider font-bold">SHOWING RESULTS</p>
+                  <p className="font-bold text-gray-900 text-2xl">{sortedInvestors.length}</p>
+                  <p className="text-gray-600 text-xs uppercase tracking-wide">TOTAL RECORDS</p>
                 </div>
-                <div>
-                  <p className="text-gray-500 mb-1">Total Portfolio Value</p>
-                  <p className="font-bold text-blue-600 text-lg">
+                <div className="bg-white p-4 border-2 border-gray-400">
+                  <p className="text-gray-600 mb-2 text-xs uppercase tracking-wider font-bold">PORTFOLIO VALUE</p>
+                  <p className="font-bold text-gray-900 text-2xl">
                     ${sortedInvestors.reduce((sum, inv) => sum + inv.currentBalance, 0).toLocaleString()}
                   </p>
+                  <p className="text-gray-600 text-xs uppercase tracking-wide">COMBINED AUM</p>
                 </div>
-                <div>
-                  <p className="text-gray-500 mb-1">Average Account Size</p>
-                  <p className="font-bold text-purple-600 text-lg">
+                <div className="bg-white p-4 border-2 border-gray-400">
+                  <p className="text-gray-600 mb-2 text-xs uppercase tracking-wider font-bold">AVERAGE SIZE</p>
+                  <p className="font-bold text-gray-900 text-2xl">
                     ${sortedInvestors.length > 0 ? Math.round(sortedInvestors.reduce((sum, inv) => sum + inv.currentBalance, 0) / sortedInvestors.length).toLocaleString() : '0'}
                   </p>
+                  <p className="text-gray-600 text-xs uppercase tracking-wide">PER ACCOUNT</p>
                 </div>
-                <div>
-                  <p className="text-gray-500 mb-1">Success Rate</p>
-                  <p className="font-bold text-green-600 text-lg">
+                <div className="bg-white p-4 border-2 border-gray-400">
+                  <p className="text-gray-600 mb-2 text-xs uppercase tracking-wider font-bold">SUCCESS RATE</p>
+                  <p className="font-bold text-gray-900 text-2xl">
                     {sortedInvestors.length > 0 ? ((sortedInvestors.filter(inv => inv.currentBalance > inv.initialDeposit).length / sortedInvestors.length) * 100).toFixed(1) : '0.0'}%
                   </p>
+                  <p className="text-gray-600 text-xs uppercase tracking-wide">PROFITABLE</p>
                 </div>
               </div>
             </div>
@@ -417,7 +501,7 @@ const InvestorsListPage = () => {
         onClose={() => setAddInvestorModalOpen(false)}
         onSuccess={() => {
           setAddInvestorModalOpen(false);
-          refetch(); // Refresh the investor list
+          refetch(); // Refresh the investor list from Firebase
         }}
       />
     </DashboardLayout>
