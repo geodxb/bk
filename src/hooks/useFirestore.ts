@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { FirestoreService } from '../services/firestoreService';
 import { Investor, Transaction, WithdrawalRequest } from '../types/user';
 
-// Hook for investors data with enhanced Firebase integration
+// Hook for investors data with enhanced Firebase integration and real-time updates
 export const useInvestors = () => {
   const [investors, setInvestors] = useState<Investor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,6 +33,21 @@ export const useInvestors = () => {
 
   useEffect(() => {
     fetchInvestors();
+
+    // Set up real-time listener
+    console.log('🔄 Setting up real-time listener for investors...');
+    const unsubscribe = FirestoreService.subscribeToInvestors((updatedInvestors) => {
+      console.log('🔄 Real-time update: Received', updatedInvestors.length, 'investors');
+      setInvestors(updatedInvestors);
+      setLoading(false);
+      setError(null);
+    });
+
+    // Cleanup listener on unmount
+    return () => {
+      console.log('🔄 Cleaning up real-time listener');
+      unsubscribe();
+    };
   }, []);
 
   return { investors, loading, error, refetch: fetchInvestors };
