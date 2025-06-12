@@ -13,6 +13,8 @@ const WithdrawalsPage = lazy(() => import('./pages/admin/WithdrawalsPage'));
 const AnalyticsPage = lazy(() => import('./pages/admin/AnalyticsPage'));
 const SettingsPage = lazy(() => import('./pages/admin/SettingsPage'));
 const CommissionsPage = lazy(() => import('./pages/admin/CommissionsPage'));
+const TransactionsPage = lazy(() => import('./pages/admin/TransactionsPage'));
+const PerformanceReportsPage = lazy(() => import('./pages/admin/PerformanceReportsPage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 function App() {
@@ -50,9 +52,19 @@ function App() {
             <CommissionsPage />
           </ProtectedRoute>
         } />
+        <Route path="/admin/transactions" element={
+          <ProtectedRoute role="admin">
+            <TransactionsPage />
+          </ProtectedRoute>
+        } />
         <Route path="/admin/analytics" element={
           <ProtectedRoute role="admin">
             <AnalyticsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/performance-reports" element={
+          <ProtectedRoute role="admin">
+            <PerformanceReportsPage />
           </ProtectedRoute>
         } />
         <Route path="/admin/settings" element={
@@ -64,16 +76,16 @@ function App() {
         {/* Redirect based on authentication status - Admin only */}
         <Route path="/" element={
           user ? (
-            user.role === 'admin' ? <Navigate to="/admin\" replace /> : <Navigate to="/admin-login" replace />
+            user.role === 'admin' ? <Navigate to="/admin" replace /> : <Navigate to="/admin-login" replace />
           ) : (
             <Navigate to="/admin-login" replace />
           )
         } />
         
         {/* Redirect any investor routes to admin login */}
-        <Route path="/investor-login" element={<Navigate to="/admin-login\" replace />} />
-        <Route path="/investor" element={<Navigate to="/admin-login\" replace />} />
-        <Route path="/investor/*" element={<Navigate to="/admin-login\" replace />} />
+        <Route path="/investor-login" element={<Navigate to="/admin-login" replace />} />
+        <Route path="/investor" element={<Navigate to="/admin-login" replace />} />
+        <Route path="/investor/*" element={<Navigate to="/admin-login" replace />} />
         
         {/* Catch-all route */}
         <Route path="*" element={<NotFound />} />

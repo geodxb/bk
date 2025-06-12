@@ -52,7 +52,7 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
       dropdownItems: [
         { text: 'Withdrawal Requests', path: '/admin/withdrawals' },
         { text: 'Commission Tracking', path: '/admin/commissions' },
-        { text: 'Transaction History', path: '/admin/analytics' }
+        { text: 'Transaction History', path: '/admin/transactions' }
       ]
     },
     { 
@@ -61,7 +61,7 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
       hasDropdown: true,
       dropdownItems: [
         { text: 'Configuration', path: '/admin/settings' },
-        { text: 'Performance & Reports', path: '/admin/analytics' }
+        { text: 'Performance & Reports', path: '/admin/performance-reports' }
       ]
     },
   ];
