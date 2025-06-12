@@ -31,7 +31,7 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Navigation items with dropdowns
+  // Navigation items with exact structure requested
   const navItems: NavItem[] = [
     { text: 'Dashboard', path: '/admin' },
     { 
@@ -55,7 +55,15 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
         { text: 'Transaction History', path: '/admin/analytics' }
       ]
     },
-    { text: 'Configuration', path: '/admin/settings' },
+    { 
+      text: 'Profile', 
+      path: '/admin/settings',
+      hasDropdown: true,
+      dropdownItems: [
+        { text: 'Configuration', path: '/admin/settings' },
+        { text: 'Performance & Reports', path: '/admin/analytics' }
+      ]
+    },
   ];
 
   const handleLogout = () => {
@@ -164,28 +172,6 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
                   className="px-3 py-2 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors whitespace-nowrap"
                 >
                   Withdrawals
-                </button>
-              </div>
-
-              {/* User Info Links */}
-              <div className="hidden lg:flex items-center space-x-4 text-sm text-gray-600">
-                <button 
-                  onClick={() => navigate('/admin')}
-                  className="hover:text-blue-600 transition-colors font-medium whitespace-nowrap"
-                >
-                  Home
-                </button>
-                <button 
-                  onClick={() => navigate('/admin/analytics')}
-                  className="hover:text-blue-600 transition-colors font-medium whitespace-nowrap"
-                >
-                  Performance & Reports
-                </button>
-                <button 
-                  onClick={() => navigate('/admin/settings')}
-                  className="hover:text-blue-600 transition-colors font-medium whitespace-nowrap"
-                >
-                  Settings
                 </button>
               </div>
 
