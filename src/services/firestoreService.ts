@@ -11,7 +11,8 @@ import {
   orderBy, 
   limit,
   serverTimestamp,
-  Timestamp
+  Timestamp,
+  setDoc
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Investor, Transaction, WithdrawalRequest } from '../types/user';
@@ -23,7 +24,9 @@ export class FirestoreService {
       const querySnapshot = await getDocs(collection(db, 'investors'));
       return querySnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate() || new Date(),
+        updatedAt: doc.data().updatedAt?.toDate() || new Date()
       })) as Investor[];
     } catch (error) {
       console.error('Error fetching investors:', error);
@@ -37,9 +40,12 @@ export class FirestoreService {
       const docSnap = await getDoc(docRef);
       
       if (docSnap.exists()) {
+        const data = docSnap.data();
         return {
           id: docSnap.id,
-          ...docSnap.data()
+          ...data,
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date()
         } as Investor;
       }
       return null;
@@ -52,25 +58,14 @@ export class FirestoreService {
   static async createInvestor(id: string, data: any): Promise<void> {
     try {
       const docRef = doc(db, 'investors', id);
-      await updateDoc(docRef, {
+      await setDoc(docRef, {
         ...data,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
     } catch (error) {
-      // If document doesn't exist, create it
-      const docRef = doc(db, 'investors', id);
-      await updateDoc(docRef, {
-        ...data,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      }).catch(async () => {
-        await addDoc(collection(db, 'investors'), {
-          ...data,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
-      });
+      console.error('Error creating investor:', error);
+      throw error;
     }
   }
 
@@ -147,7 +142,8 @@ export class FirestoreService {
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate() || new Date()
       })) as Transaction[];
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -178,10 +174,28 @@ export class FirestoreService {
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate() || new Date(),
+        processedAt: doc.data().processedAt?.toDate() || null
       })) as WithdrawalRequest[];
     } catch (error) {
       console.error('Error fetching withdrawal requests:', error);
+      throw error;
+    }
+  }
+
+  static async addWithdrawalRequest(investorId: string, investorName: string, amount: number): Promise<void> {
+    try {
+      await addDoc(collection(db, 'withdrawalRequests'), {
+        investorId,
+        investorName,
+        amount,
+        date: new Date().toISOString().split('T')[0],
+        status: 'Pending',
+        createdAt: serverTimestamp()
+      });
+    } catch (error) {
+      console.error('Error adding withdrawal request:', error);
       throw error;
     }
   }
@@ -201,6 +215,24 @@ export class FirestoreService {
         reason: reason || null,
         updatedAt: serverTimestamp()
       });
+
+      // If approved, create commission record
+      if (status === 'Approved') {
+        const requestDoc = await getDoc(docRef);
+        if (requestDoc.exists()) {
+          const requestData = requestDoc.data();
+          await this.addCommission({
+            investorId: requestData.investorId,
+            investorName: requestData.investorName,
+            withdrawalAmount: requestData.amount,
+            commissionRate: 15,
+            commissionAmount: requestData.amount * 0.15,
+            date: new Date().toISOString().split('T')[0],
+            status: 'Earned',
+            withdrawalId: id
+          });
+        }
+      }
     } catch (error) {
       console.error('Error updating withdrawal request:', error);
       throw error;
@@ -218,10 +250,23 @@ export class FirestoreService {
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate() || new Date()
       }));
     } catch (error) {
       console.error('Error fetching commissions:', error);
+      throw error;
+    }
+  }
+
+  static async addCommission(commission: any): Promise<void> {
+    try {
+      await addDoc(collection(db, 'commissions'), {
+        ...commission,
+        createdAt: serverTimestamp()
+      });
+    } catch (error) {
+      console.error('Error adding commission:', error);
       throw error;
     }
   }
@@ -284,7 +329,9 @@ export class FirestoreService {
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate() || new Date(),
+        updatedAt: doc.data().updatedAt?.toDate() || new Date()
       })) as Investor[];
     } catch (error) {
       console.error('Error fetching investors by status:', error);
@@ -314,7 +361,8 @@ export class FirestoreService {
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate() || new Date()
       })) as Transaction[];
     } catch (error) {
       console.error('Error fetching recent transactions:', error);
