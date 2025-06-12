@@ -1,6 +1,0 @@
-import{j as e,m as t,v as a}from"./index-Dz2LKTib.js";import{B as s}from"./Button-C4WQrzF6.js";import{c as i}from"./createLucideIcon-CZPXBe3C.js";/**
- * @license lucide-react v0.344.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */const n=i("ShieldCheck",[["path",{d:"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",key:"oel41y"}],["path",{d:"m9 12 2 2 4-4",key:"dzmm74"}]]),m=()=>e.jsx("div",{className:"min-h-screen bg-gray-100 flex items-center justify-center p-4",children:e.jsxs(t.div,{initial:{opacity:0,y:20},animate:{opacity:1,y:0},transition:{duration:.5},className:"text-center",children:[e.jsxs("div",{className:"mb-8",children:[e.jsx("span",{className:"text-9xl font-bold text-purple-500",children:"404"}),e.jsx("h1",{className:"text-4xl font-bold text-gray-800 mt-4",children:"Page Not Found"}),e.jsx("p",{className:"text-gray-600 mt-2",children:"The page you're looking for doesn't exist or has been moved."})]}),e.jsx(a,{to:"/admin-login",children:e.jsxs(s,{variant:"primary",children:[e.jsx(n,{size:18,className:"mr-2"}),"Back to Admin Login"]})})]})});export{m as default};
