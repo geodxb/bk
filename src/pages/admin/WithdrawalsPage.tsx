@@ -15,7 +15,6 @@ import {
   Calendar,
   DollarSign,
   User,
-  CreditCard,
   Clock,
   AlertTriangle
 } from 'lucide-react';
@@ -35,7 +34,6 @@ const WithdrawalsPage = () => {
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [actionType, setActionType] = useState<'approve' | 'reject'>('approve');
   const [reason, setReason] = useState('');
-  const [bankDetails, setBankDetails] = useState('');
 
   // Filter and search logic
   const filteredRequests = withdrawalRequests.filter(request => {
@@ -91,7 +89,6 @@ const WithdrawalsPage = () => {
       setShowActionModal(false);
       setSelectedRequest(null);
       setReason('');
-      setBankDetails('');
     } catch (error) {
       console.error(`Error ${action}ing withdrawal:`, error);
     } finally {
@@ -103,12 +100,6 @@ const WithdrawalsPage = () => {
     setSelectedRequest(request);
     setActionType(action);
     setShowActionModal(true);
-    
-    // Get investor details for bank information
-    const investor = getInvestorDetails(request.investorId);
-    if (investor) {
-      setBankDetails(`Account Holder: ${investor.name}\nCountry: ${investor.country}`);
-    }
   };
 
   const handleModalSubmit = () => {
@@ -128,12 +119,12 @@ const WithdrawalsPage = () => {
   const columns = [
     {
       key: 'investorName',
-      header: 'Investor Details',
+      header: 'Investor',
       render: (value: string, row: any) => {
         const investor = getInvestorDetails(row.investorId);
         return (
           <div className="space-y-1">
-            <p className="font-medium text-gray-800">{value}</p>
+            <p className="font-medium text-gray-900">{value}</p>
             <p className="text-xs text-gray-500">ID: {row.investorId.slice(-8)}</p>
             {investor && (
               <p className="text-xs text-gray-500">{investor.country}</p>
@@ -144,35 +135,37 @@ const WithdrawalsPage = () => {
     },
     {
       key: 'amount',
-      header: 'Amount Requested',
+      header: 'Amount',
       align: 'right' as 'right',
       render: (value: number) => (
         <div className="text-right">
-          <p className="font-bold text-lg text-gray-800">${value?.toLocaleString() || '0'}</p>
+          <p className="font-medium text-gray-900">${value?.toLocaleString() || '0'}</p>
           <p className="text-xs text-gray-500">USD</p>
         </div>
       ),
     },
     {
       key: 'date',
-      header: 'Request Date',
+      header: 'Date',
       render: (value: string) => {
         const date = new Date(value);
         return (
           <div className="space-y-1">
-            <p className="font-medium">{date.toLocaleDateString()}</p>
+            <p className="text-sm text-gray-900">{date.toLocaleDateString()}</p>
+            <p className="text-xs text-gray-500">{date.toLocaleDateString('en-US', { weekday: 'short' })}</p>
           </div>
         );
       }
     },
     {
       key: 'bankDetails',
-      header: 'Bank Details',
+      header: 'Bank/Platform',
       render: (_: any, row: any) => {
         const bankInfo = getBankInfo(row.investorName);
         return (
           <div className="space-y-1">
-            <p className="text-sm font-medium">{bankInfo}</p>
+            <p className="text-sm text-gray-900">{bankInfo}</p>
+            <p className="text-xs text-gray-500">External Transfer</p>
           </div>
         );
       }
@@ -181,28 +174,19 @@ const WithdrawalsPage = () => {
       key: 'status',
       header: 'Status',
       render: (value: string, row: any) => {
-        let bgColor = 'bg-gray-100';
-        let textColor = 'text-gray-800';
-        let icon = null;
+        let statusClass = 'bg-gray-100 text-gray-800';
         
         if (value === 'Approved') {
-          bgColor = 'bg-green-100';
-          textColor = 'text-green-800';
-          icon = <CheckCircle size={14} className="mr-1" />;
+          statusClass = 'bg-green-50 text-green-800 border border-green-200';
         } else if (value === 'Rejected') {
-          bgColor = 'bg-red-100';
-          textColor = 'text-red-800';
-          icon = <XCircle size={14} className="mr-1" />;
+          statusClass = 'bg-red-50 text-red-800 border border-red-200';
         } else if (value === 'Pending') {
-          bgColor = 'bg-amber-100';
-          textColor = 'text-amber-800';
-          icon = <Clock size={14} className="mr-1" />;
+          statusClass = 'bg-yellow-50 text-yellow-800 border border-yellow-200';
         }
         
         return (
           <div className="space-y-1">
-            <span className={`px-3 py-1 text-sm rounded-full flex items-center w-fit ${bgColor} ${textColor}`}>
-              {icon}
+            <span className={`px-2 py-1 text-xs rounded ${statusClass}`}>
               {value}
             </span>
             {row.processedAt && (
@@ -222,7 +206,7 @@ const WithdrawalsPage = () => {
         if (row.status !== 'Pending') {
           return (
             <div className="text-center space-y-1">
-              <span className="text-gray-500 text-sm">Processed</span>
+              <span className="text-gray-500 text-xs">Processed</span>
               {row.reason && (
                 <p className="text-xs text-gray-400 max-w-32 truncate">
                   {row.reason}
@@ -233,29 +217,21 @@ const WithdrawalsPage = () => {
         }
         
         return (
-          <div className="flex flex-col space-y-2">
-            <Button
-              variant="success"
-              size="sm"
+          <div className="flex space-x-2">
+            <button
               onClick={() => openActionModal(row, 'approve')}
-              isLoading={isLoading[row.id]}
               disabled={isLoading[row.id]}
-              className="w-full"
+              className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
             >
-              <CheckCircle size={14} className="mr-1" />
               Approve
-            </Button>
-            <Button
-              variant="danger"
-              size="sm"
+            </button>
+            <button
               onClick={() => openActionModal(row, 'reject')}
-              isLoading={isLoading[row.id]}
               disabled={isLoading[row.id]}
-              className="w-full"
+              className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
             >
-              <XCircle size={14} className="mr-1" />
               Reject
-            </Button>
+            </button>
           </div>
         );
       },
@@ -280,55 +256,46 @@ const WithdrawalsPage = () => {
 
   return (
     <DashboardLayout title="Withdrawal Management">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Withdrawal Requests</h2>
-        <p className="text-gray-600">Review and process investor withdrawal requests with detailed bank information</p>
-      </div>
-      
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <Card className="text-center">
-          <div className="flex items-center justify-center w-12 h-12 bg-amber-100 rounded-lg mx-auto mb-3">
-            <Clock className="text-amber-600" size={24} />
+      {/* Summary Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <Card className="bg-white border border-gray-200">
+          <div className="text-center">
+            <div className="text-2xl font-semibold text-gray-900 mb-1">{pendingCount}</div>
+            <div className="text-sm text-gray-600">Pending Requests</div>
           </div>
-          <h3 className="text-gray-500 font-medium mb-2">Pending Requests</h3>
-          <p className="text-3xl font-bold text-amber-600">{pendingCount}</p>
         </Card>
         
-        <Card className="text-center">
-          <div className="flex items-center justify-center w-12 h-12 bg-red-100 rounded-lg mx-auto mb-3">
-            <DollarSign className="text-red-600" size={24} />
+        <Card className="bg-white border border-gray-200">
+          <div className="text-center">
+            <div className="text-2xl font-semibold text-gray-900 mb-1">${totalPendingAmount.toLocaleString()}</div>
+            <div className="text-sm text-gray-600">Pending Amount</div>
           </div>
-          <h3 className="text-gray-500 font-medium mb-2">Pending Amount</h3>
-          <p className="text-3xl font-bold text-red-600">${totalPendingAmount.toLocaleString()}</p>
         </Card>
         
-        <Card className="text-center">
-          <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg mx-auto mb-3">
-            <CheckCircle className="text-green-600" size={24} />
+        <Card className="bg-white border border-gray-200">
+          <div className="text-center">
+            <div className="text-2xl font-semibold text-gray-900 mb-1">{approvedCount}</div>
+            <div className="text-sm text-gray-600">Approved</div>
           </div>
-          <h3 className="text-gray-500 font-medium mb-2">Approved</h3>
-          <p className="text-3xl font-bold text-green-600">{approvedCount}</p>
         </Card>
         
-        <Card className="text-center">
-          <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-lg mx-auto mb-3">
-            <XCircle className="text-gray-600" size={24} />
+        <Card className="bg-white border border-gray-200">
+          <div className="text-center">
+            <div className="text-2xl font-semibold text-gray-900 mb-1">{rejectedCount}</div>
+            <div className="text-sm text-gray-600">Rejected</div>
           </div>
-          <h3 className="text-gray-500 font-medium mb-2">Rejected</h3>
-          <p className="text-3xl font-bold text-gray-600">{rejectedCount}</p>
         </Card>
       </div>
       
-      {/* Filters and Search */}
-      <Card className="mb-6">
+      {/* Filters and Controls */}
+      <Card className="mb-6 bg-white border border-gray-200">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              <Filter size={18} className="text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">Filter by status:</span>
+              <Filter size={16} className="text-gray-500" />
+              <span className="text-sm text-gray-700">Filter:</span>
             </div>
-            <div className="flex space-x-2">
+            <div className="flex space-x-1">
               {[
                 { key: 'all', label: 'All', count: withdrawalRequests.length },
                 { key: 'pending', label: 'Pending', count: pendingCount },
@@ -338,9 +305,9 @@ const WithdrawalsPage = () => {
                 <button
                   key={filter.key}
                   onClick={() => setFilterStatus(filter.key as FilterStatus)}
-                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                  className={`px-3 py-1 text-sm rounded transition-colors ${
                     filterStatus === filter.key
-                      ? 'bg-blue-500 text-white'
+                      ? 'bg-blue-600 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -351,20 +318,20 @@ const WithdrawalsPage = () => {
           </div>
           
           <div className="relative">
-            <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="Search by investor name or amount..."
+              placeholder="Search by investor or amount..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-64"
+              className="pl-9 pr-4 py-2 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 w-64"
             />
           </div>
         </div>
       </Card>
       
       {/* Withdrawal Requests Table */}
-      <Card title={`Withdrawal Requests (${filteredRequests.length})`}>
+      <Card title={`Withdrawal Requests (${filteredRequests.length})`} className="bg-white border border-gray-200">
         <Table 
           columns={columns} 
           data={filteredRequests}
@@ -373,21 +340,21 @@ const WithdrawalsPage = () => {
         />
         
         {!loading && filteredRequests.length > 0 && (
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+          <div className="mt-4 p-4 bg-gray-50 border-t border-gray-200">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div>
                 <p className="text-gray-500">Showing Results</p>
-                <p className="font-semibold">{filteredRequests.length} of {withdrawalRequests.length} requests</p>
+                <p className="font-medium text-gray-900">{filteredRequests.length} of {withdrawalRequests.length} requests</p>
               </div>
               <div>
                 <p className="text-gray-500">Total Amount (Filtered)</p>
-                <p className="font-semibold text-blue-600">
+                <p className="font-medium text-gray-900">
                   ${filteredRequests.reduce((sum, req) => sum + req.amount, 0).toLocaleString()}
                 </p>
               </div>
               <div>
                 <p className="text-gray-500">Average Request</p>
-                <p className="font-semibold text-indigo-600">
+                <p className="font-medium text-gray-900">
                   ${filteredRequests.length > 0 ? Math.round(filteredRequests.reduce((sum, req) => sum + req.amount, 0) / filteredRequests.length).toLocaleString() : '0'}
                 </p>
               </div>
@@ -403,7 +370,6 @@ const WithdrawalsPage = () => {
           setShowActionModal(false);
           setSelectedRequest(null);
           setReason('');
-          setBankDetails('');
         }}
         title={`${actionType === 'approve' ? 'Approve' : 'Reject'} Withdrawal Request`}
         size="lg"
@@ -411,55 +377,24 @@ const WithdrawalsPage = () => {
         {selectedRequest && (
           <div className="space-y-6">
             {/* Request Summary */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium text-gray-800 mb-3 flex items-center">
-                <CreditCard size={18} className="mr-2" />
-                Request Details
-              </h4>
+            <div className="bg-gray-50 p-4 rounded border border-gray-200">
+              <h4 className="font-medium text-gray-900 mb-3">Request Details</h4>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-gray-500">Investor</p>
-                  <p className="font-medium">{selectedRequest.investorName}</p>
+                  <p className="font-medium text-gray-900">{selectedRequest.investorName}</p>
                 </div>
                 <div>
                   <p className="text-gray-500">Amount</p>
-                  <p className="font-bold text-lg">${selectedRequest.amount.toLocaleString()}</p>
+                  <p className="font-medium text-gray-900">${selectedRequest.amount.toLocaleString()}</p>
                 </div>
                 <div>
                   <p className="text-gray-500">Request Date</p>
-                  <p className="font-medium">{new Date(selectedRequest.date).toLocaleDateString()}</p>
+                  <p className="font-medium text-gray-900">{new Date(selectedRequest.date).toLocaleDateString()}</p>
                 </div>
                 <div>
-                  <p className="text-gray-500">Current Status</p>
-                  <p className="font-medium">{selectedRequest.status}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Bank Details */}
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-medium text-gray-800 mb-3 flex items-center">
-                <User size={18} className="mr-2" />
-                Bank & Contact Information
-              </h4>
-              <div className="text-sm space-y-2">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-gray-500">Account Holder</p>
-                    <p className="font-medium">{selectedRequest.investorName}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Country</p>
-                    <p className="font-medium">{getInvestorDetails(selectedRequest.investorId)?.country || 'Unknown'}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Bank/Platform</p>
-                    <p className="font-medium">{getBankInfo(selectedRequest.investorName)}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Account Status</p>
-                    <p className="font-medium">{getInvestorDetails(selectedRequest.investorId)?.accountStatus || 'Active'}</p>
-                  </div>
+                  <p className="text-gray-500">Bank/Platform</p>
+                  <p className="font-medium text-gray-900">{getBankInfo(selectedRequest.investorName)}</p>
                 </div>
               </div>
             </div>
@@ -473,7 +408,7 @@ const WithdrawalsPage = () => {
               <textarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 rows={3}
                 placeholder={
                   actionType === 'approve' 
@@ -485,36 +420,28 @@ const WithdrawalsPage = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex space-x-4">
-              <Button
-                variant="outline"
+            <div className="flex space-x-3">
+              <button
                 onClick={() => {
                   setShowActionModal(false);
                   setSelectedRequest(null);
                   setReason('');
-                  setBankDetails('');
                 }}
+                className="px-4 py-2 text-sm border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
               >
                 Cancel
-              </Button>
-              <Button
-                variant={actionType === 'approve' ? 'success' : 'danger'}
+              </button>
+              <button
                 onClick={handleModalSubmit}
-                isLoading={isLoading[selectedRequest.id]}
                 disabled={actionType === 'reject' && !reason.trim()}
+                className={`px-4 py-2 text-sm rounded text-white ${
+                  actionType === 'approve' 
+                    ? 'bg-green-600 hover:bg-green-700' 
+                    : 'bg-red-600 hover:bg-red-700'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
-                {actionType === 'approve' ? (
-                  <>
-                    <CheckCircle size={18} className="mr-2" />
-                    Approve Withdrawal
-                  </>
-                ) : (
-                  <>
-                    <XCircle size={18} className="mr-2" />
-                    Reject Withdrawal
-                  </>
-                )}
-              </Button>
+                {actionType === 'approve' ? 'Approve Request' : 'Reject Request'}
+              </button>
             </div>
           </div>
         )}
