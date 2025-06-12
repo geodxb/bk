@@ -1,22 +1,12 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/common/Card';
-import Button from '../../components/common/Button';
 import { useAuth } from '../../contexts/AuthContext';
 import { useInvestors, useWithdrawalRequests, useTransactions } from '../../hooks/useFirestore';
 import { 
-  Users, 
-  DollarSign, 
-  TrendingUp, 
-  AlertTriangle, 
-  Activity, 
-  UserPlus,
-  ArrowUpRight,
-  ArrowDownRight,
-  Wallet,
-  Target,
   BarChart3,
   PieChart,
+  TrendingUp,
   Settings
 } from 'lucide-react';
 
@@ -62,146 +52,6 @@ const AdminDashboard = () => {
 
   return (
     <DashboardLayout title="Dashboard">
-      {/* Header Section */}
-      <div className="mb-8">
-        <div className="flex justify-between items-start">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome back, {user?.name || 'Cristian Rolando Dorao'}</h2>
-            <p className="text-gray-600 text-lg">Here's what's happening with your platform today</p>
-          </div>
-          <Button
-            variant="primary"
-            className="shadow-lg"
-          >
-            <UserPlus size={18} className="mr-2" />
-            Add Investor
-          </Button>
-        </div>
-      </div>
-      
-      {/* Key Metrics Cards - Top Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card className="hover:shadow-lg transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500 mb-1">Total Investors</p>
-              <p className="text-3xl font-bold text-gray-900">{totalInvestors}</p>
-              <p className="text-sm text-blue-600 mt-1 flex items-center">
-                <Users size={14} className="mr-1" />
-                {activeInvestors} active
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-              <Users className="text-blue-600" size={24} />
-            </div>
-          </div>
-        </Card>
-        
-        <Card className="hover:shadow-lg transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500 mb-1">Assets Under Management</p>
-              <p className="text-3xl font-bold text-gray-900">${totalAssets.toLocaleString()}</p>
-              <p className="text-sm text-gray-500 mt-1">Total portfolio value</p>
-            </div>
-            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-              <Wallet className="text-green-600" size={24} />
-            </div>
-          </div>
-        </Card>
-        
-        <Card className="hover:shadow-lg transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500 mb-1">Total Withdrawals</p>
-              <p className="text-3xl font-bold text-gray-900">${totalWithdrawalsProcessed.toLocaleString()}</p>
-              <p className="text-sm text-blue-600 mt-1 flex items-center">
-                <ArrowDownRight size={14} className="mr-1" />
-                Processed successfully
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-              <DollarSign className="text-blue-600" size={24} />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500 mb-1">Pending Withdrawals</p>
-              <p className="text-3xl font-bold text-gray-900">{pendingWithdrawals}</p>
-              <p className="text-sm text-red-600 mt-1 flex items-center">
-                <AlertTriangle size={14} className="mr-1" />
-                ${pendingWithdrawalAmount.toLocaleString()} total
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-              <AlertTriangle className="text-red-600" size={24} />
-            </div>
-          </div>
-        </Card>
-      </div>
-      
-      {/* Platform Performance and Top Performers */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <Card title="Platform Performance" className="lg:col-span-2">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                <TrendingUp className="text-blue-600" size={28} />
-              </div>
-              <p className="text-2xl font-bold text-blue-600">${totalEarnings.toLocaleString()}</p>
-              <p className="text-sm text-gray-600">Total Platform Earnings</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                <Target className="text-green-600" size={28} />
-              </div>
-              <p className="text-2xl font-bold text-green-600">${totalDeposits.toLocaleString()}</p>
-              <p className="text-sm text-gray-600">Total Deposits</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                <Activity className="text-red-600" size={28} />
-              </div>
-              <p className="text-2xl font-bold text-red-600">
-                {averageROI.toFixed(1)}%
-              </p>
-              <p className="text-sm text-gray-600">Average ROI</p>
-            </div>
-          </div>
-        </Card>
-        
-        <Card title="Top Performers">
-          <div className="space-y-4">
-            {topPerformers.length > 0 ? topPerformers.map((investor, index) => (
-              <div key={investor.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 font-medium text-sm">{index + 1}</span>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-800 text-sm">{investor.name}</p>
-                    <p className="text-xs text-gray-500">{investor.country}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-blue-600 text-sm">
-                    +${investor.performance.toLocaleString()}
-                  </p>
-                  <p className="text-xs text-blue-600">
-                    +{investor.performancePercent.toFixed(1)}%
-                  </p>
-                </div>
-              </div>
-            )) : (
-              <p className="text-gray-500 text-center py-4">No performance data available</p>
-            )}
-          </div>
-        </Card>
-      </div>
-
       {/* Key Statistics Section - Interactive Brokers Style */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <Card title="Holdings" className="bg-white border border-gray-200">
@@ -360,35 +210,38 @@ const AdminDashboard = () => {
         </Card>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="hover:shadow-lg transition-all duration-200 cursor-pointer group" onClick={() => window.location.href = '/admin/investors'}>
-          <div className="text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-200 transition-colors">
-              <Activity className="text-blue-600" size={28} />
+      {/* ESG and Allocation Goals */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <Card title="ESG" className="bg-white border border-gray-200">
+          <div className="h-48 flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-gray-500">No eligible holdings</p>
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2 text-lg">Manage Investors</h3>
-            <p className="text-gray-600">View and edit investor profiles</p>
           </div>
         </Card>
-        
-        <Card className="hover:shadow-lg transition-all duration-200 cursor-pointer group" onClick={() => window.location.href = '/admin/withdrawals'}>
-          <div className="text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-red-200 transition-colors">
-              <DollarSign className="text-red-600" size={28} />
+
+        <Card title="Allocation Goals" className="bg-white border border-gray-200">
+          <div className="h-48 flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-blue-600 text-2xl">+</span>
+              </div>
+              <p className="text-gray-500 mb-4">You have no allocation goals set at this time</p>
+              <button className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+                Configure Allocation Goals
+              </button>
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2 text-lg">Process Withdrawals</h3>
-            <p className="text-gray-600">Review and approve requests</p>
           </div>
         </Card>
-        
-        <Card className="hover:shadow-lg transition-all duration-200 cursor-pointer group" onClick={() => window.location.href = '/admin/analytics'}>
-          <div className="text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-green-200 transition-colors">
-              <TrendingUp className="text-green-600" size={28} />
+      </div>
+
+      {/* Projected Income */}
+      <div className="grid grid-cols-1 gap-6">
+        <Card title="Projected Income" className="bg-white border border-gray-200">
+          <div className="h-48 flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-gray-500">No eligible holdings</p>
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2 text-lg">View Analytics</h3>
-            <p className="text-gray-600">Platform performance insights</p>
           </div>
         </Card>
       </div>

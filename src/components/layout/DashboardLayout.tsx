@@ -5,14 +5,7 @@ import {
   Menu, 
   X, 
   LogOut, 
-  Home, 
-  Users, 
-  BarChart4, 
-  Clock, 
-  User,
-  DollarSign,
-  Settings,
-  Percent
+  User
 } from 'lucide-react';
 import { useAuth, UserRole } from '../../contexts/AuthContext';
 
@@ -27,14 +20,13 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Only admin navigation items
+  // Navigation items without icons
   const navItems = [
-    { icon: <Home size={20} />, text: 'Dashboard', path: '/admin' },
-    { icon: <Users size={20} />, text: 'Investors', path: '/admin/investors' },
-    { icon: <DollarSign size={20} />, text: 'Withdrawals', path: '/admin/withdrawals' },
-    { icon: <Percent size={20} />, text: 'Commissions', path: '/admin/commissions' },
-    { icon: <BarChart4 size={20} />, text: 'Analytics', path: '/admin/analytics' },
-    { icon: <Settings size={20} />, text: 'Settings', path: '/admin/settings' },
+    { text: 'Dashboard', path: '/admin' },
+    { text: 'Holdings', path: '/admin/investors' },
+    { text: 'Reports', path: '/admin/analytics' },
+    { text: 'Planning', path: '/admin/withdrawals' },
+    { text: 'Configuration', path: '/admin/settings' },
   ];
 
   const handleLogout = () => {
@@ -50,24 +42,70 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Mobile Sidebar Toggle */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-10 bg-white shadow-sm border-b border-gray-100">
-        <div className="flex justify-between items-center px-4 py-4">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="text-gray-500 hover:text-gray-700 focus:outline-none"
-          >
-            <Menu size={24} />
-          </button>
-          <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
-          <div className="w-8">
-            {/* Spacer for alignment */}
+    <div className="min-h-screen bg-white">
+      {/* Top Navigation Bar */}
+      <div className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="px-6 py-3">
+          <div className="flex items-center justify-between">
+            {/* Logo and Brand */}
+            <div className="flex items-center space-x-4">
+              <img 
+                src="/Screenshot 2025-06-07 024813.png" 
+                alt="Interactive Brokers" 
+                className="h-8 w-auto object-contain"
+                style={{ filter: 'none', boxShadow: 'none' }}
+              />
+              <div className="text-sm text-gray-600">
+                <span className="font-medium">PortfolioAnalyst</span>
+                <span className="ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded">MARKETS</span>
+              </div>
+            </div>
+
+            {/* Navigation Menu */}
+            <div className="hidden md:flex items-center space-x-8">
+              {navItems.map((item, index) => (
+                <button
+                  key={index}
+                  onClick={() => navigate(item.path)}
+                  className={`text-sm font-medium transition-colors ${
+                    isActivePath(item.path)
+                      ? 'text-blue-600 border-b-2 border-blue-600 pb-1'
+                      : 'text-gray-700 hover:text-blue-600'
+                  }`}
+                >
+                  {item.text}
+                </button>
+              ))}
+            </div>
+
+            {/* User Menu */}
+            <div className="flex items-center space-x-4">
+              <div className="hidden md:flex items-center space-x-2 text-sm text-gray-600">
+                <span>Home</span>
+                <span>Performance & Reports</span>
+                <span>Settings</span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-800"
+              >
+                <User size={16} />
+                <span className="hidden md:inline">{user?.name}</span>
+              </button>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="md:hidden text-gray-500 hover:text-gray-700"
+            >
+              <Menu size={24} />
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Sidebar (Mobile) */}
+      {/* Mobile Sidebar */}
       <AnimatePresence>
         {sidebarOpen && (
           <>
@@ -87,20 +125,16 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
               className="fixed inset-y-0 left-0 z-30 w-72 bg-white shadow-xl md:hidden border-r border-gray-100"
             >
               <div className="p-6 flex justify-between items-center border-b border-gray-100">
-                <div className="flex flex-col items-center w-full">
-                  <div className="flex items-center justify-center mb-3">
-                    <img 
-                      src="/Screenshot 2025-06-07 023015.png" 
-                      alt="Interactive Brokers" 
-                      className="h-12 w-auto object-contain"
-                      style={{ filter: 'none', boxShadow: 'none' }}
-                    />
-                  </div>
-                  <span className="text-sm text-gray-600 font-medium text-center">Affiliate Dashboard</span>
+                <div className="flex items-center">
+                  <img 
+                    src="/Screenshot 2025-06-07 024813.png" 
+                    alt="Interactive Brokers" 
+                    className="h-8 w-auto object-contain"
+                  />
                 </div>
                 <button
                   onClick={() => setSidebarOpen(false)}
-                  className="text-gray-500 hover:text-gray-700 focus:outline-none absolute top-6 right-6"
+                  className="text-gray-500 hover:text-gray-700"
                 >
                   <X size={20} />
                 </button>
@@ -114,15 +148,12 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
                       navigate(item.path);
                       setSidebarOpen(false);
                     }}
-                    className={`flex items-center w-full px-6 py-3 transition-colors ${
+                    className={`flex items-center w-full px-6 py-3 text-left transition-colors ${
                       isActivePath(item.path)
                         ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
                         : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600'
                     }`}
                   >
-                    <span className={`mr-3 ${isActivePath(item.path) ? 'text-blue-600' : 'text-gray-400'}`}>
-                      {item.icon}
-                    </span>
                     <span className="font-medium">{item.text}</span>
                   </button>
                 ))}
@@ -132,7 +163,7 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
                     onClick={handleLogout}
                     className="flex items-center w-full text-gray-600 hover:text-red-600 transition-colors"
                   >
-                    <LogOut size={20} className="mr-3 text-gray-400" />
+                    <LogOut size={18} className="mr-3" />
                     <span className="font-medium">Logout</span>
                   </button>
                 </div>
@@ -142,74 +173,34 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
         )}
       </AnimatePresence>
 
-      {/* Sidebar (Desktop) */}
-      <div className="hidden md:fixed md:inset-y-0 md:left-0 md:z-10 md:w-72 md:bg-white md:shadow-sm md:flex md:flex-col md:border-r md:border-gray-100">
-        <div className="p-6 border-b border-gray-100">
-          <div className="flex flex-col items-center w-full">
-            <div className="flex items-center justify-center mb-3">
-              <img 
-                src="/Screenshot 2025-06-07 023015.png" 
-                alt="Interactive Brokers" 
-                className="h-12 w-auto object-contain"
-                style={{ filter: 'none', boxShadow: 'none' }}
-              />
-            </div>
-            <span className="text-sm text-gray-600 font-medium text-center">Affiliate Dashboard</span>
-          </div>
-        </div>
-
-        <div className="flex-1 py-6 flex flex-col justify-between">
-          <div>
-            {navItems.map((item, index) => (
-              <button
-                key={index}
-                onClick={() => navigate(item.path)}
-                className={`flex items-center w-full px-6 py-3 transition-colors ${
-                  isActivePath(item.path)
-                    ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600'
-                }`}
-              >
-                <span className={`mr-3 ${isActivePath(item.path) ? 'text-blue-600' : 'text-gray-400'}`}>
-                  {item.icon}
-                </span>
-                <span className="font-medium">{item.text}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="px-6 mt-6 border-t border-gray-100 pt-6">
-            <div className="flex items-center mb-4 p-3 bg-gray-50 rounded-xl">
-              <div className="w-10 h-10 bg-gray-200 rounded-xl flex items-center justify-center mr-3">
-                <User size={20} className="text-gray-500" />
-              </div>
-              <div>
-                <p className="font-medium text-gray-900 text-sm">{user?.name}</p>
-                <p className="text-xs text-gray-500">{user?.email}</p>
-              </div>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center w-full text-gray-600 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50"
-            >
-              <LogOut size={18} className="mr-3 text-gray-400" />
-              <span className="font-medium">Logout</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
-      <div className="md:pl-72 pt-16 md:pt-0">
-        {/* Page Header (Desktop) */}
-        <div className="hidden md:block bg-white shadow-sm border-b border-gray-100">
-          <div className="px-8 py-6">
-            <h1 className="text-2xl font-semibold text-gray-900">{title}</h1>
+      <div className="bg-gray-50 min-h-screen">
+        {/* Breadcrumb/Title Bar */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-xl font-medium text-gray-900">{title}</h1>
+                <div className="flex items-center space-x-2 text-sm text-gray-500 mt-1">
+                  <span>2025-01-07 to 2025-01-07</span>
+                </div>
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="text-sm text-gray-600">
+                  <span className="mr-4">Frequency: Daily</span>
+                  <span className="mr-4">Performance Measure: TWR</span>
+                  <span>Benchmark: Real-Time</span>
+                </div>
+                <button className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+                  Configure Dashboard
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Page Content */}
-        <main className="p-6 md:p-8">
+        <main className="p-6">
           {children}
         </main>
       </div>

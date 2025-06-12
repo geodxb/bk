@@ -11,19 +11,19 @@ interface CardProps {
 const Card = ({ children, title, className = '', onClick }: CardProps) => {
   return (
     <motion.div
-      whileHover={onClick ? { y: -2, scale: 1.01 } : {}}
-      initial={{ opacity: 0, y: 10 }}
+      whileHover={onClick ? { y: -1 } : {}}
+      initial={{ opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      className={`bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden ${onClick ? 'cursor-pointer hover:shadow-lg hover:border-blue-200' : ''} ${className}`}
+      className={`bg-white rounded-lg border border-gray-200 overflow-hidden ${onClick ? 'cursor-pointer hover:shadow-md hover:border-gray-300' : ''} ${className}`}
       onClick={onClick}
     >
       {title && (
-        <div className="px-6 py-5 border-b border-gray-50">
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
+          <h3 className="text-sm font-medium text-gray-900">{title}</h3>
         </div>
       )}
-      <div className={title ? "p-6" : "p-6"}>{children}</div>
+      <div className={title ? "p-4" : "p-4"}>{children}</div>
     </motion.div>
   );
 };
