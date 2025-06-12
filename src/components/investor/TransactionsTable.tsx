@@ -16,7 +16,7 @@ const TransactionsTable = ({ investorId, filterType }: TransactionsTableProps) =
     : allTransactions;
     
   const [page, setPage] = useState(1);
-  const pageSize = 15; // Show more transactions per page
+  const pageSize = 15;
   
   const totalPages = Math.ceil(transactions.length / pageSize);
   const startIndex = (page - 1) * pageSize;
@@ -26,26 +26,26 @@ const TransactionsTable = ({ investorId, filterType }: TransactionsTableProps) =
   const columns = [
     {
       key: 'type',
-      header: 'Transaction Type',
+      header: 'Type',
       render: (value: string) => (
         <div className="flex items-center space-x-3">
           {value === 'Deposit' && (
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-              <LogIn size={16} className="text-blue-600" />
+            <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
+              <LogIn size={12} className="text-gray-600" />
             </div>
           )}
           {value === 'Earnings' && (
-            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-              <TrendingUp size={16} className="text-green-600" />
+            <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
+              <TrendingUp size={12} className="text-gray-600" />
             </div>
           )}
           {value === 'Withdrawal' && (
-            <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-              <ArrowDownRight size={16} className="text-red-600" />
+            <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
+              <ArrowDownRight size={12} className="text-gray-600" />
             </div>
           )}
           <div>
-            <p className="font-semibold text-gray-800">{value}</p>
+            <p className="font-medium text-gray-900">{value}</p>
             <p className="text-xs text-gray-500">
               {value === 'Deposit' && 'Funds added'}
               {value === 'Earnings' && 'Trading profit'}
@@ -57,12 +57,12 @@ const TransactionsTable = ({ investorId, filterType }: TransactionsTableProps) =
     },
     {
       key: 'date',
-      header: 'Date & Time',
+      header: 'Date',
       render: (value: string) => {
         const date = new Date(value);
         return (
           <div className="space-y-1">
-            <p className="font-semibold text-gray-800">{date.toLocaleDateString('en-US', {
+            <p className="font-medium text-gray-900">{date.toLocaleDateString('en-US', {
               year: 'numeric',
               month: 'short',
               day: 'numeric'
@@ -84,17 +84,17 @@ const TransactionsTable = ({ investorId, filterType }: TransactionsTableProps) =
       align: 'right' as 'right',
       render: (value: number, row: any) => (
         <div className="text-right space-y-1">
-          <div className={`text-xl font-bold ${
-            row.type === 'Withdrawal' ? 'text-red-600' : 
-            row.type === 'Earnings' ? 'text-green-600' : 
-            'text-blue-600'
+          <div className={`text-lg font-semibold ${
+            row.type === 'Withdrawal' ? 'text-gray-900' : 
+            row.type === 'Earnings' ? 'text-gray-900' : 
+            'text-gray-900'
           }`}>
             {row.type === 'Withdrawal' ? '-' : '+'}${Math.abs(value).toLocaleString()}
           </div>
-          <div className={`text-xs px-2 py-1 rounded-full inline-block ${
-            row.type === 'Withdrawal' ? 'bg-red-100 text-red-700' : 
-            row.type === 'Earnings' ? 'bg-green-100 text-green-700' : 
-            'bg-blue-100 text-blue-700'
+          <div className={`text-xs px-2 py-1 rounded inline-block ${
+            row.type === 'Withdrawal' ? 'bg-gray-100 text-gray-700' : 
+            row.type === 'Earnings' ? 'bg-gray-100 text-gray-700' : 
+            'bg-gray-100 text-gray-700'
           }`}>
             {row.type === 'Withdrawal' ? 'Debited' : 'Credited'}
           </div>
@@ -105,30 +105,29 @@ const TransactionsTable = ({ investorId, filterType }: TransactionsTableProps) =
       key: 'status',
       header: 'Status',
       render: (value: string, row: any) => {
-        let bgColor = 'bg-green-100';
-        let textColor = 'text-green-800';
-        let icon = <CheckCircle size={14} />;
+        let statusClass = 'bg-gray-100 text-gray-800';
+        let icon = <CheckCircle size={12} />;
         
         if (value === 'Pending') {
-          bgColor = 'bg-amber-100';
-          textColor = 'text-amber-800';
-          icon = <div className="w-3 h-3 bg-amber-500 rounded-full animate-pulse"></div>;
+          statusClass = 'bg-yellow-50 text-yellow-800 border border-yellow-200';
+          icon = <div className="w-3 h-3 bg-yellow-500 rounded-full animate-pulse"></div>;
         } else if (value === 'Rejected') {
-          bgColor = 'bg-red-100';
-          textColor = 'text-red-800';
+          statusClass = 'bg-red-50 text-red-800 border border-red-200';
           icon = <div className="w-3 h-3 bg-red-500 rounded-full"></div>;
+        } else {
+          statusClass = 'bg-green-50 text-green-800 border border-green-200';
         }
         
         return (
           <div className="space-y-2">
-            <div className={`flex items-center space-x-2 px-3 py-2 rounded-full ${bgColor} ${textColor} font-medium text-sm w-fit`}>
+            <div className={`flex items-center space-x-2 px-2 py-1 rounded text-xs font-medium w-fit ${statusClass}`}>
               {icon}
               <span>{value}</span>
             </div>
             {row.type === 'Withdrawal' && value === 'Completed' && (
-              <div className="flex items-center space-x-1 text-xs text-green-600">
-                <CheckCircle size={12} />
-                <span>Successfully processed</span>
+              <div className="flex items-center space-x-1 text-xs text-gray-600">
+                <CheckCircle size={10} />
+                <span>Processed</span>
               </div>
             )}
           </div>
@@ -137,30 +136,30 @@ const TransactionsTable = ({ investorId, filterType }: TransactionsTableProps) =
     },
     {
       key: 'description',
-      header: 'Transaction Details',
+      header: 'Details',
       render: (value: string, row: any) => (
         <div className="space-y-1 max-w-xs">
-          <p className="text-sm font-medium text-gray-800">
+          <p className="text-sm text-gray-900">
             {value || `${row.type} transaction`}
           </p>
           {row.type === 'Withdrawal' && (
             <div className="space-y-1">
               <p className="text-xs text-gray-600">
-                Withdrawal Request #{row.date.replace(/-/g, '')}
+                Request #{row.date.replace(/-/g, '')}
               </p>
               <p className="text-xs text-gray-500">
-                Processed via bank transfer
+                Bank transfer
               </p>
             </div>
           )}
           {row.type === 'Deposit' && (
             <p className="text-xs text-gray-500">
-              Credited by in-app bank balance
+              Account credit
             </p>
           )}
           {row.type === 'Earnings' && (
             <p className="text-xs text-gray-500">
-              Generated from trading activities
+              Trading activity
             </p>
           )}
         </div>
@@ -170,7 +169,7 @@ const TransactionsTable = ({ investorId, filterType }: TransactionsTableProps) =
 
   if (error) {
     return (
-      <Card title={filterType ? `${filterType} History` : "Complete Transaction History"} className="h-full">
+      <Card title={filterType ? `${filterType} History` : "Transaction History"} className="h-full bg-white border border-gray-200">
         <div className="text-center py-8">
           <p className="text-red-600">{error}</p>
         </div>
@@ -179,69 +178,63 @@ const TransactionsTable = ({ investorId, filterType }: TransactionsTableProps) =
   }
   
   return (
-    <Card title={filterType ? `${filterType} History` : "Complete Transaction History"} className="h-full">
-      {/* Enhanced Summary Stats */}
+    <Card title={filterType ? `${filterType} History` : "Transaction History"} className="h-full bg-white border border-gray-200">
+      {/* Summary Stats */}
       {!filterType && transactions.length > 0 && (
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Account Summary</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
+        <div className="mb-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Account Summary</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-gray-50 p-4 rounded border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-blue-700 font-semibold text-sm">Total Deposits</p>
-                  <p className="text-blue-900 text-2xl font-bold">
+                  <p className="text-gray-600 text-sm">Total Deposits</p>
+                  <p className="text-gray-900 text-xl font-semibold">
                     ${transactions
                       .filter(tx => tx.type === 'Deposit')
                       .reduce((sum, tx) => sum + Math.abs(tx.amount), 0)
                       .toLocaleString()}
                   </p>
-                  <p className="text-blue-600 text-xs mt-1">
+                  <p className="text-gray-600 text-xs mt-1">
                     {transactions.filter(tx => tx.type === 'Deposit').length} transaction(s)
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center">
-                  <LogIn className="text-blue-700" size={24} />
-                </div>
+                <LogIn className="text-gray-600" size={20} />
               </div>
             </div>
             
-            <div className="bg-gradient-to-r from-green-50 to-green-100 p-6 rounded-xl border border-green-200">
+            <div className="bg-gray-50 p-4 rounded border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-green-700 font-semibold text-sm">Total Earnings</p>
-                  <p className="text-green-900 text-2xl font-bold">
+                  <p className="text-gray-600 text-sm">Total Earnings</p>
+                  <p className="text-gray-900 text-xl font-semibold">
                     ${transactions
                       .filter(tx => tx.type === 'Earnings')
                       .reduce((sum, tx) => sum + Math.abs(tx.amount), 0)
                       .toLocaleString()}
                   </p>
-                  <p className="text-green-600 text-xs mt-1">
+                  <p className="text-gray-600 text-xs mt-1">
                     {transactions.filter(tx => tx.type === 'Earnings').length} transaction(s)
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-green-200 rounded-full flex items-center justify-center">
-                  <TrendingUp className="text-green-700" size={24} />
-                </div>
+                <TrendingUp className="text-gray-600" size={20} />
               </div>
             </div>
             
-            <div className="bg-gradient-to-r from-red-50 to-red-100 p-6 rounded-xl border border-red-200">
+            <div className="bg-gray-50 p-4 rounded border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-red-700 font-semibold text-sm">Total Withdrawals</p>
-                  <p className="text-red-900 text-2xl font-bold">
+                  <p className="text-gray-600 text-sm">Total Withdrawals</p>
+                  <p className="text-gray-900 text-xl font-semibold">
                     ${transactions
                       .filter(tx => tx.type === 'Withdrawal')
                       .reduce((sum, tx) => sum + Math.abs(tx.amount), 0)
                       .toLocaleString()}
                   </p>
-                  <p className="text-red-600 text-xs mt-1">
+                  <p className="text-gray-600 text-xs mt-1">
                     {transactions.filter(tx => tx.type === 'Withdrawal').length} withdrawal(s)
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-red-200 rounded-full flex items-center justify-center">
-                  <ArrowDownRight className="text-red-700" size={24} />
-                </div>
+                <ArrowDownRight className="text-gray-600" size={20} />
               </div>
             </div>
           </div>
@@ -250,12 +243,12 @@ const TransactionsTable = ({ investorId, filterType }: TransactionsTableProps) =
 
       {/* Special Withdrawal History Section */}
       {filterType === 'Withdrawal' && (
-        <div className="mb-6 p-6 bg-red-50 rounded-xl border border-red-200">
-          <h3 className="text-lg font-semibold text-red-800 mb-2 flex items-center">
-            <ArrowDownRight size={20} className="mr-2" />
+        <div className="mb-6 p-4 bg-gray-50 rounded border border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900 mb-2 flex items-center">
+            <ArrowDownRight size={18} className="mr-2" />
             Withdrawal History
           </h3>
-          <p className="text-red-700 text-sm">
+          <p className="text-gray-700 text-sm">
             Complete record of all withdrawal transactions processed for this account.
             Each withdrawal has been successfully transferred to the registered bank account.
           </p>
@@ -270,7 +263,7 @@ const TransactionsTable = ({ investorId, filterType }: TransactionsTableProps) =
       />
       
       {totalPages > 1 && (
-        <div className="flex justify-between items-center mt-8 p-4 bg-gray-50 rounded-xl">
+        <div className="flex justify-between items-center mt-6 p-4 bg-gray-50 rounded border-t border-gray-200">
           <div className="text-sm text-gray-600">
             <p className="font-medium">
               Showing {startIndex + 1}-{Math.min(endIndex, transactions.length)} of {transactions.length} transactions
@@ -283,16 +276,15 @@ const TransactionsTable = ({ investorId, filterType }: TransactionsTableProps) =
             <button
               onClick={() => setPage(p => Math.max(p - 1, 1))}
               disabled={page === 1}
-              className={`px-4 py-2 rounded-lg border transition-colors font-medium ${
+              className={`px-3 py-2 rounded border transition-colors text-sm ${
                 page === 1
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
-                  : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300 hover:border-gray-400'
+                  : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
               }`}
             >
               Previous
             </button>
             
-            {/* Enhanced Page numbers */}
             <div className="flex space-x-1">
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 let pageNum;
@@ -310,10 +302,10 @@ const TransactionsTable = ({ investorId, filterType }: TransactionsTableProps) =
                   <button
                     key={pageNum}
                     onClick={() => setPage(pageNum)}
-                    className={`px-3 py-2 rounded-lg border transition-colors font-medium ${
+                    className={`px-3 py-2 rounded border transition-colors text-sm ${
                       page === pageNum
-                        ? 'bg-blue-500 text-white border-blue-500 shadow-md'
-                        : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300 hover:border-gray-400'
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
                     }`}
                   >
                     {pageNum}
@@ -325,10 +317,10 @@ const TransactionsTable = ({ investorId, filterType }: TransactionsTableProps) =
             <button
               onClick={() => setPage(p => Math.min(p + 1, totalPages))}
               disabled={page === totalPages}
-              className={`px-4 py-2 rounded-lg border transition-colors font-medium ${
+              className={`px-3 py-2 rounded border transition-colors text-sm ${
                 page === totalPages
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
-                  : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300 hover:border-gray-400'
+                  : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
               }`}
             >
               Next
@@ -337,38 +329,35 @@ const TransactionsTable = ({ investorId, filterType }: TransactionsTableProps) =
         </div>
       )}
       
-      {/* Enhanced Transaction Type Legend */}
+      {/* Transaction Guide */}
       {!loading && transactions.length > 0 && (
-        <div className="mt-8 p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
-          <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
-            <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
-            Transaction Guide
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="mt-6 p-4 bg-gray-50 rounded border border-gray-200">
+          <h4 className="font-medium text-gray-900 mb-3">Transaction Guide</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex items-start space-x-3">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <LogIn size={16} className="text-blue-600" />
+              <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+                <LogIn size={12} className="text-gray-600" />
               </div>
               <div>
-                <p className="font-semibold text-gray-800">Deposits</p>
+                <p className="font-medium text-gray-900">Deposits</p>
                 <p className="text-sm text-gray-600">Funds added to your trading account</p>
               </div>
             </div>
             <div className="flex items-start space-x-3">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <TrendingUp size={16} className="text-green-600" />
+              <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+                <TrendingUp size={12} className="text-gray-600" />
               </div>
               <div>
-                <p className="font-semibold text-gray-800">Earnings</p>
+                <p className="font-medium text-gray-900">Earnings</p>
                 <p className="text-sm text-gray-600">Profits generated from trading activities</p>
               </div>
             </div>
             <div className="flex items-start space-x-3">
-              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <ArrowDownRight size={16} className="text-red-600" />
+              <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+                <ArrowDownRight size={12} className="text-gray-600" />
               </div>
               <div>
-                <p className="font-semibold text-gray-800">Withdrawals</p>
+                <p className="font-medium text-gray-900">Withdrawals</p>
                 <p className="text-sm text-gray-600">Funds withdrawn to your bank account</p>
               </div>
             </div>
