@@ -19,107 +19,47 @@ import { db } from '../lib/firebase';
 import { Investor, Transaction, WithdrawalRequest } from '../types/user';
 
 export class FirestoreService {
-  // Enhanced Investors methods with proper user collection integration
+  // Enhanced Investors methods - now properly syncing from users collection
   static async getInvestors(): Promise<Investor[]> {
     try {
-      console.log('🔥 Firestore: Querying investors collection...');
+      console.log('🔥 Firestore: Querying users collection for investors...');
       
-      // First try to get from investors collection
-      const investorsSnapshot = await getDocs(collection(db, 'investors'));
-      
-      if (!investorsSnapshot.empty) {
-        console.log(`✅ Firestore: Found ${investorsSnapshot.size} investors in investors collection`);
-        return this.processInvestorDocs(investorsSnapshot);
-      }
-      
-      // If no investors found, check users collection for investor role users
-      console.log('⚠️ Firestore: No investors collection found, checking users collection...');
+      // Query users collection for documents with role 'investor'
       const usersQuery = query(collection(db, 'users'), where('role', '==', 'investor'));
       const usersSnapshot = await getDocs(usersQuery);
       
-      if (!usersSnapshot.empty) {
-        console.log(`✅ Firestore: Found ${usersSnapshot.size} investor users, migrating to investors collection...`);
-        const investors = await this.migrateUsersToInvestors(usersSnapshot);
-        return investors;
+      if (usersSnapshot.empty) {
+        console.log('⚠️ Firestore: No investor users found in users collection');
+        return [];
       }
       
-      // If still no data, create sample investors
-      console.log('⚠️ Firestore: No investor data found. Creating sample data...');
-      await this.createSampleInvestors();
+      console.log(`✅ Firestore: Found ${usersSnapshot.size} investor users in users collection`);
       
-      // Fetch again after creating sample data
-      const newSnapshot = await getDocs(collection(db, 'investors'));
-      return this.processInvestorDocs(newSnapshot);
+      // Process and return the investor data directly from users collection
+      const investors = this.processUserDocsAsInvestors(usersSnapshot);
+      
+      // Log each investor for debugging
+      investors.forEach(investor => {
+        console.log(`👤 Investor: ${investor.name} | Balance: $${investor.currentBalance?.toLocaleString() || '0'} | Status: ${investor.accountStatus || 'Active'} | Email: ${investor.email || 'N/A'}`);
+      });
+      
+      return investors;
       
     } catch (error) {
-      console.error('❌ Firestore Error: Failed to fetch investors:', error);
+      console.error('❌ Firestore Error: Failed to fetch investors from users collection:', error);
       throw new Error(`Database connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
-  // Migrate users with investor role to investors collection
-  private static async migrateUsersToInvestors(usersSnapshot: any): Promise<Investor[]> {
-    const investors: Investor[] = [];
-    
-    for (const userDoc of usersSnapshot.docs) {
-      const userData = userDoc.data();
-      console.log(`🔄 Migrating user to investor: ${userData.name || userData.email}`);
-      
-      const investorData = {
-        name: userData.name || userData.email || 'Unknown Investor',
-        email: userData.email,
-        phone: userData.phone || '',
-        country: userData.country || 'Unknown',
-        location: userData.location || '',
-        joinDate: userData.createdAt ? userData.createdAt.toDate().toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-        initialDeposit: userData.initialDeposit || 10000,
-        currentBalance: userData.currentBalance || userData.initialDeposit || 10000,
-        role: 'investor' as const,
-        isActive: userData.isActive !== false,
-        accountStatus: userData.accountStatus || 'Active',
-        tradingData: userData.tradingData || {
-          positionsPerDay: 3,
-          pairs: ['EUR/USD', 'GBP/USD'],
-          platform: 'IBKR',
-          leverage: 100,
-          currency: 'USD'
-        },
-        bankDetails: userData.bankDetails || {},
-        verification: userData.verification || {},
-        createdAt: userData.createdAt?.toDate() || new Date(),
-        updatedAt: new Date()
-      };
-      
-      // Create investor document
-      await setDoc(doc(db, 'investors', userDoc.id), {
-        ...investorData,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      });
-      
-      investors.push({
-        id: userDoc.id,
-        ...investorData
-      });
-      
-      console.log(`✅ Migrated investor: ${investorData.name}`);
-    }
-    
-    return investors;
-  }
-
-  private static processInvestorDocs(querySnapshot: any): Investor[] {
-    const investors = querySnapshot.docs.map((doc: any) => {
+  // Process user documents as investor objects
+  private static processUserDocsAsInvestors(usersSnapshot: any): Investor[] {
+    const investors = usersSnapshot.docs.map((doc: any) => {
       const data = doc.data();
-      console.log(`📄 Processing investor document: ${doc.id} - ${data.name || 'Unknown'}`);
+      console.log(`📄 Processing user document as investor: ${doc.id} - ${data.name || 'Unknown'}`);
       
       return {
         id: doc.id,
-        ...data,
-        // Ensure proper date handling
-        createdAt: data.createdAt?.toDate() || new Date(),
-        updatedAt: data.updatedAt?.toDate() || new Date(),
-        // Ensure required fields have defaults
+        // Map all the fields from your users collection structure
         name: data.name || 'Unknown Investor',
         email: data.email || '',
         phone: data.phone || '',
@@ -131,365 +71,37 @@ export class FirestoreService {
         role: 'investor' as const,
         isActive: data.isActive !== false,
         accountStatus: data.accountStatus || 'Active',
-        tradingData: data.tradingData || {
-          positionsPerDay: 0,
-          pairs: [],
-          platform: 'IBKR',
-          leverage: 100,
-          currency: 'USD'
+        accountFlags: data.accountFlags || {},
+        tradingData: {
+          positionsPerDay: data.tradingData?.positionsPerDay || 0,
+          pairs: data.tradingData?.pairs || [],
+          platform: data.tradingData?.platform || 'IBKR',
+          leverage: data.tradingData?.leverage || 100,
+          currency: data.tradingData?.currency || 'USD'
         },
         bankDetails: data.bankDetails || {},
         verification: data.verification || {},
-        accountFlags: data.accountFlags || {}
+        // Handle timestamps properly
+        createdAt: data.createdAt?.toDate() || new Date(),
+        updatedAt: data.updatedAt?.toDate() || new Date()
       };
     }) as Investor[];
     
-    console.log(`✅ Firestore: Successfully processed ${investors.length} investor records`);
-    
-    // Log each investor for debugging
-    investors.forEach(investor => {
-      console.log(`👤 Investor: ${investor.name} | Balance: $${investor.currentBalance.toLocaleString()} | Status: ${investor.accountStatus} | Email: ${investor.email || 'N/A'}`);
-    });
-    
+    console.log(`✅ Firestore: Successfully processed ${investors.length} investor records from users collection`);
     return investors;
   }
 
-  // Create comprehensive sample investors with all required data
-  static async createSampleInvestors(): Promise<void> {
-    console.log('🔥 Firestore: Creating comprehensive sample investor data...');
-    
-    const sampleInvestors = [
-      {
-        name: 'Omar Ehab Mohamed',
-        email: 'omar.ehab@example.com',
-        phone: '+20 123 456 7890',
-        country: 'Egypt',
-        location: 'Cairo',
-        joinDate: '2024-01-15',
-        initialDeposit: 25000,
-        currentBalance: 32500,
-        accountStatus: 'Active',
-        tradingData: {
-          positionsPerDay: 5,
-          pairs: ['EUR/USD', 'GBP/USD', 'USD/JPY'],
-          platform: 'IBKR',
-          leverage: 100,
-          currency: 'USD'
-        },
-        bankDetails: {
-          accountHolderName: 'Omar Ehab Mohamed',
-          bankName: 'National Bank of Egypt',
-          accountNumber: '1234567890',
-          swiftCode: 'NBEGEGCX',
-          bankAddress: 'Cairo, Egypt',
-          currency: 'USD'
-        },
-        verification: {
-          idType: 'National ID Card',
-          depositMethod: 'crypto',
-          selectedCrypto: 'Bitcoin (BTC)'
-        }
-      },
-      {
-        name: 'Rodrigo Alfonso Martinez',
-        email: 'rodrigo.martinez@example.com',
-        phone: '+52 555 123 4567',
-        country: 'Mexico',
-        location: 'Mexico City',
-        joinDate: '2024-02-20',
-        initialDeposit: 15000,
-        currentBalance: 18750,
-        accountStatus: 'Active',
-        tradingData: {
-          positionsPerDay: 3,
-          pairs: ['USD/MXN', 'EUR/USD'],
-          platform: 'IBKR',
-          leverage: 50,
-          currency: 'USD'
-        },
-        bankDetails: {
-          accountHolderName: 'Rodrigo Alfonso Martinez',
-          bankName: 'Banco Santander México',
-          accountNumber: '9876543210',
-          swiftCode: 'BMSXMXMM',
-          bankAddress: 'Mexico City, Mexico',
-          currency: 'USD'
-        },
-        verification: {
-          idType: 'Passport',
-          depositMethod: 'crypto',
-          selectedCrypto: 'Ethereum (ETH)'
-        }
-      },
-      {
-        name: 'Pablo Canales Rodriguez',
-        email: 'pablo.canales@example.com',
-        phone: '+52 444 987 6543',
-        country: 'Mexico',
-        location: 'Guadalajara',
-        joinDate: '2024-03-10',
-        initialDeposit: 50000,
-        currentBalance: 47500,
-        accountStatus: 'Restricted for withdrawals (policy violation)',
-        accountFlags: {
-          policyViolation: true,
-          policyViolationMessage: 'Account flagged for suspicious trading patterns. Under compliance review.',
-          withdrawalDisabled: true,
-          withdrawalMessage: 'Withdrawals temporarily disabled pending investigation.'
-        },
-        tradingData: {
-          positionsPerDay: 8,
-          pairs: ['USD/MXN', 'EUR/USD', 'GBP/USD'],
-          platform: 'IBKR',
-          leverage: 200,
-          currency: 'USD'
-        },
-        bankDetails: {
-          accountHolderName: 'Pablo Canales Rodriguez',
-          bankName: 'BBVA México',
-          accountNumber: '5555666677',
-          swiftCode: 'BCMRMXMM',
-          bankAddress: 'Guadalajara, Mexico',
-          currency: 'USD'
-        },
-        verification: {
-          idType: 'Driver\'s License',
-          depositMethod: 'bank',
-          selectedCrypto: null
-        }
-      },
-      {
-        name: 'Haas Raphael Herreman',
-        email: 'haas.herreman@example.com',
-        phone: '+32 2 123 4567',
-        country: 'Belgium',
-        location: 'Brussels',
-        joinDate: '2024-01-05',
-        initialDeposit: 75000,
-        currentBalance: 89250,
-        accountStatus: 'Active',
-        tradingData: {
-          positionsPerDay: 12,
-          pairs: ['EUR/USD', 'GBP/USD', 'USD/CHF'],
-          platform: 'IBKR',
-          leverage: 100,
-          currency: 'EUR'
-        },
-        bankDetails: {
-          accountHolderName: 'Haas Raphael Herreman',
-          bankName: 'KBC Bank',
-          accountNumber: 'BE68539007547034',
-          swiftCode: 'KREDBEBB',
-          bankAddress: 'Brussels, Belgium',
-          currency: 'EUR'
-        },
-        verification: {
-          idType: 'National ID Card',
-          depositMethod: 'bank',
-          selectedCrypto: null
-        }
-      },
-      {
-        name: 'Javier Francisco Lopez',
-        email: 'javier.lopez@example.com',
-        phone: '+52 333 555 7777',
-        country: 'Mexico',
-        location: 'Monterrey',
-        joinDate: '2024-02-28',
-        initialDeposit: 30000,
-        currentBalance: 28500,
-        accountStatus: 'Active',
-        tradingData: {
-          positionsPerDay: 4,
-          pairs: ['USD/MXN', 'EUR/USD'],
-          platform: 'IBKR',
-          leverage: 75,
-          currency: 'USD'
-        },
-        bankDetails: {
-          accountHolderName: 'Javier Francisco Lopez',
-          bankName: 'Banorte',
-          accountNumber: '1122334455',
-          swiftCode: 'MENOMXMT',
-          bankAddress: 'Monterrey, Mexico',
-          currency: 'USD'
-        },
-        verification: {
-          idType: 'Passport',
-          depositMethod: 'crypto',
-          selectedCrypto: 'USDT (TRC20)'
-        }
-      },
-      {
-        name: 'Pamela Medina Santos',
-        email: 'pamela.medina@example.com',
-        phone: '+52 222 888 9999',
-        country: 'Mexico',
-        location: 'Puebla',
-        joinDate: '2024-03-15',
-        initialDeposit: 20000,
-        currentBalance: 22400,
-        accountStatus: 'Active',
-        tradingData: {
-          positionsPerDay: 2,
-          pairs: ['USD/MXN'],
-          platform: 'IBKR',
-          leverage: 30,
-          currency: 'USD'
-        },
-        bankDetails: {
-          accountHolderName: 'Pamela Medina Santos',
-          bankName: 'Banco Azteca',
-          accountNumber: '7788990011',
-          swiftCode: 'AZTEMXMT',
-          bankAddress: 'Puebla, Mexico',
-          currency: 'USD'
-        },
-        verification: {
-          idType: 'National ID Card',
-          depositMethod: 'bank',
-          selectedCrypto: null
-        }
-      },
-      {
-        name: 'Patricia Perea Gonzalez',
-        email: 'patricia.perea@example.com',
-        phone: '+52 777 444 1111',
-        country: 'Mexico',
-        location: 'Cuernavaca',
-        joinDate: '2024-01-25',
-        initialDeposit: 40000,
-        currentBalance: 45600,
-        accountStatus: 'Closed - refund in progress',
-        accountFlags: {
-          withdrawalDisabled: false,
-          withdrawalMessage: 'Account closed at client request. Final withdrawal processed.'
-        },
-        tradingData: {
-          positionsPerDay: 6,
-          pairs: ['USD/MXN', 'EUR/USD', 'GBP/USD'],
-          platform: 'IBKR',
-          leverage: 100,
-          currency: 'USD'
-        },
-        bankDetails: {
-          accountHolderName: 'Patricia Perea Gonzalez',
-          bankName: 'Citibanamex',
-          accountNumber: '3344556677',
-          swiftCode: 'BNMXMXMM',
-          bankAddress: 'Cuernavaca, Mexico',
-          currency: 'USD'
-        },
-        verification: {
-          idType: 'Driver\'s License',
-          depositMethod: 'crypto',
-          selectedCrypto: 'Bitcoin (BTC)'
-        }
-      }
-    ];
-
-    try {
-      for (const investorData of sampleInvestors) {
-        const investorId = `investor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
-        // Create investor document with all data
-        await setDoc(doc(db, 'investors', investorId), {
-          ...investorData,
-          role: 'investor',
-          isActive: !investorData.accountStatus?.includes('Closed'),
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
-        
-        // Create initial deposit transaction
-        await addDoc(collection(db, 'transactions'), {
-          investorId,
-          type: 'Deposit',
-          amount: investorData.initialDeposit,
-          date: investorData.joinDate,
-          status: 'Completed',
-          description: `Initial deposit via ${investorData.verification.depositMethod === 'crypto' ? investorData.verification.selectedCrypto : 'bank transfer'}`,
-          createdAt: serverTimestamp()
-        });
-
-        // Create earnings transactions if profitable
-        if (investorData.currentBalance > investorData.initialDeposit) {
-          const earnings = investorData.currentBalance - investorData.initialDeposit;
-          const earningsDate = new Date(investorData.joinDate);
-          earningsDate.setDate(earningsDate.getDate() + Math.floor(Math.random() * 30) + 7);
-          
-          await addDoc(collection(db, 'transactions'), {
-            investorId,
-            type: 'Earnings',
-            amount: earnings,
-            date: earningsDate.toISOString().split('T')[0],
-            status: 'Completed',
-            description: 'Trading profits from IBKR platform',
-            createdAt: serverTimestamp()
-          });
-        }
-
-        // Create withdrawal transactions for some investors
-        if (Math.random() > 0.7 && investorData.currentBalance > 5000) {
-          const withdrawalAmount = Math.floor(Math.random() * 5000) + 1000;
-          const withdrawalDate = new Date();
-          withdrawalDate.setDate(withdrawalDate.getDate() - Math.floor(Math.random() * 15));
-          
-          await addDoc(collection(db, 'transactions'), {
-            investorId,
-            type: 'Withdrawal',
-            amount: -withdrawalAmount,
-            date: withdrawalDate.toISOString().split('T')[0],
-            status: 'Completed',
-            description: 'Withdrawal to registered bank account',
-            createdAt: serverTimestamp()
-          });
-
-          // Create withdrawal request record
-          await addDoc(collection(db, 'withdrawalRequests'), {
-            investorId,
-            investorName: investorData.name,
-            amount: withdrawalAmount,
-            date: withdrawalDate.toISOString().split('T')[0],
-            status: 'Approved',
-            processedBy: 'admin_system',
-            processedAt: serverTimestamp(),
-            reason: 'Standard withdrawal request approved',
-            createdAt: serverTimestamp()
-          });
-
-          // Create commission record
-          await addDoc(collection(db, 'commissions'), {
-            investorId,
-            investorName: investorData.name,
-            withdrawalAmount: withdrawalAmount,
-            commissionRate: 15,
-            commissionAmount: withdrawalAmount * 0.15,
-            date: withdrawalDate.toISOString().split('T')[0],
-            status: 'Earned',
-            createdAt: serverTimestamp()
-          });
-        }
-
-        console.log(`✅ Created comprehensive investor profile: ${investorData.name} (${investorData.email})`);
-      }
-      
-      console.log('✅ Firestore: Comprehensive sample investor data created successfully');
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to create sample investors:', error);
-      throw error;
-    }
-  }
-
-  // Real-time listener for investors
+  // Real-time listener for investors from users collection
   static subscribeToInvestors(callback: (investors: Investor[]) => void): () => void {
-    console.log('🔥 Firestore: Setting up real-time listener for investors...');
+    console.log('🔥 Firestore: Setting up real-time listener for investors in users collection...');
+    
+    const usersQuery = query(collection(db, 'users'), where('role', '==', 'investor'));
     
     const unsubscribe = onSnapshot(
-      collection(db, 'investors'),
+      usersQuery,
       (querySnapshot) => {
-        console.log('🔄 Firestore: Investors collection updated');
-        const investors = this.processInvestorDocs(querySnapshot);
+        console.log('🔄 Firestore: Users collection updated, processing investors...');
+        const investors = this.processUserDocsAsInvestors(querySnapshot);
         callback(investors);
       },
       (error) => {
@@ -502,22 +114,25 @@ export class FirestoreService {
 
   static async getInvestorById(id: string): Promise<Investor | null> {
     try {
-      console.log(`🔥 Firestore: Fetching investor by ID: ${id}`);
+      console.log(`🔥 Firestore: Fetching investor by ID from users collection: ${id}`);
       
-      // First try investors collection
-      let docRef = doc(db, 'investors', id);
-      let docSnap = await getDoc(docRef);
+      // Get directly from users collection
+      const docRef = doc(db, 'users', id);
+      const docSnap = await getDoc(docRef);
       
       if (docSnap.exists()) {
         const data = docSnap.data();
-        console.log(`✅ Firestore: Found investor in investors collection: ${data.name || 'Unknown'}`);
+        
+        // Verify this is an investor
+        if (data.role !== 'investor') {
+          console.log(`⚠️ Firestore: Document ${id} is not an investor (role: ${data.role})`);
+          return null;
+        }
+        
+        console.log(`✅ Firestore: Found investor in users collection: ${data.name || 'Unknown'}`);
         
         return {
           id: docSnap.id,
-          ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date(),
-          // Ensure required fields
           name: data.name || 'Unknown Investor',
           email: data.email || '',
           phone: data.phone || '',
@@ -529,56 +144,19 @@ export class FirestoreService {
           role: 'investor' as const,
           isActive: data.isActive !== false,
           accountStatus: data.accountStatus || 'Active',
-          tradingData: data.tradingData || {},
+          accountFlags: data.accountFlags || {},
+          tradingData: {
+            positionsPerDay: data.tradingData?.positionsPerDay || 0,
+            pairs: data.tradingData?.pairs || [],
+            platform: data.tradingData?.platform || 'IBKR',
+            leverage: data.tradingData?.leverage || 100,
+            currency: data.tradingData?.currency || 'USD'
+          },
           bankDetails: data.bankDetails || {},
           verification: data.verification || {},
-          accountFlags: data.accountFlags || {}
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date()
         } as Investor;
-      }
-      
-      // If not found in investors, check users collection
-      console.log(`⚠️ Firestore: Investor not found in investors collection, checking users collection...`);
-      docRef = doc(db, 'users', id);
-      docSnap = await getDoc(docRef);
-      
-      if (docSnap.exists()) {
-        const userData = docSnap.data();
-        if (userData.role === 'investor') {
-          console.log(`✅ Firestore: Found investor in users collection, migrating: ${userData.name || userData.email}`);
-          
-          // Migrate this user to investors collection
-          const investorData = {
-            name: userData.name || userData.email || 'Unknown Investor',
-            email: userData.email || '',
-            phone: userData.phone || '',
-            country: userData.country || 'Unknown',
-            location: userData.location || '',
-            joinDate: userData.createdAt ? userData.createdAt.toDate().toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-            initialDeposit: userData.initialDeposit || 10000,
-            currentBalance: userData.currentBalance || userData.initialDeposit || 10000,
-            role: 'investor' as const,
-            isActive: userData.isActive !== false,
-            accountStatus: userData.accountStatus || 'Active',
-            tradingData: userData.tradingData || {},
-            bankDetails: userData.bankDetails || {},
-            verification: userData.verification || {},
-            accountFlags: userData.accountFlags || {},
-            createdAt: userData.createdAt?.toDate() || new Date(),
-            updatedAt: new Date()
-          };
-          
-          // Create in investors collection
-          await setDoc(doc(db, 'investors', id), {
-            ...investorData,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-          });
-          
-          return {
-            id,
-            ...investorData
-          };
-        }
       }
       
       console.log(`⚠️ Firestore: No investor found with ID: ${id}`);
@@ -591,27 +169,33 @@ export class FirestoreService {
 
   static async createInvestor(id: string, data: any): Promise<void> {
     try {
-      console.log(`🔥 Firestore: Creating investor profile: ${data.name || 'Unknown'}`);
-      const docRef = doc(db, 'investors', id);
+      console.log(`🔥 Firestore: Creating investor profile in users collection: ${data.name || 'Unknown'}`);
+      const docRef = doc(db, 'users', id);
       
       const investorData = {
         ...data,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        // Ensure required fields
         role: 'investor',
         isActive: true,
-        accountStatus: data.accountStatus || 'Active - Pending Verification',
+        accountStatus: data.accountStatus || 'Active',
         email: data.email || '',
         phone: data.phone || '',
-        tradingData: data.tradingData || {},
+        country: data.country || 'Unknown',
+        tradingData: data.tradingData || {
+          positionsPerDay: 0,
+          pairs: [],
+          platform: 'IBKR',
+          leverage: 100,
+          currency: 'USD'
+        },
         bankDetails: data.bankDetails || {},
         verification: data.verification || {},
-        accountFlags: data.accountFlags || {}
+        accountFlags: data.accountFlags || {},
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       };
       
       await setDoc(docRef, investorData);
-      console.log(`✅ Firestore: Successfully created investor profile: ${id}`);
+      console.log(`✅ Firestore: Successfully created investor profile in users collection: ${id}`);
     } catch (error) {
       console.error('❌ Firestore Error: Failed to create investor:', error);
       throw new Error(`Failed to create investor profile: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -620,13 +204,13 @@ export class FirestoreService {
 
   static async updateInvestor(id: string, data: Partial<Investor>): Promise<void> {
     try {
-      console.log(`🔥 Firestore: Updating investor: ${id}`);
-      const docRef = doc(db, 'investors', id);
+      console.log(`🔥 Firestore: Updating investor in users collection: ${id}`);
+      const docRef = doc(db, 'users', id);
       await updateDoc(docRef, {
         ...data,
         updatedAt: serverTimestamp()
       });
-      console.log(`✅ Firestore: Successfully updated investor: ${id}`);
+      console.log(`✅ Firestore: Successfully updated investor in users collection: ${id}`);
     } catch (error) {
       console.error('❌ Firestore Error: Failed to update investor:', error);
       throw new Error(`Failed to update investor profile: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -636,7 +220,7 @@ export class FirestoreService {
   static async updateInvestorBalance(id: string, newBalance: number): Promise<void> {
     try {
       console.log(`🔥 Firestore: Updating balance for investor ${id}: $${newBalance.toLocaleString()}`);
-      const docRef = doc(db, 'investors', id);
+      const docRef = doc(db, 'users', id);
       await updateDoc(docRef, {
         currentBalance: newBalance,
         updatedAt: serverTimestamp()
@@ -652,7 +236,7 @@ export class FirestoreService {
     try {
       console.log(`🔥 Firestore: Adding $${amount.toLocaleString()} credit to investor: ${investorId}`);
       
-      // Get current investor data
+      // Get current investor data from users collection
       const investor = await this.getInvestorById(investorId);
       if (!investor) {
         throw new Error('Investor profile not found');
@@ -1022,20 +606,13 @@ export class FirestoreService {
     try {
       console.log(`🔥 Firestore: Fetching investors with status: ${status}`);
       const q = query(
-        collection(db, 'investors'),
+        collection(db, 'users'),
+        where('role', '==', 'investor'),
         where('accountStatus', '==', status)
       );
       
       const querySnapshot = await getDocs(q);
-      const investors = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date()
-        };
-      }) as Investor[];
+      const investors = this.processUserDocsAsInvestors(querySnapshot);
       
       console.log(`✅ Firestore: Found ${investors.length} investors with status: ${status}`);
       return investors;
