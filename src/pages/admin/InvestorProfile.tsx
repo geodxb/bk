@@ -24,8 +24,8 @@ const InvestorProfile = () => {
     return (
       <DashboardLayout title="Loading...">
         <div className="text-center py-12">
-          <div className="w-8 h-8 border-2 border-gray-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium uppercase tracking-wide">LOADING INVESTOR PROFILE...</p>
+          <div className="w-8 h-8 border-2 border-gray-300 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading investor profile...</p>
         </div>
       </DashboardLayout>
     );
@@ -35,18 +35,18 @@ const InvestorProfile = () => {
     return (
       <DashboardLayout title="Investor Not Found">
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4 uppercase tracking-wide">
-            {error ? 'ERROR LOADING INVESTOR' : 'INVESTOR NOT FOUND'}
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+            {error ? 'Error Loading Investor' : 'Investor Not Found'}
           </h2>
-          <p className="text-gray-600 mb-6 uppercase tracking-wide">
-            {error || "THE INVESTOR YOU'RE LOOKING FOR DOESN'T EXIST OR HAS BEEN REMOVED."}
+          <p className="text-gray-600 mb-6">
+            {error || "The investor you're looking for doesn't exist or has been removed."}
           </p>
           <button
             onClick={() => navigate('/admin')}
-            className="px-4 py-2 bg-gray-800 text-white font-medium uppercase tracking-wide hover:bg-gray-900 transition-colors"
+            className="px-4 py-2 bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors rounded-lg"
           >
             <ChevronLeft size={18} className="mr-2 inline" />
-            BACK TO DASHBOARD
+            Back to Dashboard
           </button>
         </div>
       </DashboardLayout>
@@ -73,40 +73,32 @@ const InvestorProfile = () => {
       case 'transactions':
         return (
           <div className="space-y-6">
-            {/* Industrial Transaction Summary */}
-            <div className="bg-white border border-gray-400">
-              <div className="px-6 py-4 border-b border-gray-400 bg-gray-100">
-                <h3 className="text-sm font-medium text-gray-900 uppercase tracking-wider">TRANSACTION OVERVIEW</h3>
+            {/* Refined Transaction Summary */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+              <div className="px-6 py-4 border-b border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900">Transaction Overview</h3>
               </div>
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <div className="bg-gray-100 p-4 border border-gray-400">
-                    <div className="border-b border-gray-400 pb-2 mb-3">
-                      <p className="text-gray-700 text-xs uppercase tracking-wider font-bold">TOTAL TRANSACTIONS</p>
-                    </div>
-                    <p className="text-gray-900 text-2xl font-bold">{transactions.length}</p>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-900 mb-1">{transactions.length}</div>
+                    <div className="text-sm text-gray-600 font-medium">Total Transactions</div>
                   </div>
-                  <div className="bg-gray-100 p-4 border border-gray-400">
-                    <div className="border-b border-gray-400 pb-2 mb-3">
-                      <p className="text-gray-700 text-xs uppercase tracking-wider font-bold">DEPOSITS</p>
-                    </div>
-                    <p className="text-gray-900 text-2xl font-bold">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-900 mb-1">
                       {transactions.filter(tx => tx.type === 'Deposit').length}
-                    </p>
-                  </div>
-                  <div className="bg-gray-100 p-4 border border-gray-400">
-                    <div className="border-b border-gray-400 pb-2 mb-3">
-                      <p className="text-gray-700 text-xs uppercase tracking-wider font-bold">EARNINGS</p>
                     </div>
-                    <p className="text-gray-900 text-2xl font-bold">
+                    <div className="text-sm text-gray-600 font-medium">Deposits</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-900 mb-1">
                       {transactions.filter(tx => tx.type === 'Earnings').length}
-                    </p>
-                  </div>
-                  <div className="bg-gray-100 p-4 border border-gray-400">
-                    <div className="border-b border-gray-400 pb-2 mb-3">
-                      <p className="text-gray-700 text-xs uppercase tracking-wider font-bold">WITHDRAWALS</p>
                     </div>
-                    <p className="text-gray-900 text-2xl font-bold">{withdrawalCount}</p>
+                    <div className="text-sm text-gray-600 font-medium">Earnings</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-900 mb-1">{withdrawalCount}</div>
+                    <div className="text-sm text-gray-600 font-medium">Withdrawals</div>
                   </div>
                 </div>
               </div>
@@ -117,77 +109,65 @@ const InvestorProfile = () => {
       case 'withdrawals':
         return (
           <div className="space-y-6">
-            {/* Industrial Withdrawal Summary */}
-            <div className="bg-white border border-gray-400">
-              <div className="px-6 py-4 border-b border-gray-400 bg-gray-100">
-                <h3 className="text-sm font-medium text-gray-900 uppercase tracking-wider">WITHDRAWAL ANALYSIS</h3>
+            {/* Refined Withdrawal Summary */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+              <div className="px-6 py-4 border-b border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900">Withdrawal Analysis</h3>
               </div>
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-gray-100 p-6 border border-gray-400">
-                    <div className="border-b border-gray-400 pb-3 mb-4">
-                      <p className="text-gray-700 font-bold text-xs uppercase tracking-wider">TOTAL WITHDRAWN</p>
+                  <div className="text-center p-6 bg-gray-50 rounded-lg">
+                    <div className="text-3xl font-bold text-gray-900 mb-2">
+                      ${totalWithdrawn.toLocaleString()}
                     </div>
-                    <div>
-                      <p className="text-gray-900 text-3xl font-bold">${totalWithdrawn.toLocaleString()}</p>
-                      <p className="text-gray-600 text-xs mt-1 uppercase tracking-wide">LIFETIME WITHDRAWALS</p>
-                    </div>
+                    <div className="text-sm text-gray-600 font-medium">Total Withdrawn</div>
+                    <div className="text-xs text-gray-500 mt-1">Lifetime withdrawals</div>
                   </div>
                   
-                  <div className="bg-gray-100 p-6 border border-gray-400">
-                    <div className="border-b border-gray-400 pb-3 mb-4">
-                      <p className="text-gray-700 font-bold text-xs uppercase tracking-wider">WITHDRAWAL COUNT</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-900 text-3xl font-bold">{withdrawalCount}</p>
-                      <p className="text-gray-600 text-xs mt-1 uppercase tracking-wide">TOTAL REQUESTS</p>
-                    </div>
+                  <div className="text-center p-6 bg-gray-50 rounded-lg">
+                    <div className="text-3xl font-bold text-gray-900 mb-2">{withdrawalCount}</div>
+                    <div className="text-sm text-gray-600 font-medium">Withdrawal Count</div>
+                    <div className="text-xs text-gray-500 mt-1">Total requests</div>
                   </div>
                   
-                  <div className="bg-gray-100 p-6 border border-gray-400">
-                    <div className="border-b border-gray-400 pb-3 mb-4">
-                      <p className="text-gray-700 font-bold text-xs uppercase tracking-wider">AVERAGE WITHDRAWAL</p>
+                  <div className="text-center p-6 bg-gray-50 rounded-lg">
+                    <div className="text-3xl font-bold text-gray-900 mb-2">
+                      ${withdrawalCount > 0 ? Math.round(totalWithdrawn / withdrawalCount).toLocaleString() : '0'}
                     </div>
-                    <div>
-                      <p className="text-gray-900 text-3xl font-bold">
-                        ${withdrawalCount > 0 ? Math.round(totalWithdrawn / withdrawalCount).toLocaleString() : '0'}
-                      </p>
-                      <p className="text-gray-600 text-xs mt-1 uppercase tracking-wide">PER TRANSACTION</p>
-                    </div>
+                    <div className="text-sm text-gray-600 font-medium">Average Withdrawal</div>
+                    <div className="text-xs text-gray-500 mt-1">Per transaction</div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Industrial Commission Information */}
+            {/* Refined Commission Information */}
             {withdrawalCount > 0 && (
-              <div className="bg-white border border-gray-400">
-                <div className="px-6 py-4 border-b border-gray-400 bg-gray-100">
-                  <h3 className="text-sm font-medium text-gray-900 uppercase tracking-wider">COMMISSION INFORMATION</h3>
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div className="px-6 py-4 border-b border-gray-100">
+                  <h3 className="text-lg font-semibold text-gray-900">Commission Information</h3>
                 </div>
                 <div className="p-6">
-                  <div className="bg-gray-100 p-6 border border-gray-400">
-                    <div className="border-b border-gray-400 pb-3 mb-4">
-                      <h3 className="text-gray-800 font-bold text-lg uppercase tracking-wider">TOTAL COMMISSIONS EARNED</h3>
-                    </div>
-                    <div>
-                      <p className="text-gray-900 text-4xl font-bold mb-2">
+                  <div className="bg-gray-50 p-6 rounded-lg">
+                    <div className="text-center mb-6">
+                      <div className="text-4xl font-bold text-gray-900 mb-2">
                         ${(totalWithdrawn * 0.15).toLocaleString()}
-                      </p>
-                      <p className="text-gray-700 text-sm mb-4 uppercase tracking-wide">
-                        15% COMMISSION ON ${totalWithdrawn.toLocaleString()} IN WITHDRAWALS
-                      </p>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p className="text-gray-600 uppercase tracking-wider font-bold">COMMISSION RATE</p>
-                          <p className="font-bold text-gray-800">15%</p>
+                      </div>
+                      <div className="text-lg font-medium text-gray-700 mb-1">Total Commissions Earned</div>
+                      <div className="text-sm text-gray-600">
+                        15% commission on ${totalWithdrawn.toLocaleString()} in withdrawals
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-6 text-center">
+                      <div>
+                        <div className="text-lg font-semibold text-gray-900">15%</div>
+                        <div className="text-sm text-gray-600">Commission Rate</div>
+                      </div>
+                      <div>
+                        <div className="text-lg font-semibold text-gray-900">
+                          ${withdrawalCount > 0 ? ((totalWithdrawn * 0.15) / withdrawalCount).toFixed(2) : '0.00'}
                         </div>
-                        <div>
-                          <p className="text-gray-600 uppercase tracking-wider font-bold">PER WITHDRAWAL</p>
-                          <p className="font-bold text-gray-800">
-                            ${withdrawalCount > 0 ? ((totalWithdrawn * 0.15) / withdrawalCount).toFixed(2) : '0.00'} AVG
-                          </p>
-                        </div>
+                        <div className="text-sm text-gray-600">Average per Withdrawal</div>
                       </div>
                     </div>
                   </div>
@@ -204,9 +184,9 @@ const InvestorProfile = () => {
         );
       case 'performance':
         return (
-          <div className="bg-white border border-gray-400">
-            <div className="px-6 py-4 border-b border-gray-400 bg-gray-100">
-              <h3 className="text-sm font-medium text-gray-900 uppercase tracking-wider">PERFORMANCE ANALYTICS</h3>
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+            <div className="px-6 py-4 border-b border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900">Performance Analytics</h3>
             </div>
             <div className="p-6">
               <PerformanceChart investorId={investorData.id} />
@@ -223,55 +203,53 @@ const InvestorProfile = () => {
       <div className="mb-6">
         <button
           onClick={() => navigate('/admin/investors')}
-          className="mb-4 px-3 py-2 bg-white border border-gray-400 text-gray-700 text-sm font-medium uppercase tracking-wide hover:bg-gray-50 transition-colors"
+          className="mb-4 px-3 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors rounded-lg"
         >
           <ChevronLeft size={16} className="mr-1 inline" />
-          BACK TO INVESTORS
+          Back to Investors
         </button>
         
-        {/* Industrial Header */}
-        <div className="bg-white border border-gray-400">
+        {/* Refined Header */}
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="p-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2 uppercase tracking-wider">{investorData.name}</h1>
-                <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-4 uppercase tracking-wider font-medium">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">{investorData.name}</h1>
+                <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-4 font-medium">
                   <span>ID: {investorData.id.slice(-8)}</span>
                   <span>•</span>
                   <span>{investorData.country}</span>
                   <span>•</span>
-                  <span>JOINED: {investorData.joinDate}</span>
+                  <span>Joined: {investorData.joinDate}</span>
                   <span>•</span>
-                  <span className="font-bold text-gray-900">
-                    {investorData.accountStatus || 'ACTIVE'}
+                  <span className={`font-semibold ${
+                    investorData.accountStatus?.includes('Active') || !investorData.accountStatus
+                      ? 'text-gray-900'
+                      : investorData.accountStatus?.includes('Restricted')
+                      ? 'text-gray-700'
+                      : 'text-gray-700'
+                  }`}>
+                    {investorData.accountStatus || 'Active'}
                   </span>
                 </div>
                 
-                {/* Industrial Quick Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div className="bg-gray-100 p-3 border border-gray-400">
-                    <div className="border-b border-gray-400 pb-2 mb-2">
-                      <p className="text-gray-700 font-bold uppercase tracking-wider text-xs">CURRENT BALANCE</p>
-                    </div>
-                    <p className="text-gray-900 font-bold text-lg">${investorData.currentBalance.toLocaleString()}</p>
+                {/* Refined Quick Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                    <div className="text-sm text-gray-600 font-medium mb-1">Current Balance</div>
+                    <div className="text-xl font-bold text-gray-900">${investorData.currentBalance.toLocaleString()}</div>
                   </div>
-                  <div className="bg-gray-100 p-3 border border-gray-400">
-                    <div className="border-b border-gray-400 pb-2 mb-2">
-                      <p className="text-gray-700 font-bold uppercase tracking-wider text-xs">INITIAL DEPOSIT</p>
-                    </div>
-                    <p className="text-gray-900 font-bold text-lg">${investorData.initialDeposit.toLocaleString()}</p>
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                    <div className="text-sm text-gray-600 font-medium mb-1">Initial Deposit</div>
+                    <div className="text-xl font-bold text-gray-900">${investorData.initialDeposit.toLocaleString()}</div>
                   </div>
-                  <div className="bg-gray-100 p-3 border border-gray-400">
-                    <div className="border-b border-gray-400 pb-2 mb-2">
-                      <p className="text-gray-700 font-bold uppercase tracking-wider text-xs">TOTAL TRANSACTIONS</p>
-                    </div>
-                    <p className="text-gray-900 font-bold text-lg">{transactions.length}</p>
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                    <div className="text-sm text-gray-600 font-medium mb-1">Total Transactions</div>
+                    <div className="text-xl font-bold text-gray-900">{transactions.length}</div>
                   </div>
-                  <div className="bg-gray-100 p-3 border border-gray-400">
-                    <div className="border-b border-gray-400 pb-2 mb-2">
-                      <p className="text-gray-700 font-bold uppercase tracking-wider text-xs">WITHDRAWALS</p>
-                    </div>
-                    <p className="text-gray-900 font-bold text-lg">{withdrawalCount}</p>
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                    <div className="text-sm text-gray-600 font-medium mb-1">Withdrawals</div>
+                    <div className="text-xl font-bold text-gray-900">{withdrawalCount}</div>
                   </div>
                 </div>
               </div>
@@ -279,10 +257,10 @@ const InvestorProfile = () => {
               <div className="mt-4 md:mt-0 flex space-x-3">
                 <button
                   onClick={() => setAddCreditModalOpen(true)}
-                  className="px-4 py-2 bg-gray-800 text-white font-medium uppercase tracking-wide hover:bg-gray-900 transition-colors"
+                  className="px-4 py-2 bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors rounded-lg"
                 >
                   <PlusCircle size={18} className="mr-2 inline" />
-                  ADD CREDIT
+                  Add Credit
                 </button>
               </div>
             </div>
@@ -290,54 +268,54 @@ const InvestorProfile = () => {
         </div>
       </div>
       
-      {/* Industrial Navigation Tabs */}
-      <div className="mb-6 border-b border-gray-400">
+      {/* Refined Navigation Tabs */}
+      <div className="mb-6 border-b border-gray-200">
         <nav className="flex space-x-8">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`py-4 px-2 border-b-2 font-bold text-sm transition-colors uppercase tracking-wider ${
+            className={`py-4 px-2 border-b-2 font-semibold text-sm transition-colors ${
               activeTab === 'overview'
                 ? 'border-gray-900 text-gray-900'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-400'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            OVERVIEW & PROFILE
+            Overview & Profile
           </button>
           <button
             onClick={() => setActiveTab('transactions')}
-            className={`py-4 px-2 border-b-2 font-bold text-sm transition-colors uppercase tracking-wider ${
+            className={`py-4 px-2 border-b-2 font-semibold text-sm transition-colors ${
               activeTab === 'transactions'
                 ? 'border-gray-900 text-gray-900'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-400'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            ALL TRANSACTIONS
-            <span className="ml-2 px-2 py-1 bg-gray-300 text-gray-900 text-xs font-bold uppercase tracking-wider border border-gray-400">
+            All Transactions
+            <span className="ml-2 px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
               {transactions.length}
             </span>
           </button>
           <button
             onClick={() => setActiveTab('withdrawals')}
-            className={`py-4 px-2 border-b-2 font-bold text-sm transition-colors uppercase tracking-wider ${
+            className={`py-4 px-2 border-b-2 font-semibold text-sm transition-colors ${
               activeTab === 'withdrawals'
                 ? 'border-gray-900 text-gray-900'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-400'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            WITHDRAWAL HISTORY
-            <span className="ml-2 px-2 py-1 bg-gray-300 text-gray-900 text-xs font-bold uppercase tracking-wider border border-gray-400">
+            Withdrawal History
+            <span className="ml-2 px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
               {withdrawalCount}
             </span>
           </button>
           <button
             onClick={() => setActiveTab('performance')}
-            className={`py-4 px-2 border-b-2 font-bold text-sm transition-colors uppercase tracking-wider ${
+            className={`py-4 px-2 border-b-2 font-semibold text-sm transition-colors ${
               activeTab === 'performance'
                 ? 'border-gray-900 text-gray-900'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-400'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            PERFORMANCE
+            Performance
           </button>
         </nav>
       </div>
