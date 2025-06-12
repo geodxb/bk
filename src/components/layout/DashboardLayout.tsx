@@ -87,39 +87,39 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
     <div className="min-h-screen bg-white">
       {/* Top Navigation Bar */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="px-6 py-3">
-          <div className="flex items-center justify-between h-10">
+        <div className="px-6 py-2">
+          <div className="flex items-center justify-between min-h-[48px]">
             {/* Logo and Brand */}
-            <div className="flex items-center space-x-4 h-full">
+            <div className="flex items-center space-x-6">
               <img 
                 src="/Screenshot 2025-06-07 024813.png" 
                 alt="Interactive Brokers" 
                 className="h-6 w-auto object-contain"
                 style={{ filter: 'none', boxShadow: 'none' }}
               />
-              <div className="flex items-center space-x-2 text-sm text-gray-600 h-full">
+              <div className="flex items-center space-x-3 text-sm text-gray-600">
                 <span className="font-medium">PortfolioAnalyst</span>
                 <span className="px-2 py-1 bg-gray-800 text-white text-xs rounded font-medium">MARKETS</span>
               </div>
             </div>
 
             {/* Navigation Menu */}
-            <div className="hidden md:flex items-center space-x-6 h-full relative">
+            <div className="hidden md:flex items-center space-x-8 relative">
               {navItems.map((item, index) => (
-                <div key={index} className="relative h-full flex items-center">
+                <div key={index} className="relative">
                   <button
                     onClick={() => handleNavItemClick(item)}
-                    className={`flex items-center space-x-1 text-sm font-medium transition-colors h-full px-2 ${
+                    className={`flex items-center space-x-1 text-sm font-medium transition-colors py-3 px-1 ${
                       isActivePath(item.path)
                         ? 'text-blue-600 border-b-2 border-blue-600'
                         : 'text-gray-700 hover:text-blue-600'
                     }`}
                   >
-                    <span>{item.text}</span>
+                    <span className="whitespace-nowrap">{item.text}</span>
                     {item.hasDropdown && (
                       <ChevronDown 
                         size={14} 
-                        className={`transition-transform ${
+                        className={`transition-transform ml-1 ${
                           activeDropdown === item.text ? 'rotate-180' : ''
                         }`} 
                       />
@@ -150,42 +150,40 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
             </div>
 
             {/* Right Side - Quick Actions and User Menu */}
-            <div className="flex items-center space-x-4 h-full">
+            <div className="flex items-center space-x-6">
               {/* Quick Action Buttons */}
               <div className="hidden lg:flex items-center space-x-3">
                 <button
                   onClick={() => navigate('/admin/investors')}
-                  className="flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition-colors"
                 >
-                  <Users size={14} />
-                  <span>Investors</span>
+                  Investors
                 </button>
                 <button
                   onClick={() => navigate('/admin/withdrawals')}
-                  className="flex items-center space-x-2 px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+                  className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors"
                 >
-                  <DollarSign size={14} />
-                  <span>Withdrawals</span>
+                  Withdrawals
                 </button>
               </div>
 
               {/* User Info Links */}
-              <div className="hidden md:flex items-center space-x-4 text-sm text-gray-600 h-full">
+              <div className="hidden md:flex items-center space-x-6 text-sm text-gray-600">
                 <button 
                   onClick={() => navigate('/admin')}
-                  className="hover:text-blue-600 transition-colors"
+                  className="hover:text-blue-600 transition-colors font-medium"
                 >
                   Home
                 </button>
                 <button 
                   onClick={() => navigate('/admin/analytics')}
-                  className="hover:text-blue-600 transition-colors"
+                  className="hover:text-blue-600 transition-colors font-medium whitespace-nowrap"
                 >
                   Performance & Reports
                 </button>
                 <button 
                   onClick={() => navigate('/admin/settings')}
-                  className="hover:text-blue-600 transition-colors"
+                  className="hover:text-blue-600 transition-colors font-medium"
                 >
                   Settings
                 </button>
@@ -194,10 +192,10 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
               {/* User Menu */}
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-800 transition-colors h-full"
+                className="flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
               >
                 <User size={16} />
-                <span className="hidden md:inline font-medium">{user?.name}</span>
+                <span className="hidden md:inline font-medium whitespace-nowrap">{user?.name}</span>
               </button>
 
               {/* Mobile Menu Button */}
