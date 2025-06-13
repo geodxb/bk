@@ -56,21 +56,16 @@ const TradingViewChart = ({
       "container_id": widgetId
     };
 
-    // Create configuration script tag
-    const configScript = document.createElement('script');
-    configScript.type = 'text/javascript';
-    configScript.innerHTML = JSON.stringify(config);
-
-    // Create the main TradingView embedding script
+    // Create the main TradingView embedding script with configuration
     const embedScript = document.createElement('script');
     embedScript.type = 'text/javascript';
     embedScript.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
     embedScript.async = true;
+    embedScript.innerHTML = JSON.stringify(config);
 
     // Append elements in the correct order
     widgetContainer.appendChild(widgetDiv);
     widgetContainer.appendChild(copyrightDiv);
-    widgetContainer.appendChild(configScript);
     widgetContainer.appendChild(embedScript);
 
     containerRef.current.appendChild(widgetContainer);
