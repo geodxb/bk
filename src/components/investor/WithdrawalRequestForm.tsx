@@ -148,55 +148,115 @@ const WithdrawalRequestForm = ({
   // Get investor data from the investors list
   const currentInvestor = investors.find(inv => inv.id === user?.id);
   
-  // Get investor country with proper normalization and fallback
-  let investorCountry = currentInvestor?.country || 'Unknown';
-  
-  // Normalize country names to match our bank data keys exactly
-  const normalizeCountryName = (country: string): string => {
-    const normalized = country.trim();
+  // Enhanced country normalization function
+  const normalizeCountryName = (rawCountry: string | undefined): string => {
+    if (!rawCountry) return 'Unknown';
     
-    // Direct matches for our supported countries
-    const countryMappings: Record<string, string> = {
-      'mexico': 'Mexico',
-      'México': 'Mexico',
-      'france': 'France',
-      'switzerland': 'Switzerland',
-      'saudi arabia': 'Saudi Arabia',
-      'uae': 'United Arab Emirates',
-      'united arab emirates': 'United Arab Emirates',
-      'emirates': 'United Arab Emirates'
-    };
+    const country = rawCountry.trim();
     
-    // Check for exact match first
-    if (banksByCountry[normalized]) {
-      return normalized;
+    // Direct exact matches first (case sensitive)
+    if (banksByCountry[country]) {
+      return country;
     }
     
+    // Case insensitive exact matches
+    const exactMatch = Object.keys(banksByCountry).find(
+      key => key.toLowerCase() === country.toLowerCase()
+    );
+    if (exactMatch) {
+      return exactMatch;
+    }
+    
+    // Comprehensive mapping for all variations
+    const countryMappings: Record<string, string> = {
+      // Mexico variations
+      'mexico': 'Mexico',
+      'méxico': 'Mexico',
+      'mexican': 'Mexico',
+      'mx': 'Mexico',
+      'mex': 'Mexico',
+      
+      // France variations
+      'france': 'France',
+      'french': 'France',
+      'fr': 'France',
+      'francia': 'France',
+      
+      // Switzerland variations
+      'switzerland': 'Switzerland',
+      'swiss': 'Switzerland',
+      'ch': 'Switzerland',
+      'suisse': 'Switzerland',
+      'schweiz': 'Switzerland',
+      'svizzera': 'Switzerland',
+      
+      // Saudi Arabia variations
+      'saudi arabia': 'Saudi Arabia',
+      'saudi': 'Saudi Arabia',
+      'ksa': 'Saudi Arabia',
+      'kingdom of saudi arabia': 'Saudi Arabia',
+      'sa': 'Saudi Arabia',
+      'saudiarabia': 'Saudi Arabia',
+      
+      // UAE variations
+      'united arab emirates': 'United Arab Emirates',
+      'uae': 'United Arab Emirates',
+      'emirates': 'United Arab Emirates',
+      'u.a.e': 'United Arab Emirates',
+      'u.a.e.': 'United Arab Emirates',
+      'dubai': 'United Arab Emirates',
+      'abu dhabi': 'United Arab Emirates'
+    };
+    
     // Check lowercase mapping
-    const lowerCountry = normalized.toLowerCase();
+    const lowerCountry = country.toLowerCase();
     if (countryMappings[lowerCountry]) {
       return countryMappings[lowerCountry];
     }
     
+    // Partial matching for common cases
+    const lowerInput = lowerCountry;
+    
+    if (lowerInput.includes('mexico') || lowerInput.includes('méxico')) {
+      return 'Mexico';
+    }
+    if (lowerInput.includes('france') || lowerInput.includes('french')) {
+      return 'France';
+    }
+    if (lowerInput.includes('switzerland') || lowerInput.includes('swiss')) {
+      return 'Switzerland';
+    }
+    if (lowerInput.includes('saudi')) {
+      return 'Saudi Arabia';
+    }
+    if (lowerInput.includes('emirates') || lowerInput.includes('uae') || lowerInput.includes('dubai')) {
+      return 'United Arab Emirates';
+    }
+    
     // Return original if no mapping found
-    return normalized;
+    return country;
   };
   
-  investorCountry = normalizeCountryName(investorCountry);
+  // Get investor country with proper normalization
+  const rawCountry = currentInvestor?.country;
+  const investorCountry = normalizeCountryName(rawCountry);
   const accountStatus = currentInvestor?.accountStatus || 'Active';
   
-  // Get available banks for the investor's country with robust fallback
+  // Get available banks for the investor's country
   const availableBanks = banksByCountry[investorCountry] || [];
 
-  console.log('🏦 Withdrawal Form Debug:', {
+  console.log('🏦 Enhanced Withdrawal Form Debug:', {
     userId: user?.id,
     investorName,
-    rawCountry: currentInvestor?.country,
+    rawCountry,
     normalizedCountry: investorCountry,
     accountStatus,
     availableBanksCount: availableBanks.length,
     supportedCountries: Object.keys(banksByCountry),
-    currentInvestor: currentInvestor ? 'Found' : 'Not Found'
+    currentInvestor: currentInvestor ? 'Found' : 'Not Found',
+    allInvestorsCount: investors.length,
+    banksByCountryKeys: Object.keys(banksByCountry),
+    isCountrySupported: banksByCountry.hasOwnProperty(investorCountry)
   });
 
   // Check account restrictions
@@ -457,9 +517,15 @@ const WithdrawalRequestForm = ({
         </div>
       </div>
 
-      {/* Debug Info */}
+      {/* Enhanced Debug Info */}
       <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded text-xs">
-        <p><strong>Debug:</strong> Raw: "{currentInvestor?.country}" | Normalized: "{investorCountry}" | Banks: {availableBanks.length} | Supported: {Object.keys(banksByCountry).join(', ')}</p>
+        <p><strong>Debug Info:</strong></p>
+        <p>Raw Country: "{rawCountry}" | Normalized: "{investorCountry}"</p>
+        <p>Banks Available: {availableBanks.length} | Is Supported: {banksByCountry.hasOwnProperty(investorCountry) ? 'YES' : 'NO'}</p>
+        <p>Supported Countries: {Object.keys(banksByCountry).join(', ')}</p>
+        {availableBanks.length > 0 && (
+          <p>Sample Banks: {availableBanks.slice(0, 3).join(', ')}...</p>
+        )}
       </div>
 
       {/* Country Not Supported Warning */}
@@ -468,10 +534,13 @@ const WithdrawalRequestForm = ({
           <div className="flex items-start space-x-3">
             <AlertCircle size={20} className="text-amber-600 mt-0.5" />
             <div>
-              <h4 className="text-amber-800 font-semibold">Country Not Supported</h4>
+              <h4 className="text-amber-800 font-semibold">Country Not Supported for Bank Transfers</h4>
               <p className="text-amber-700 text-sm mt-1">
-                Bank withdrawals are not currently available for {investorCountry}. 
+                Bank withdrawals are not currently available for "{investorCountry}". 
                 Please use cryptocurrency or credit card withdrawal methods, or contact support for assistance.
+              </p>
+              <p className="text-amber-700 text-xs mt-2">
+                Supported countries: {Object.keys(banksByCountry).join(', ')}
               </p>
             </div>
           </div>
@@ -666,7 +735,7 @@ const WithdrawalRequestForm = ({
                     ))}
                   </select>
                   <p className="text-xs text-gray-500 mt-1">
-                    Banks available for {investorCountry}. If your bank is not listed, contact support.
+                    {availableBanks.length} banks available for {investorCountry}. If your bank is not listed, contact support.
                   </p>
                 </div>
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
