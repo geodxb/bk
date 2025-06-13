@@ -5,6 +5,7 @@ import EditableInvestorProfile from '../../components/admin/EditableInvestorProf
 import WalletOverview from '../../components/investor/WalletOverview';
 import PerformanceChart from '../../components/common/PerformanceChart';
 import TransactionsTable from '../../components/investor/TransactionsTable';
+import WithdrawalRequestForm from '../../components/investor/WithdrawalRequestForm';
 import AddCreditModal from '../../components/admin/AddCreditModal';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
@@ -140,6 +141,14 @@ const InvestorProfile = () => {
                 </div>
               </div>
             </div>
+
+            {/* Withdrawal Request Form - Now with investor prop */}
+            <WithdrawalRequestForm
+              currentBalance={investorData.currentBalance || 0}
+              investorName={investorData.name}
+              investor={investorData}
+              onSuccess={refetch}
+            />
 
             {/* Refined Commission Information */}
             {withdrawalCount > 0 && (
@@ -302,7 +311,7 @@ const InvestorProfile = () => {
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            Withdrawal History
+            Withdrawal Management
             <span className="ml-2 px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
               {withdrawalCount}
             </span>

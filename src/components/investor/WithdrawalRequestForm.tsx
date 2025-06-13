@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../common/Button';
 import { FirestoreService } from '../../services/firestoreService';
-import { useAuth } from '../../contexts/AuthContext';
-import { useInvestors } from '../../hooks/useFirestore';
+import { Investor } from '../../types/user';
 import { 
   DollarSign, 
   AlertCircle, 
@@ -22,6 +21,7 @@ import {
 interface WithdrawalRequestFormProps {
   currentBalance: number;
   investorName: string;
+  investor: Investor; // New prop to receive investor data
   onSuccess?: () => void;
 }
 
@@ -121,11 +121,9 @@ const banksByCountry: Record<string, string[]> = {
 const WithdrawalRequestForm = ({ 
   currentBalance, 
   investorName,
+  investor, // Use the investor prop instead of hooks
   onSuccess 
 }: WithdrawalRequestFormProps) => {
-  const { user } = useAuth();
-  const { investors } = useInvestors();
-  
   // Form state
   const [step, setStep] = useState(1);
   const [amount, setAmount] = useState('');
@@ -145,9 +143,6 @@ const WithdrawalRequestForm = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // Get investor data from the investors list
-  const currentInvestor = investors.find(inv => inv.id === user?.id);
-  
   // Enhanced country normalization function
   const normalizeCountryName = (rawCountry: string | undefined): string => {
     if (!rawCountry) return 'Unknown';
@@ -237,24 +232,23 @@ const WithdrawalRequestForm = ({
     return country;
   };
   
-  // Get investor country with proper normalization
-  const rawCountry = currentInvestor?.country;
+  // Get investor country with proper normalization from the investor prop
+  const rawCountry = investor?.country;
   const investorCountry = normalizeCountryName(rawCountry);
-  const accountStatus = currentInvestor?.accountStatus || 'Active';
+  const accountStatus = investor?.accountStatus || 'Active';
   
   // Get available banks for the investor's country
   const availableBanks = banksByCountry[investorCountry] || [];
 
-  console.log('🏦 Enhanced Withdrawal Form Debug:', {
-    userId: user?.id,
+  console.log('🏦 Fixed Withdrawal Form Debug:', {
+    investorId: investor?.id,
     investorName,
     rawCountry,
     normalizedCountry: investorCountry,
     accountStatus,
     availableBanksCount: availableBanks.length,
     supportedCountries: Object.keys(banksByCountry),
-    currentInvestor: currentInvestor ? 'Found' : 'Not Found',
-    allInvestorsCount: investors.length,
+    investorProp: investor ? 'Received' : 'Missing',
     banksByCountryKeys: Object.keys(banksByCountry),
     isCountrySupported: banksByCountry.hasOwnProperty(investorCountry)
   });
@@ -316,7 +310,7 @@ const WithdrawalRequestForm = ({
   };
 
   const handleSubmit = async () => {
-    if (!user) return;
+    if (!investor) return;
     
     // Final validation
     const amountError = getAmountValidationError();
@@ -369,18 +363,18 @@ const WithdrawalRequestForm = ({
       }
       
       // 1. Update investor balance
-      await FirestoreService.updateInvestorBalance(user.id, newBalance);
+      await FirestoreService.updateInvestorBalance(investor.id, newBalance);
       
       // 2. Add withdrawal request
       await FirestoreService.addWithdrawalRequest(
-        user.id,
+        investor.id,
         investorName,
         withdrawalAmount
       );
       
       // 3. Add withdrawal transaction
       await FirestoreService.addTransaction({
-        investorId: user.id,
+        investorId: investor.id,
         type: 'Withdrawal',
         amount: -withdrawalAmount,
         date: new Date().toISOString().split('T')[0],
@@ -390,7 +384,7 @@ const WithdrawalRequestForm = ({
       
       // 4. Add commission record
       await FirestoreService.addCommission({
-        investorId: user.id,
+        investorId: investor.id,
         investorName: investorName,
         withdrawalAmount: withdrawalAmount,
         commissionRate: 15,
