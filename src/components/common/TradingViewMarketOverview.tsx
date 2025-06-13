@@ -145,23 +145,19 @@ const TradingViewMarketOverview = ({
       containerRef.current.appendChild(script);
     };
 
-    // Load TradingView library first, then initialize widget
-    const loadScript = () => {
-      if (window.TradingView) {
+    // Poll for TradingView.MarketQuotesWidget constructor availability
+    const checkTradingViewMarketWidget = () => {
+      if (window.TradingView && typeof window.TradingView.MarketQuotesWidget === 'function') {
         loadTradingViewWidget();
         return;
       }
-
-      const tvScript = document.createElement('script');
-      tvScript.src = 'https://s3.tradingview.com/tv.js';
-      tvScript.async = true;
-      tvScript.onload = () => {
-        setTimeout(loadTradingViewWidget, 100);
-      };
-      document.head.appendChild(tvScript);
+      
+      // Continue polling every 100ms until constructor is available
+      setTimeout(checkTradingViewMarketWidget, 100);
     };
 
-    const timer = setTimeout(loadScript, 500);
+    // Start polling after a short delay
+    const timer = setTimeout(checkTradingViewMarketWidget, 500);
 
     return () => {
       clearTimeout(timer);
