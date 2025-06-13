@@ -172,7 +172,7 @@ const SettingsPage = () => {
                     <div>
                       <h3 className="text-blue-800 font-semibold uppercase tracking-wide">PLATFORM INFORMATION</h3>
                       <p className="text-blue-700 text-sm mt-1">
-                        This platform embeds multiple platforms' data, stored in Netlify database. Any misuse of this information will not be the responsibility of Interactive Brokers.
+                        This platform embeds multiple platform's data, stored in Netlify database. Any misuse of this information will not be the responsibility of Interactive Brokers.
                       </p>
                     </div>
                   </div>
