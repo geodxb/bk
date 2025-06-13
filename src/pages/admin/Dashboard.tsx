@@ -224,12 +224,12 @@ const AdminDashboard = () => {
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Market Overview</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Live Market Overview</h3>
               <div className="text-sm text-gray-500">
                 Real-time market data powered by TradingView
               </div>
             </div>
-            <div className="flex justify-center">
+            <div className="flex justify-center bg-gray-900 rounded-lg p-4">
               <TradingViewMarketOverview 
                 width={800}
                 height={550}
