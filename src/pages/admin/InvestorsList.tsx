@@ -16,16 +16,31 @@ const InvestorsListPage = () => {
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  // Filter investors based on search and status
+  // Enhanced filtering logic to properly handle account statuses
   const filteredInvestors = investors.filter(investor => {
     const matchesSearch = investor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       investor.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
       investor.email?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = statusFilter === 'all' || 
-      (statusFilter === 'active' && (!investor.accountStatus || investor.accountStatus.includes('Active'))) ||
-      (statusFilter === 'restricted' && investor.accountStatus?.includes('Restricted')) ||
-      (statusFilter === 'closed' && investor.accountStatus?.includes('Closed'));
+    // Enhanced status filtering logic
+    let matchesStatus = true;
+    const accountStatus = investor.accountStatus || 'Active';
+    
+    if (statusFilter === 'active') {
+      // Active accounts: either no status set, or status contains "Active" but not "Restricted" or "Closed"
+      matchesStatus = !accountStatus || 
+                    (accountStatus.toLowerCase().includes('active') && 
+                     !accountStatus.toLowerCase().includes('restricted') && 
+                     !accountStatus.toLowerCase().includes('closed'));
+    } else if (statusFilter === 'restricted') {
+      // Restricted accounts: status contains "Restricted" or "policy violation"
+      matchesStatus = accountStatus.toLowerCase().includes('restricted') || 
+                     accountStatus.toLowerCase().includes('policy violation');
+    } else if (statusFilter === 'closed') {
+      // Closed accounts: status contains "Closed"
+      matchesStatus = accountStatus.toLowerCase().includes('closed');
+    }
+    // 'all' filter shows everything
     
     return matchesSearch && matchesStatus;
   });
@@ -57,10 +72,31 @@ const InvestorsListPage = () => {
     }
   };
 
-  // Calculate summary statistics
+  // Calculate summary statistics with proper status categorization
   const totalAUM = investors.reduce((sum, inv) => sum + (inv.currentBalance || 0), 0);
-  const activeInvestors = investors.filter(inv => !inv.accountStatus?.includes('Closed')).length;
-  const restrictedInvestors = investors.filter(inv => inv.accountStatus?.includes('Restricted')).length;
+  
+  // Active investors: no status, or status contains "Active" but not "Restricted" or "Closed"
+  const activeInvestors = investors.filter(inv => {
+    const status = inv.accountStatus || 'Active';
+    return !status || 
+           (status.toLowerCase().includes('active') && 
+            !status.toLowerCase().includes('restricted') && 
+            !status.toLowerCase().includes('closed'));
+  }).length;
+  
+  // Restricted investors: status contains "Restricted" or "policy violation"
+  const restrictedInvestors = investors.filter(inv => {
+    const status = inv.accountStatus || '';
+    return status.toLowerCase().includes('restricted') || 
+           status.toLowerCase().includes('policy violation');
+  }).length;
+  
+  // Closed investors: status contains "Closed"
+  const closedInvestors = investors.filter(inv => {
+    const status = inv.accountStatus || '';
+    return status.toLowerCase().includes('closed');
+  }).length;
+  
   const profitableInvestors = investors.filter(inv => inv.currentBalance > inv.initialDeposit).length;
 
   // Clean industrial-style columns without excessive styling
@@ -119,10 +155,10 @@ const InvestorsListPage = () => {
         
         return (
           <div className="text-right">
-            <p className={`font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+            <p className={`font-medium ${isPositive ? 'text-gray-900' : 'text-gray-900'}`}>
               {isPositive ? '+' : ''}${performance.toLocaleString()}
             </p>
-            <p className={`text-xs ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+            <p className={`text-xs ${isPositive ? 'text-gray-600' : 'text-gray-600'}`}>
               {isPositive ? '+' : ''}{performancePercent.toFixed(1)}%
             </p>
           </div>
@@ -134,16 +170,20 @@ const InvestorsListPage = () => {
       header: 'Status',
       render: (value: string) => {
         const status = value || 'Active';
-        let statusClass = 'bg-green-100 text-green-800';
+        let statusClass = 'bg-gray-100 text-gray-800 border border-gray-200';
         
-        if (status.includes('Restricted')) {
-          statusClass = 'bg-amber-100 text-amber-800';
-        } else if (status.includes('Closed')) {
-          statusClass = 'bg-red-100 text-red-800';
+        // Determine status styling based on content
+        if (status.toLowerCase().includes('restricted') || status.toLowerCase().includes('policy violation')) {
+          statusClass = 'bg-gray-100 text-gray-800 border border-gray-200';
+        } else if (status.toLowerCase().includes('closed')) {
+          statusClass = 'bg-gray-100 text-gray-800 border border-gray-200';
+        } else {
+          // Active status
+          statusClass = 'bg-gray-100 text-gray-800 border border-gray-200';
         }
         
         return (
-          <span className={`px-2 py-1 text-xs rounded ${statusClass}`}>
+          <span className={`px-3 py-1 text-xs rounded-full font-medium ${statusClass}`}>
             {status.length > 15 ? status.substring(0, 15) + '...' : status}
           </span>
         );
@@ -174,22 +214,18 @@ const InvestorsListPage = () => {
       align: 'center' as 'center',
       render: (_: any, row: any) => (
         <div className="space-y-1">
-          <Button
-            variant="outline"
-            size="sm"
+          <button
             onClick={() => navigate(`/admin/investor/${row.id}`)}
-            className="w-full"
+            className="w-full px-3 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors rounded-lg"
           >
             View
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
+          </button>
+          <button
             onClick={() => navigate(`/admin/investor/${row.id}`)}
-            className="w-full"
+            className="w-full px-3 py-2 bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors rounded-lg"
           >
             Manage
-          </Button>
+          </button>
         </div>
       )
     }
@@ -198,14 +234,17 @@ const InvestorsListPage = () => {
   if (error) {
     return (
       <DashboardLayout title="Holdings">
-        <Card title="Error Loading Data" className="bg-white border border-gray-300">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="text-center py-8">
-            <p className="text-red-600 mb-4 font-medium">{error}</p>
-            <Button variant="outline" onClick={refetch}>
+            <p className="text-gray-600 mb-4 font-medium">{error}</p>
+            <button
+              onClick={refetch}
+              className="px-4 py-2 bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors rounded-lg"
+            >
               Retry Loading
-            </Button>
+            </button>
           </div>
-        </Card>
+        </div>
       </DashboardLayout>
     );
   }
@@ -214,25 +253,25 @@ const InvestorsListPage = () => {
     <DashboardLayout title="Holdings">
       {/* Clean Header */}
       <div className="mb-8">
-        <div className="bg-white border border-gray-300 p-6">
+        <div className="bg-white border border-gray-200 shadow-sm p-6 rounded-lg">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
             <div>
               <h2 className="text-2xl font-bold text-gray-900 uppercase tracking-wide">INVESTOR HOLDINGS</h2>
               <p className="text-gray-600 uppercase tracking-wide text-sm">Portfolio management and performance monitoring</p>
             </div>
-            <Button
-              variant="primary"
+            <button
               onClick={() => setAddInvestorModalOpen(true)}
+              className="px-4 py-2 bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors rounded-lg"
             >
               Add New Investor
-            </Button>
+            </button>
           </div>
         </div>
       </div>
 
       {/* Clean Summary Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <Card className="bg-white border border-gray-300">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="p-6">
             <div className="border-b border-gray-300 pb-3 mb-4">
               <p className="text-gray-600 font-medium text-sm uppercase tracking-wider">TOTAL AUM</p>
@@ -242,9 +281,9 @@ const InvestorsListPage = () => {
               <p className="text-gray-500 text-xs mt-1">Assets Under Management</p>
             </div>
           </div>
-        </Card>
+        </div>
 
-        <Card className="bg-white border border-gray-300">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="p-6">
             <div className="border-b border-gray-300 pb-3 mb-4">
               <p className="text-gray-600 font-medium text-sm uppercase tracking-wider">ACTIVE ACCOUNTS</p>
@@ -254,9 +293,9 @@ const InvestorsListPage = () => {
               <p className="text-gray-500 text-xs mt-1">Operational Status</p>
             </div>
           </div>
-        </Card>
+        </div>
 
-        <Card className="bg-white border border-gray-300">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="p-6">
             <div className="border-b border-gray-300 pb-3 mb-4">
               <p className="text-gray-600 font-medium text-sm uppercase tracking-wider">PROFITABLE</p>
@@ -266,9 +305,9 @@ const InvestorsListPage = () => {
               <p className="text-gray-500 text-xs mt-1">Positive Performance</p>
             </div>
           </div>
-        </Card>
+        </div>
 
-        <Card className="bg-white border border-gray-300">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="p-6">
             <div className="border-b border-gray-300 pb-3 mb-4">
               <p className="text-gray-600 font-medium text-sm uppercase tracking-wider">RESTRICTED</p>
@@ -278,11 +317,11 @@ const InvestorsListPage = () => {
               <p className="text-gray-500 text-xs mt-1">Compliance Review</p>
             </div>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Clean Filters */}
-      <Card className="mb-8 bg-white border border-gray-300">
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm mb-8">
         <div className="p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
             <div className="flex items-center space-x-6">
@@ -294,15 +333,15 @@ const InvestorsListPage = () => {
                   { key: 'all', label: 'All', count: investors.length },
                   { key: 'active', label: 'Active', count: activeInvestors },
                   { key: 'restricted', label: 'Restricted', count: restrictedInvestors },
-                  { key: 'closed', label: 'Closed', count: investors.filter(inv => inv.accountStatus?.includes('Closed')).length }
+                  { key: 'closed', label: 'Closed', count: closedInvestors }
                 ].map(filter => (
                   <button
                     key={filter.key}
                     onClick={() => setStatusFilter(filter.key)}
-                    className={`px-3 py-2 text-sm font-medium border transition-colors uppercase tracking-wide ${
+                    className={`px-3 py-2 text-sm font-medium border transition-colors uppercase tracking-wide rounded-lg ${
                       statusFilter === filter.key
                         ? 'bg-gray-900 text-white border-gray-900'
-                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                        : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
                     }`}
                   >
                     {filter.label} ({filter.count})
@@ -317,18 +356,24 @@ const InvestorsListPage = () => {
                 placeholder="Search investors..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="px-4 py-2 border border-gray-300 text-sm focus:ring-1 focus:ring-gray-500 focus:border-gray-500 w-80 uppercase tracking-wide"
+                className="px-4 py-2 border border-gray-200 text-sm focus:ring-1 focus:ring-gray-300 focus:border-gray-300 w-80 uppercase tracking-wide font-medium rounded-lg"
               />
             </div>
           </div>
         </div>
-      </Card>
+      </div>
 
       {/* Clean Investor Profiles Table */}
-      <Card title={`INVESTOR PROFILES (${sortedInvestors.length} RECORDS)`} className="bg-white border border-gray-300">
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div className="px-6 py-4 border-b border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-900 uppercase tracking-wide">
+            INVESTOR PROFILES ({sortedInvestors.length} RECORDS)
+          </h3>
+        </div>
+        
         {loading ? (
           <div className="text-center py-16">
-            <div className="w-8 h-8 border-2 border-gray-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="w-8 h-8 border-2 border-gray-300 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-700 font-medium uppercase tracking-wide">LOADING INVESTOR PROFILES FROM FIREBASE...</p>
             <p className="text-gray-500 text-sm mt-2 uppercase tracking-wide">Retrieving account data & transaction history</p>
           </div>
@@ -342,12 +387,12 @@ const InvestorsListPage = () => {
               }
             </p>
             {!searchTerm && statusFilter === 'all' && (
-              <Button
-                variant="primary"
+              <button
                 onClick={() => setAddInvestorModalOpen(true)}
+                className="px-4 py-2 bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors rounded-lg"
               >
                 Add First Investor
-              </Button>
+              </button>
             )}
           </div>
         ) : (
@@ -355,7 +400,7 @@ const InvestorsListPage = () => {
             <div className="overflow-x-auto">
               <table className="min-w-full">
                 <thead>
-                  <tr className="border-b border-gray-300 bg-gray-50">
+                  <tr className="border-b border-gray-200 bg-gray-50">
                     {columns.map((column) => (
                       <th 
                         key={column.key}
@@ -370,7 +415,7 @@ const InvestorsListPage = () => {
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-100">
                   {sortedInvestors.map((row, index) => (
                     <tr 
                       key={row.id || index}
@@ -394,28 +439,28 @@ const InvestorsListPage = () => {
             </div>
 
             {/* Clean Summary Footer */}
-            <div className="mt-6 p-6 bg-gray-50 border-t border-gray-300">
+            <div className="p-6 bg-gray-50 border-t border-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="bg-white p-4 border border-gray-300">
+                <div className="bg-white p-4 border border-gray-200 rounded-lg">
                   <p className="text-gray-600 mb-2 text-xs font-medium uppercase tracking-wide">SHOWING RESULTS</p>
                   <p className="font-bold text-gray-900 text-xl">{sortedInvestors.length}</p>
                   <p className="text-gray-500 text-xs uppercase tracking-wide">Total Records</p>
                 </div>
-                <div className="bg-white p-4 border border-gray-300">
+                <div className="bg-white p-4 border border-gray-200 rounded-lg">
                   <p className="text-gray-600 mb-2 text-xs font-medium uppercase tracking-wide">PORTFOLIO VALUE</p>
                   <p className="font-bold text-gray-900 text-xl">
                     ${sortedInvestors.reduce((sum, inv) => sum + inv.currentBalance, 0).toLocaleString()}
                   </p>
                   <p className="text-gray-500 text-xs uppercase tracking-wide">Combined AUM</p>
                 </div>
-                <div className="bg-white p-4 border border-gray-300">
+                <div className="bg-white p-4 border border-gray-200 rounded-lg">
                   <p className="text-gray-600 mb-2 text-xs font-medium uppercase tracking-wide">AVERAGE SIZE</p>
                   <p className="font-bold text-gray-900 text-xl">
                     ${sortedInvestors.length > 0 ? Math.round(sortedInvestors.reduce((sum, inv) => sum + inv.currentBalance, 0) / sortedInvestors.length).toLocaleString() : '0'}
                   </p>
                   <p className="text-gray-500 text-xs uppercase tracking-wide">Per Account</p>
                 </div>
-                <div className="bg-white p-4 border border-gray-300">
+                <div className="bg-white p-4 border border-gray-200 rounded-lg">
                   <p className="text-gray-600 mb-2 text-xs font-medium uppercase tracking-wide">SUCCESS RATE</p>
                   <p className="font-bold text-gray-900 text-xl">
                     {sortedInvestors.length > 0 ? ((sortedInvestors.filter(inv => inv.currentBalance > inv.initialDeposit).length / sortedInvestors.length) * 100).toFixed(1) : '0.0'}%
@@ -426,7 +471,7 @@ const InvestorsListPage = () => {
             </div>
           </>
         )}
-      </Card>
+      </div>
 
       {/* Add Investor Modal */}
       <AddInvestorModal
