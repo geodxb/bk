@@ -219,30 +219,6 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* TradingView Chart Section */}
-      <div className="mb-8">
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Live Market Chart</h3>
-              <div className="text-sm text-gray-500">
-                Real-time market data powered by TradingView
-              </div>
-            </div>
-            
-            <div className="bg-gray-900 rounded-lg p-4" style={{ height: '500px' }}>
-              <TradingViewChart 
-                symbol="NASDAQ:AAPL"
-                interval="D"
-                theme="dark"
-                height="100%"
-                width="100%"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Performance Statistics and Analytics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Performance Statistics with Circular Chart */}
@@ -325,7 +301,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Withdrawal Statistics and Rejected Statistics */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Withdrawal Statistics */}
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="p-6">
@@ -400,6 +376,30 @@ const AdminDashboard = () => {
                   <div className="text-sm text-gray-600 font-medium">Rejected Withdrawal Requests</div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* TradingView Chart Section - Moved to Bottom */}
+      <div className="mb-8">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900">Live Market Chart</h3>
+              <div className="text-sm text-gray-500">
+                Real-time market data powered by TradingView
+              </div>
+            </div>
+            
+            <div className="bg-gray-900 rounded-lg p-4" style={{ height: '500px' }}>
+              <TradingViewChart 
+                symbol="NASDAQ:AAPL"
+                interval="D"
+                theme="dark"
+                height="100%"
+                width="100%"
+              />
             </div>
           </div>
         </div>
