@@ -23,6 +23,9 @@ const TradingViewChart = ({
     // Clear any existing content
     containerRef.current.innerHTML = '';
 
+    // Generate a unique ID for this widget instance
+    const widgetId = `tradingview_${Math.random().toString(36).substr(2, 9)}`;
+
     // Create the TradingView widget HTML structure
     const widgetContainer = document.createElement('div');
     widgetContainer.className = 'tradingview-widget-container';
@@ -31,17 +34,13 @@ const TradingViewChart = ({
 
     const widgetDiv = document.createElement('div');
     widgetDiv.className = 'tradingview-widget-container__widget';
+    widgetDiv.id = widgetId;
     widgetDiv.style.height = 'calc(100% - 32px)';
     widgetDiv.style.width = '100%';
 
     const copyrightDiv = document.createElement('div');
     copyrightDiv.className = 'tradingview-widget-copyright';
     copyrightDiv.innerHTML = '<a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a>';
-
-    const script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-    script.async = true;
 
     // Configuration object
     const config = {
@@ -53,16 +52,26 @@ const TradingViewChart = ({
       "style": "1",
       "locale": "en",
       "allow_symbol_change": true,
-      "support_host": "https://www.tradingview.com"
+      "support_host": "https://www.tradingview.com",
+      "container_id": widgetId
     };
 
-    // Add the configuration as text content
-    script.textContent = JSON.stringify(config);
+    // Create configuration script tag
+    const configScript = document.createElement('script');
+    configScript.type = 'text/javascript';
+    configScript.innerHTML = JSON.stringify(config);
 
-    // Append elements
+    // Create the main TradingView embedding script
+    const embedScript = document.createElement('script');
+    embedScript.type = 'text/javascript';
+    embedScript.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+    embedScript.async = true;
+
+    // Append elements in the correct order
     widgetContainer.appendChild(widgetDiv);
     widgetContainer.appendChild(copyrightDiv);
-    widgetContainer.appendChild(script);
+    widgetContainer.appendChild(configScript);
+    widgetContainer.appendChild(embedScript);
 
     containerRef.current.appendChild(widgetContainer);
 
