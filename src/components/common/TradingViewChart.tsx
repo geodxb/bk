@@ -66,11 +66,16 @@ const TradingViewChart = ({
     // Append elements in the correct order
     widgetContainer.appendChild(widgetDiv);
     widgetContainer.appendChild(copyrightDiv);
-    widgetContainer.appendChild(embedScript);
 
     containerRef.current.appendChild(widgetContainer);
 
+    // Add a delay before appending the script to prevent race condition
+    const timeoutId = setTimeout(() => {
+      widgetContainer.appendChild(embedScript);
+    }, 150);
+
     return () => {
+      clearTimeout(timeoutId);
       if (containerRef.current) {
         containerRef.current.innerHTML = '';
       }
