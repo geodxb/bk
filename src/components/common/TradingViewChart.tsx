@@ -20,65 +20,67 @@ const TradingViewChart = ({
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Clear any existing content
-    containerRef.current.innerHTML = '';
-
     // Generate a unique ID for this widget instance
     const widgetId = `tradingview_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Create the widget container with proper structure
-    const widgetHTML = `
-      <div class="tradingview-widget-container" style="height:${height};width:${width}">
-        <div id="${widgetId}" class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-        <div class="tradingview-widget-copyright">
-          <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
-            <span class="blue-text">Track all markets on TradingView</span>
-          </a>
-        </div>
-      </div>
+    // Clear any existing content
+    containerRef.current.innerHTML = '';
+
+    // Create the widget container
+    const widgetContainer = document.createElement('div');
+    widgetContainer.className = 'tradingview-widget-container';
+    widgetContainer.style.height = height;
+    widgetContainer.style.width = width;
+
+    // Create the main widget div
+    const widgetDiv = document.createElement('div');
+    widgetDiv.id = widgetId;
+    widgetDiv.className = 'tradingview-widget-container__widget';
+    widgetDiv.style.height = 'calc(100% - 32px)';
+    widgetDiv.style.width = '100%';
+
+    // Create the copyright div
+    const copyrightDiv = document.createElement('div');
+    copyrightDiv.className = 'tradingview-widget-copyright';
+    copyrightDiv.innerHTML = `
+      <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
+        <span class="blue-text">Track all markets on TradingView</span>
+      </a>
     `;
 
-    containerRef.current.innerHTML = widgetHTML;
+    // Create the script element
+    const script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+    script.async = true;
 
-    // Load TradingView script if not already loaded
-    const loadTradingViewWidget = () => {
-      // Check if TradingView is available
-      if (typeof window !== 'undefined') {
-        // Create script element for the widget
-        const script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.async = true;
-        script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-        
-        // Widget configuration
-        const config = {
-          "autosize": true,
-          "symbol": symbol,
-          "interval": interval,
-          "timezone": "Etc/UTC",
-          "theme": theme,
-          "style": "1",
-          "locale": "en",
-          "allow_symbol_change": true,
-          "support_host": "https://www.tradingview.com",
-          "container_id": widgetId
-        };
-
-        script.innerHTML = JSON.stringify(config);
-        
-        // Append script to the widget container
-        const widgetContainer = containerRef.current?.querySelector('.tradingview-widget-container');
-        if (widgetContainer) {
-          widgetContainer.appendChild(script);
-        }
-      }
+    // Widget configuration
+    const config = {
+      "autosize": true,
+      "symbol": symbol,
+      "interval": interval,
+      "timezone": "Etc/UTC",
+      "theme": theme,
+      "style": "1",
+      "locale": "en",
+      "allow_symbol_change": true,
+      "support_host": "https://www.tradingview.com",
+      "container_id": widgetId
     };
 
-    // Add delay to ensure DOM is ready
-    const timeoutId = setTimeout(loadTradingViewWidget, 100);
+    // Set the script content
+    script.text = JSON.stringify(config);
 
+    // Assemble the widget
+    widgetContainer.appendChild(widgetDiv);
+    widgetContainer.appendChild(copyrightDiv);
+    widgetContainer.appendChild(script);
+
+    // Add to the container
+    containerRef.current.appendChild(widgetContainer);
+
+    // Cleanup function
     return () => {
-      clearTimeout(timeoutId);
       if (containerRef.current) {
         containerRef.current.innerHTML = '';
       }
