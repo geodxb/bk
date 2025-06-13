@@ -62,15 +62,6 @@ const TradingViewTickerTape = ({
     const widgetDiv = document.createElement('div');
     widgetDiv.className = 'tradingview-widget-container__widget';
 
-    // Create the copyright div
-    const copyrightDiv = document.createElement('div');
-    copyrightDiv.className = 'tradingview-widget-copyright';
-    copyrightDiv.innerHTML = `
-      <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
-        <span class="blue-text">Track all markets on TradingView</span>
-      </a>
-    `;
-
     // Create the script element
     const script = document.createElement('script');
     script.type = 'text/javascript';
@@ -90,13 +81,20 @@ const TradingViewTickerTape = ({
     // Set the script content
     script.text = JSON.stringify(config);
 
-    // Assemble the widget
+    // Assemble the widget (without copyright div)
     widgetContainer.appendChild(widgetDiv);
-    widgetContainer.appendChild(copyrightDiv);
     widgetContainer.appendChild(script);
 
     // Add to the container
     containerRef.current.appendChild(widgetContainer);
+
+    // Hide copyright text with CSS after widget loads
+    setTimeout(() => {
+      const copyrightElements = document.querySelectorAll('.tradingview-widget-copyright');
+      copyrightElements.forEach(el => {
+        (el as HTMLElement).style.display = 'none';
+      });
+    }, 2000);
 
     // Cleanup function
     return () => {
