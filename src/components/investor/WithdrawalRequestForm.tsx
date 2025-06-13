@@ -88,54 +88,73 @@ const WithdrawalRequestForm = ({
   const isAccountRestricted = accountStatus.toLowerCase().includes('restricted');
   const isAccountActive = !isAccountClosed && !isAccountRestricted;
 
-  const validateAmount = () => {
+  // Validation functions that return error messages instead of setting state
+  const getAmountValidationError = () => {
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) {
-      setError('Please enter a valid amount');
-      return false;
+      return 'Please enter a valid amount';
     }
     
     if (numAmount > currentBalance) {
-      setError('Withdrawal amount cannot exceed your current balance');
-      return false;
+      return 'Withdrawal amount cannot exceed your current balance';
     }
     
     if (numAmount < 100) {
-      setError('Minimum withdrawal amount is $100');
-      return false;
+      return 'Minimum withdrawal amount is $100';
     }
     
-    setError('');
-    return true;
+    return '';
   };
 
-  const validateStep2 = () => {
+  const getStep2ValidationError = () => {
     if (method === 'bank' && !selectedBank) {
-      setError('Please select a bank');
-      return false;
+      return 'Please select a bank';
     }
     if (method === 'crypto' && !walletAddress.trim()) {
-      setError('Please enter your wallet address');
-      return false;
+      return 'Please enter your wallet address';
     }
     if (method === 'credit_card' && (!creditCardData.number || !creditCardData.expiry || !creditCardData.cvv || !creditCardData.name)) {
-      setError('Please fill in all credit card details');
-      return false;
+      return 'Please fill in all credit card details';
     }
-    setError('');
-    return true;
+    return '';
   };
 
   const handleNext = () => {
-    if (step === 1 && validateAmount()) {
+    if (step === 1) {
+      const amountError = getAmountValidationError();
+      if (amountError) {
+        setError(amountError);
+        return;
+      }
+      setError('');
       setStep(2);
-    } else if (step === 2 && validateStep2()) {
+    } else if (step === 2) {
+      const step2Error = getStep2ValidationError();
+      if (step2Error) {
+        setError(step2Error);
+        return;
+      }
+      setError('');
       setStep(3);
     }
   };
 
   const handleSubmit = async () => {
-    if (!user || !validateAmount() || !validateStep2()) return;
+    if (!user) return;
+    
+    // Final validation
+    const amountError = getAmountValidationError();
+    const step2Error = getStep2ValidationError();
+    
+    if (amountError) {
+      setError(amountError);
+      return;
+    }
+    
+    if (step2Error) {
+      setError(step2Error);
+      return;
+    }
     
     setIsLoading(true);
     
@@ -238,6 +257,9 @@ const WithdrawalRequestForm = ({
   const previewAmount = parseFloat(amount) || 0;
   const commissionPreview = previewAmount * 0.15;
   const netAmount = previewAmount - commissionPreview;
+
+  // Check if step 1 is valid for button state
+  const isStep1Valid = amount && !getAmountValidationError();
 
   // Account status messages
   if (isAccountClosed) {
@@ -761,7 +783,7 @@ const WithdrawalRequestForm = ({
           <Button
             variant="primary"
             onClick={handleNext}
-            disabled={!amount || (step === 1 && !validateAmount())}
+            disabled={!amount || (step === 1 && !isStep1Valid)}
           >
             Next
           </Button>
