@@ -24,55 +24,58 @@ const TradingViewChart = ({
     containerRef.current.innerHTML = '';
 
     // Generate a unique ID for this widget instance
-    const widgetId = `tradingview_${Math.random().toString(36).substr(2, 9)}`;
+    const widgetId = `tradingview_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Create the TradingView widget HTML structure
-    const widgetContainer = document.createElement('div');
-    widgetContainer.className = 'tradingview-widget-container';
-    widgetContainer.style.height = height;
-    widgetContainer.style.width = width;
+    // Create the widget container with proper structure
+    const widgetHTML = `
+      <div class="tradingview-widget-container" style="height:${height};width:${width}">
+        <div id="${widgetId}" class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+        <div class="tradingview-widget-copyright">
+          <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
+            <span class="blue-text">Track all markets on TradingView</span>
+          </a>
+        </div>
+      </div>
+    `;
 
-    const widgetDiv = document.createElement('div');
-    widgetDiv.className = 'tradingview-widget-container__widget';
-    widgetDiv.id = widgetId;
-    widgetDiv.style.height = 'calc(100% - 32px)';
-    widgetDiv.style.width = '100%';
+    containerRef.current.innerHTML = widgetHTML;
 
-    const copyrightDiv = document.createElement('div');
-    copyrightDiv.className = 'tradingview-widget-copyright';
-    copyrightDiv.innerHTML = '<a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a>';
+    // Load TradingView script if not already loaded
+    const loadTradingViewWidget = () => {
+      // Check if TradingView is available
+      if (typeof window !== 'undefined') {
+        // Create script element for the widget
+        const script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.async = true;
+        script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+        
+        // Widget configuration
+        const config = {
+          "autosize": true,
+          "symbol": symbol,
+          "interval": interval,
+          "timezone": "Etc/UTC",
+          "theme": theme,
+          "style": "1",
+          "locale": "en",
+          "allow_symbol_change": true,
+          "support_host": "https://www.tradingview.com",
+          "container_id": widgetId
+        };
 
-    // Configuration object
-    const config = {
-      "autosize": true,
-      "symbol": symbol,
-      "interval": interval,
-      "timezone": "Etc/UTC",
-      "theme": theme,
-      "style": "1",
-      "locale": "en",
-      "allow_symbol_change": true,
-      "support_host": "https://www.tradingview.com",
-      "container_id": widgetId
+        script.innerHTML = JSON.stringify(config);
+        
+        // Append script to the widget container
+        const widgetContainer = containerRef.current?.querySelector('.tradingview-widget-container');
+        if (widgetContainer) {
+          widgetContainer.appendChild(script);
+        }
+      }
     };
 
-    // Create the main TradingView embedding script with configuration
-    const embedScript = document.createElement('script');
-    embedScript.type = 'text/javascript';
-    embedScript.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-    embedScript.async = true;
-    embedScript.innerHTML = JSON.stringify(config);
-
-    // Append elements in the correct order
-    widgetContainer.appendChild(widgetDiv);
-    widgetContainer.appendChild(copyrightDiv);
-
-    containerRef.current.appendChild(widgetContainer);
-
-    // Add a delay before appending the script to prevent race condition
-    const timeoutId = setTimeout(() => {
-      widgetContainer.appendChild(embedScript);
-    }, 150);
+    // Add delay to ensure DOM is ready
+    const timeoutId = setTimeout(loadTradingViewWidget, 100);
 
     return () => {
       clearTimeout(timeoutId);
@@ -85,7 +88,7 @@ const TradingViewChart = ({
   return (
     <div 
       ref={containerRef}
-      className="w-full h-full"
+      className="w-full h-full bg-gray-900 rounded-lg overflow-hidden"
       style={{ minHeight: '400px' }}
     />
   );
