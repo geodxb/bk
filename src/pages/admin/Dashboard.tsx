@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import TradingViewMarketOverview from '../../components/common/TradingViewMarketOverview';
+import TradingViewChart from '../../components/common/TradingViewChart';
 import { useAuth } from '../../contexts/AuthContext';
 import { useInvestors, useWithdrawalRequests, useTransactions } from '../../hooks/useFirestore';
 import { 
@@ -219,22 +219,24 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* TradingView Market Overview Section */}
+      {/* TradingView Chart Section */}
       <div className="mb-8">
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Live Market Overview</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Live Market Chart</h3>
               <div className="text-sm text-gray-500">
                 Real-time market data powered by TradingView
               </div>
             </div>
-            <div className="flex justify-center bg-gray-900 rounded-lg p-4">
-              <TradingViewMarketOverview 
-                width={800}
-                height={550}
-                colorTheme="dark"
-                backgroundColor="#131722"
+            
+            <div className="bg-gray-900 rounded-lg p-4" style={{ height: '500px' }}>
+              <TradingViewChart 
+                symbol="NASDAQ:AAPL"
+                interval="D"
+                theme="dark"
+                height="100%"
+                width="100%"
               />
             </div>
           </div>
