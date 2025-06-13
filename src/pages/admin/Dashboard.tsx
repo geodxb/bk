@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import TradingViewChart from '../../components/common/TradingViewChart';
+import TradingViewTickerTape from '../../components/common/TradingViewTickerTape';
 import { useAuth } from '../../contexts/AuthContext';
 import { useInvestors, useWithdrawalRequests, useTransactions } from '../../hooks/useFirestore';
 import { 
@@ -399,6 +400,56 @@ const AdminDashboard = () => {
                 theme="dark"
                 height="100%"
                 width="100%"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* TradingView Ticker Tape Widget */}
+      <div className="mb-8">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900">Market Ticker</h3>
+              <div className="text-sm text-gray-500">
+                Live market prices
+              </div>
+            </div>
+            
+            <div className="bg-gray-900 rounded-lg overflow-hidden">
+              <TradingViewTickerTape 
+                symbols={[
+                  {
+                    "proName": "FX_IDC:EURUSD",
+                    "title": "EUR to USD"
+                  },
+                  {
+                    "proName": "BITSTAMP:BTCUSD",
+                    "title": "Bitcoin"
+                  },
+                  {
+                    "proName": "BITSTAMP:ETHUSD",
+                    "title": "Ethereum"
+                  },
+                  {
+                    "description": "XAUUSD",
+                    "proName": "FOREXCOM:XAUUSD"
+                  },
+                  {
+                    "description": "EURUSD",
+                    "proName": "FX:EURUSD"
+                  },
+                  {
+                    "description": "GBPUSD",
+                    "proName": "OANDA:GBPUSD"
+                  }
+                ]}
+                showSymbolLogo={true}
+                isTransparent={false}
+                displayMode="adaptive"
+                colorTheme="dark"
+                locale="en"
               />
             </div>
           </div>
