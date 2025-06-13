@@ -300,7 +300,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Withdrawal Statistics and Rejected Statistics */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Withdrawal Statistics */}
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="p-6">
@@ -374,57 +374,6 @@ const AdminDashboard = () => {
                   <div className="text-2xl font-bold text-gray-900 mb-1">{rejectedWithdrawals}</div>
                   <div className="text-sm text-gray-600 font-medium">Rejected Withdrawal Requests</div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ESG and Allocation Goals */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">ESG</h3>
-            </div>
-            <div className="h-48 flex items-center justify-center">
-              <div className="text-center">
-                <p className="text-gray-500 font-medium">No eligible holdings</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Allocation Goals</h3>
-            </div>
-            <div className="h-48 flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                  <span className="text-gray-600 text-2xl">+</span>
-                </div>
-                <p className="text-gray-500 mb-4 font-medium">You have no allocation goals set at this time</p>
-                <button className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors">
-                  Configure Allocation Goals
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Projected Income */}
-      <div className="grid grid-cols-1 gap-6">
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Projected Income</h3>
-            </div>
-            <div className="h-48 flex items-center justify-center">
-              <div className="text-center">
-                <p className="text-gray-500 font-medium">No eligible holdings</p>
               </div>
             </div>
           </div>
