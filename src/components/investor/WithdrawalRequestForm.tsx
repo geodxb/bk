@@ -29,26 +29,526 @@ type WithdrawalMethod = 'bank' | 'crypto' | 'credit_card';
 type CryptoType = 'BTC' | 'ETH' | 'XRP' | 'USDT';
 type USDTNetwork = 'TRC20' | 'ERC20' | 'BEP20';
 
-// Bank data by country
+// Comprehensive bank data by country
 const banksByCountry: Record<string, string[]> = {
-  'Mexico': ['Santander', 'BBVA', 'Banorte', 'Banamex', 'HSBC', 'Scotiabank'],
-  'United States': ['Bank of America', 'Chase', 'Wells Fargo', 'Citibank', 'US Bank'],
-  'Canada': ['Royal Bank of Canada', 'TD Bank', 'Bank of Montreal', 'Scotiabank', 'CIBC'],
-  'United Kingdom': ['Barclays', 'HSBC', 'Lloyds', 'NatWest', 'Santander UK'],
-  'Germany': ['Deutsche Bank', 'Commerzbank', 'DZ Bank', 'Sparkasse', 'Postbank'],
-  'France': ['BNP Paribas', 'Crédit Agricole', 'Société Générale', 'Crédit Mutuel', 'BPCE'],
-  'Spain': ['Santander', 'BBVA', 'CaixaBank', 'Bankia', 'Sabadell'],
-  'Italy': ['UniCredit', 'Intesa Sanpaolo', 'Monte dei Paschi', 'UBI Banca', 'BPER'],
-  'Australia': ['Commonwealth Bank', 'Westpac', 'ANZ', 'NAB', 'Bendigo Bank'],
-  'Brazil': ['Banco do Brasil', 'Itaú', 'Bradesco', 'Santander Brasil', 'Caixa'],
-  'Argentina': ['Banco Nación', 'Banco Provincia', 'BBVA Argentina', 'Santander Argentina', 'Macro'],
-  'Chile': ['Banco de Chile', 'BancoEstado', 'Santander Chile', 'BCI', 'Scotiabank Chile'],
-  'Colombia': ['Bancolombia', 'Banco de Bogotá', 'Davivienda', 'BBVA Colombia', 'Banco Popular'],
-  'Peru': ['BCP', 'BBVA Perú', 'Scotiabank Perú', 'Interbank', 'Banco de la Nación'],
-  'Ecuador': ['Banco Pichincha', 'Banco del Pacífico', 'Produbanco', 'Banco Guayaquil', 'Banco Internacional'],
-  'Venezuela': ['Banco de Venezuela', 'Banesco', 'Mercantil', 'Provincial', 'Bicentenario'],
-  'Uruguay': ['Banco República', 'Banco Santander', 'BBVA Uruguay', 'Itaú Uruguay', 'Banco Heritage'],
-  'Paraguay': ['Banco Continental', 'Banco Nacional de Fomento', 'Itaú Paraguay', 'Banco Atlas', 'Vision Banco']
+  // North America
+  'Mexico': [
+    'Santander México',
+    'Banorte',
+    'BBVA México',
+    'Banamex (Citibanamex)',
+    'HSBC México',
+    'Scotiabank México',
+    'Banco Azteca',
+    'Inbursa',
+    'Banco del Bajío',
+    'Banregio',
+    'Multiva',
+    'Mifel',
+    'Banco Ahorro Famsa',
+    'Banco Coppel',
+    'BanCoppel'
+  ],
+  'United States': [
+    'Bank of America',
+    'JPMorgan Chase',
+    'Wells Fargo',
+    'Citibank',
+    'U.S. Bank',
+    'PNC Bank',
+    'Truist Bank',
+    'Goldman Sachs Bank',
+    'TD Bank',
+    'Capital One',
+    'HSBC Bank USA',
+    'Fifth Third Bank',
+    'Regions Bank',
+    'KeyBank',
+    'Huntington Bank'
+  ],
+  'Canada': [
+    'Royal Bank of Canada (RBC)',
+    'Toronto-Dominion Bank (TD)',
+    'Bank of Nova Scotia (Scotiabank)',
+    'Bank of Montreal (BMO)',
+    'Canadian Imperial Bank of Commerce (CIBC)',
+    'National Bank of Canada',
+    'Desjardins Group',
+    'HSBC Bank Canada',
+    'Laurentian Bank',
+    'Canadian Western Bank',
+    'Tangerine Bank',
+    'President\'s Choice Financial',
+    'Simplii Financial',
+    'Mogo',
+    'Koodo Financial Services'
+  ],
+
+  // Europe
+  'United Kingdom': [
+    'Barclays',
+    'HSBC UK',
+    'Lloyds Banking Group',
+    'NatWest Group',
+    'Santander UK',
+    'Standard Chartered',
+    'TSB Bank',
+    'Virgin Money UK',
+    'Metro Bank',
+    'Monzo',
+    'Starling Bank',
+    'Revolut',
+    'Nationwide Building Society',
+    'Halifax',
+    'First Direct'
+  ],
+  'Germany': [
+    'Deutsche Bank',
+    'Commerzbank',
+    'DZ Bank',
+    'Sparkasse',
+    'Postbank',
+    'HypoVereinsbank',
+    'Landesbank Baden-Württemberg',
+    'Bayerische Landesbank',
+    'ING-DiBa',
+    'Santander Consumer Bank',
+    'Targobank',
+    'Comdirect Bank',
+    'N26',
+    'Consorsbank',
+    'Oldenburgische Landesbank'
+  ],
+  'France': [
+    'BNP Paribas',
+    'Crédit Agricole',
+    'Société Générale',
+    'Crédit Mutuel',
+    'BPCE (Banque Populaire)',
+    'La Banque Postale',
+    'Crédit du Nord',
+    'HSBC France',
+    'ING Direct France',
+    'Boursorama Banque',
+    'Monabanq',
+    'Hello bank!',
+    'Fortuneo Banque',
+    'BforBank',
+    'Revolut France'
+  ],
+  'Spain': [
+    'Santander',
+    'BBVA',
+    'CaixaBank',
+    'Bankia (now CaixaBank)',
+    'Banco Sabadell',
+    'Bankinter',
+    'Unicaja Banco',
+    'Liberbank',
+    'Abanca',
+    'Kutxabank',
+    'Cajamar',
+    'EVO Banco',
+    'ING España',
+    'N26 España',
+    'Revolut España'
+  ],
+  'Italy': [
+    'UniCredit',
+    'Intesa Sanpaolo',
+    'Monte dei Paschi di Siena',
+    'UBI Banca (now Intesa Sanpaolo)',
+    'BPER Banca',
+    'Banco BPM',
+    'Credito Emiliano',
+    'Banca Mediolanum',
+    'Banca Popolare di Sondrio',
+    'Banca Carige',
+    'ING Bank Italia',
+    'Fineco Bank',
+    'CheBanca!',
+    'Widiba',
+    'N26 Italia'
+  ],
+  'Switzerland': [
+    'UBS',
+    'Credit Suisse',
+    'Julius Baer',
+    'Pictet',
+    'Lombard Odier',
+    'Banque Cantonale Vaudoise',
+    'Zürcher Kantonalbank',
+    'PostFinance',
+    'Raiffeisen Switzerland',
+    'Migros Bank',
+    'Cler Bank',
+    'Bank Coop',
+    'Hypothekarbank Lenzburg',
+    'Valiant Bank',
+    'Clientis'
+  ],
+  'Netherlands': [
+    'ING Bank',
+    'ABN AMRO',
+    'Rabobank',
+    'de Volksbank',
+    'Triodos Bank',
+    'Van Lanschot Kempen',
+    'NIBC Bank',
+    'Knab',
+    'bunq',
+    'Revolut Netherlands',
+    'N26 Netherlands',
+    'Moneyou',
+    'LeasePlan Bank',
+    'HSBC Netherlands',
+    'BinckBank'
+  ],
+
+  // Middle East
+  'Saudi Arabia': [
+    'Saudi National Bank (SNB)',
+    'Al Rajhi Bank',
+    'Riyad Bank',
+    'Banque Saudi Fransi',
+    'Saudi British Bank (SABB)',
+    'Arab National Bank',
+    'Bank AlJazira',
+    'Alinma Bank',
+    'Bank Albilad',
+    'Saudi Investment Bank',
+    'First Abu Dhabi Bank Saudi Arabia',
+    'Citibank Saudi Arabia',
+    'HSBC Saudi Arabia',
+    'Deutsche Bank Saudi Arabia',
+    'JPMorgan Chase Saudi Arabia'
+  ],
+  'United Arab Emirates': [
+    'Emirates NBD',
+    'First Abu Dhabi Bank (FAB)',
+    'Abu Dhabi Commercial Bank (ADCB)',
+    'Dubai Islamic Bank',
+    'Mashreq Bank',
+    'Commercial Bank of Dubai',
+    'Union National Bank',
+    'Ajman Bank',
+    'Bank of Sharjah',
+    'Fujairah National Bank',
+    'Ras Al Khaimah National Bank',
+    'HSBC UAE',
+    'Citibank UAE',
+    'Standard Chartered UAE',
+    'ADIB (Abu Dhabi Islamic Bank)'
+  ],
+  'Qatar': [
+    'Qatar National Bank (QNB)',
+    'Commercial Bank of Qatar',
+    'Doha Bank',
+    'Ahli Bank',
+    'Qatar Islamic Bank',
+    'International Bank of Qatar',
+    'Masraf Al Rayan',
+    'Qatar Development Bank',
+    'HSBC Qatar',
+    'Standard Chartered Qatar',
+    'Citibank Qatar',
+    'Deutsche Bank Qatar',
+    'BNP Paribas Qatar',
+    'Credit Suisse Qatar',
+    'JPMorgan Chase Qatar'
+  ],
+  'Kuwait': [
+    'National Bank of Kuwait',
+    'Kuwait Finance House',
+    'Ahli United Bank Kuwait',
+    'Commercial Bank of Kuwait',
+    'Gulf Bank',
+    'Burgan Bank',
+    'Kuwait International Bank',
+    'Warba Bank',
+    'Boubyan Bank',
+    'Al Ahli Bank of Kuwait',
+    'HSBC Kuwait',
+    'Citibank Kuwait',
+    'Standard Chartered Kuwait',
+    'BNP Paribas Kuwait',
+    'Credit Agricole Kuwait'
+  ],
+
+  // Asia Pacific
+  'Australia': [
+    'Commonwealth Bank of Australia',
+    'Westpac Banking Corporation',
+    'Australia and New Zealand Banking Group (ANZ)',
+    'National Australia Bank (NAB)',
+    'Bendigo and Adelaide Bank',
+    'Bank of Queensland',
+    'Suncorp Bank',
+    'ING Australia',
+    'Macquarie Bank',
+    'HSBC Australia',
+    'Citibank Australia',
+    'UBank',
+    'ME Bank',
+    'Great Southern Bank',
+    'Heritage Bank'
+  ],
+  'Japan': [
+    'Mitsubishi UFJ Financial Group',
+    'Sumitomo Mitsui Banking Corporation',
+    'Mizuho Financial Group',
+    'Japan Post Bank',
+    'Resona Holdings',
+    'Shinsei Bank',
+    'Aozora Bank',
+    'Seven Bank',
+    'Rakuten Bank',
+    'Sony Bank',
+    'SBI Sumishin Net Bank',
+    'Citibank Japan',
+    'HSBC Japan',
+    'Standard Chartered Japan',
+    'Deutsche Bank Japan'
+  ],
+  'Singapore': [
+    'DBS Bank',
+    'Oversea-Chinese Banking Corporation (OCBC)',
+    'United Overseas Bank (UOB)',
+    'Citibank Singapore',
+    'Standard Chartered Singapore',
+    'HSBC Singapore',
+    'Maybank Singapore',
+    'Bank of China Singapore',
+    'CIMB Bank Singapore',
+    'RHB Bank Singapore',
+    'ANZ Singapore',
+    'BNP Paribas Singapore',
+    'Credit Suisse Singapore',
+    'Deutsche Bank Singapore',
+    'JPMorgan Chase Singapore'
+  ],
+
+  // South America
+  'Brazil': [
+    'Banco do Brasil',
+    'Itaú Unibanco',
+    'Bradesco',
+    'Santander Brasil',
+    'Caixa Econômica Federal',
+    'Banco BTG Pactual',
+    'Banco Safra',
+    'Banco Votorantim',
+    'Banco Inter',
+    'Nubank',
+    'C6 Bank',
+    'Original Bank',
+    'Banco Pan',
+    'Banco Pine',
+    'Banco Modal'
+  ],
+  'Argentina': [
+    'Banco de la Nación Argentina',
+    'Banco de la Provincia de Buenos Aires',
+    'BBVA Argentina',
+    'Santander Argentina',
+    'Banco Macro',
+    'Banco Galicia',
+    'Banco Supervielle',
+    'Banco Patagonia',
+    'Banco Ciudad',
+    'ICBC Argentina',
+    'HSBC Argentina',
+    'Citibank Argentina',
+    'Banco Hipotecario',
+    'Banco Comafi',
+    'Banco Credicoop'
+  ],
+  'Chile': [
+    'Banco de Chile',
+    'BancoEstado',
+    'Santander Chile',
+    'Banco de Crédito e Inversiones (BCI)',
+    'Scotiabank Chile',
+    'Banco Itaú Chile',
+    'Banco Security',
+    'Banco Falabella',
+    'Banco Ripley',
+    'Banco Consorcio',
+    'HSBC Chile',
+    'Banco Internacional',
+    'Banco BICE',
+    'Banco Edwards Citi',
+    'Coopeuch'
+  ],
+  'Colombia': [
+    'Bancolombia',
+    'Banco de Bogotá',
+    'Davivienda',
+    'BBVA Colombia',
+    'Banco Popular',
+    'Banco de Occidente',
+    'Banco Caja Social',
+    'Banco AV Villas',
+    'Banco Agrario',
+    'Banco GNB Sudameris',
+    'Citibank Colombia',
+    'HSBC Colombia',
+    'Banco Pichincha Colombia',
+    'Banco Cooperativo Coopcentral',
+    'Banco Mundo Mujer'
+  ],
+  'Peru': [
+    'Banco de Crédito del Perú (BCP)',
+    'BBVA Perú',
+    'Scotiabank Perú',
+    'Interbank',
+    'Banco de la Nación',
+    'Banco Continental',
+    'Banco Financiero',
+    'Banco GNB',
+    'Banco Falabella Perú',
+    'Banco Ripley Perú',
+    'Citibank Perú',
+    'HSBC Perú',
+    'Banco Santander Perú',
+    'Banco Azteca Perú',
+    'Mi Banco'
+  ],
+  'Ecuador': [
+    'Banco Pichincha',
+    'Banco del Pacífico',
+    'Produbanco',
+    'Banco Guayaquil',
+    'Banco Internacional',
+    'Banco Bolivariano',
+    'Banco del Austro',
+    'Banco Machala',
+    'Banco ProCredit',
+    'Banco Solidario',
+    'Banco de Loja',
+    'Banco Comercial de Manabí',
+    'Banco Capital',
+    'Banco Coopnacional',
+    'Banco D-Miro'
+  ],
+  'Venezuela': [
+    'Banco de Venezuela',
+    'Banesco',
+    'Mercantil',
+    'Provincial',
+    'Bicentenario',
+    'Banco Exterior',
+    'Bancaribe',
+    'Banco Activo',
+    'Banco Plaza',
+    'Banco Sofitasa',
+    'Banco del Tesoro',
+    'Banco Agrícola de Venezuela',
+    'Banco Nacional de Crédito',
+    'Banco Caroní',
+    'Banco Fondo Común'
+  ],
+  'Uruguay': [
+    'Banco República',
+    'Banco Santander Uruguay',
+    'BBVA Uruguay',
+    'Itaú Uruguay',
+    'Banco Heritage',
+    'Banco Hipotecario del Uruguay',
+    'Citibank Uruguay',
+    'HSBC Uruguay',
+    'Banco de la Nación Argentina (Uruguay)',
+    'Banco Bilbao Vizcaya Argentaria',
+    'Banco Comercial',
+    'Banco de Crédito',
+    'Banco Discount',
+    'Banco Prex',
+    'TuDinero'
+  ],
+  'Paraguay': [
+    'Banco Continental',
+    'Banco Nacional de Fomento',
+    'Itaú Paraguay',
+    'Banco Atlas',
+    'Vision Banco',
+    'Banco Regional',
+    'Banco Familiar',
+    'Banco GNB Paraguay',
+    'Banco Sudameris',
+    'Banco do Brasil Paraguay',
+    'Citibank Paraguay',
+    'HSBC Paraguay',
+    'Banco Amambay',
+    'Banco Basa',
+    'TiCo Bank'
+  ],
+
+  // Africa
+  'South Africa': [
+    'Standard Bank',
+    'FirstRand Bank',
+    'ABSA Bank',
+    'Nedbank',
+    'Capitec Bank',
+    'Investec Bank',
+    'African Bank',
+    'Bidvest Bank',
+    'Sasfin Bank',
+    'Mercantile Bank',
+    'Citibank South Africa',
+    'HSBC South Africa',
+    'Standard Chartered South Africa',
+    'Bank of China South Africa',
+    'Habib Overseas Bank'
+  ],
+  'Nigeria': [
+    'First Bank of Nigeria',
+    'Zenith Bank',
+    'Guaranty Trust Bank',
+    'Access Bank',
+    'United Bank for Africa',
+    'Fidelity Bank',
+    'Union Bank of Nigeria',
+    'Sterling Bank',
+    'Stanbic IBTC Bank',
+    'Ecobank Nigeria',
+    'Citibank Nigeria',
+    'Standard Chartered Nigeria',
+    'HSBC Nigeria',
+    'Heritage Bank',
+    'Keystone Bank'
+  ],
+  'Egypt': [
+    'National Bank of Egypt',
+    'Banque Misr',
+    'Commercial International Bank',
+    'QNB Alahli',
+    'Banque du Caire',
+    'Arab African International Bank',
+    'HSBC Egypt',
+    'Citibank Egypt',
+    'Credit Agricole Egypt',
+    'Société Générale Egypt',
+    'Union National Bank Egypt',
+    'Emirates NBD Egypt',
+    'Mashreq Bank Egypt',
+    'Bank of Alexandria',
+    'Export Development Bank of Egypt'
+  ],
+
+  // Default fallback
+  'Unknown': [
+    'Bank of America',
+    'JPMorgan Chase',
+    'Wells Fargo',
+    'Citibank',
+    'HSBC',
+    'Standard Chartered',
+    'Deutsche Bank',
+    'BNP Paribas',
+    'Santander',
+    'BBVA'
+  ]
 };
 
 const WithdrawalRequestForm = ({ 
@@ -79,9 +579,9 @@ const WithdrawalRequestForm = ({
   const [isSuccess, setIsSuccess] = useState(false);
 
   // Get investor country and account status
-  const investorCountry = investor?.country || 'United States';
+  const investorCountry = investor?.country || 'Unknown';
   const accountStatus = investor?.accountStatus || 'Active';
-  const availableBanks = banksByCountry[investorCountry] || banksByCountry['United States'];
+  const availableBanks = banksByCountry[investorCountry] || banksByCountry['Unknown'];
 
   // Check account restrictions
   const isAccountClosed = accountStatus.toLowerCase().includes('closure');
@@ -523,6 +1023,9 @@ const WithdrawalRequestForm = ({
                       <option key={bank} value={bank}>{bank}</option>
                     ))}
                   </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Banks available for {investorCountry}. If your bank is not listed, contact support.
+                  </p>
                 </div>
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                   <h4 className="font-medium text-blue-800 mb-2">Bank Transfer Information</h4>
@@ -700,10 +1203,16 @@ const WithdrawalRequestForm = ({
                   <span className="font-medium capitalize">{method.replace('_', ' ')}</span>
                 </div>
                 {method === 'bank' && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Bank:</span>
-                    <span className="font-medium">{selectedBank}</span>
-                  </div>
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Bank:</span>
+                      <span className="font-medium">{selectedBank}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Country:</span>
+                      <span className="font-medium">{investorCountry}</span>
+                    </div>
+                  </>
                 )}
                 {method === 'crypto' && (
                   <>
