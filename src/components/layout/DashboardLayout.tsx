@@ -157,24 +157,8 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
               ))}
             </div>
 
-            {/* Right Side - Quick Actions and User Menu */}
+            {/* Right Side - User Menu */}
             <div className="flex items-center space-x-4 flex-shrink-0">
-              {/* Quick Action Buttons */}
-              <div className="hidden xl:flex items-center space-x-2">
-                <button
-                  onClick={() => navigate('/admin/investors')}
-                  className="px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition-colors whitespace-nowrap"
-                >
-                  Investors
-                </button>
-                <button
-                  onClick={() => navigate('/admin/withdrawals')}
-                  className="px-3 py-2 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors whitespace-nowrap"
-                >
-                  Withdrawals
-                </button>
-              </div>
-
               {/* User Menu */}
               <button
                 onClick={handleLogout}
@@ -232,33 +216,6 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
               </div>
 
               <div className="py-6">
-                {/* Quick Actions for Mobile */}
-                <div className="px-6 mb-6">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Quick Actions</h3>
-                  <div className="space-y-2">
-                    <button
-                      onClick={() => {
-                        navigate('/admin/investors');
-                        setSidebarOpen(false);
-                      }}
-                      className="flex items-center space-x-2 w-full px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
-                    >
-                      <Users size={14} />
-                      <span>Manage Investors</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        navigate('/admin/withdrawals');
-                        setSidebarOpen(false);
-                      }}
-                      className="flex items-center space-x-2 w-full px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
-                    >
-                      <DollarSign size={14} />
-                      <span>Process Withdrawals</span>
-                    </button>
-                  </div>
-                </div>
-
                 {/* Navigation Items */}
                 {navItems.map((item, index) => (
                   <div key={index}>
