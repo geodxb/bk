@@ -1,5 +1,11 @@
 import { useEffect, useRef } from 'react';
 
+declare global {
+  interface Window {
+    TradingView: any;
+  }
+}
+
 interface TradingViewMarketOverviewProps {
   width?: number;
   height?: number;
@@ -7,61 +13,54 @@ interface TradingViewMarketOverviewProps {
   backgroundColor?: string;
 }
 
-declare global {
-  interface Window {
-    TradingView: any;
-  }
-}
-
 const TradingViewMarketOverview = ({ 
-  width = 550, 
-  height = 550, 
+  width = 800, 
+  height = 500, 
   colorTheme = 'dark',
   backgroundColor = '#131722'
 }: TradingViewMarketOverviewProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const scriptLoadedRef = useRef(false);
 
   useEffect(() => {
-    if (!containerRef.current) return;
-
     const loadTradingViewWidget = () => {
       if (!containerRef.current) return;
 
       // Clear any existing content
       containerRef.current.innerHTML = '';
 
-      // Create the widget container structure
-      const widgetDiv = document.createElement('div');
-      widgetDiv.className = 'tradingview-widget-container__widget';
-      containerRef.current.appendChild(widgetDiv);
+      // Create unique container ID
+      const containerId = `tradingview_market_${Math.random().toString(36).substr(2, 9)}`;
 
-      // Create copyright div
-      const copyrightDiv = document.createElement('div');
-      copyrightDiv.className = 'tradingview-widget-copyright';
-      copyrightDiv.innerHTML = '<a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span style="color: #3b82f6;">Track all markets on TradingView</span></a>';
-      containerRef.current.appendChild(copyrightDiv);
-
-      // Widget configuration exactly as provided
+      // Create the widget container with unique ID
+      const widgetContainer = document.createElement('div');
+      widgetContainer.id = containerId;
+      widgetContainer.className = 'tradingview-widget-container__widget';
+      
+      // Create the script element
+      const script = document.createElement('script');
+      script.type = 'text/javascript';
+      script.async = true;
+      
+      // Configuration object
       const config = {
         "width": width,
         "height": height,
         "symbolsGroups": [
           {
-            "name": "Indices",
-            "originalName": "Indices",
+            "name": "Crypto",
+            "originalName": "Crypto",
             "symbols": [
               {
-                "name": "BITSTAMP:BTCUSD",
-                "displayName": "BTC/USD"
-              },
-              {
-                "name": "FOREXCOM:XAUUSD",
-                "displayName": "XAU/USD"
-              },
-              {
                 "name": "BINANCE:BTCUSDT",
-                "displayName": "BTC/USDT"
+                "displayName": "Bitcoin"
+              },
+              {
+                "name": "BINANCE:ETHUSDT", 
+                "displayName": "Ethereum"
+              },
+              {
+                "name": "BINANCE:ADAUSDT",
+                "displayName": "Cardano"
               }
             ]
           },
@@ -71,71 +70,55 @@ const TradingViewMarketOverview = ({
             "symbols": [
               {
                 "name": "FX:EURUSD",
-                "displayName": "EUR to USD"
+                "displayName": "EUR/USD"
               },
               {
                 "name": "FX:GBPUSD",
-                "displayName": "GBP to USD"
+                "displayName": "GBP/USD"
               },
               {
                 "name": "FX:USDJPY",
-                "displayName": "USD to JPY"
-              },
-              {
-                "name": "FX:USDCHF",
-                "displayName": "USD to CHF"
+                "displayName": "USD/JPY"
               },
               {
                 "name": "FX:AUDUSD",
-                "displayName": "AUD to USD"
-              },
-              {
-                "name": "FX:USDCAD",
-                "displayName": "USD to CAD"
+                "displayName": "AUD/USD"
               }
             ]
           },
           {
-            "name": "Futures",
-            "originalName": "Futures",
+            "name": "Commodities",
+            "originalName": "Commodities", 
             "symbols": [
               {
-                "name": "BMFBOVESPA:ISP1!",
-                "displayName": "S&P 500 Index Futures"
+                "name": "TVC:GOLD",
+                "displayName": "Gold"
               },
               {
-                "name": "BMFBOVESPA:EUR1!",
-                "displayName": "Euro Futures"
+                "name": "TVC:SILVER",
+                "displayName": "Silver"
               },
               {
-                "name": "PYTH:WTI3!",
-                "displayName": "WTI CRUDE OIL"
-              },
-              {
-                "name": "BMFBOVESPA:ETH1!",
-                "displayName": "Hydrous ethanol"
-              },
-              {
-                "name": "BMFBOVESPA:CCM1!",
-                "displayName": "Corn"
+                "name": "NYMEX:CL1!",
+                "displayName": "Crude Oil"
               }
             ]
           },
           {
-            "name": "Bonds",
-            "originalName": "Bonds",
+            "name": "Indices",
+            "originalName": "Indices",
             "symbols": [
               {
-                "name": "EUREX:FGBL1!",
-                "displayName": "Euro Bund"
+                "name": "FOREXCOM:SPXUSD",
+                "displayName": "S&P 500"
               },
               {
-                "name": "EUREX:FBTP1!",
-                "displayName": "Euro BTP"
+                "name": "FOREXCOM:NSXUSD",
+                "displayName": "NASDAQ"
               },
               {
-                "name": "EUREX:FGBM1!",
-                "displayName": "Euro BOBL"
+                "name": "FOREXCOM:DJI",
+                "displayName": "Dow Jones"
               }
             ]
           }
@@ -144,40 +127,59 @@ const TradingViewMarketOverview = ({
         "isTransparent": false,
         "colorTheme": colorTheme,
         "locale": "en",
-        "backgroundColor": backgroundColor
+        "backgroundColor": backgroundColor,
+        "container_id": containerId
       };
 
-      // Create and load the script
-      const script = document.createElement('script');
-      script.type = 'text/javascript';
-      script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-market-quotes.js';
-      script.async = true;
-      script.text = JSON.stringify(config);
+      // Create script content that calls TradingView widget constructor
+      script.textContent = `new TradingView.MarketQuotesWidget(${JSON.stringify(config)});`;
 
-      // Append script to the widget container
+      // Create copyright div
+      const copyrightDiv = document.createElement('div');
+      copyrightDiv.className = 'tradingview-widget-copyright';
+      copyrightDiv.innerHTML = '<a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a>';
+
+      // Append elements to container
+      containerRef.current.appendChild(widgetContainer);
+      containerRef.current.appendChild(copyrightDiv);
       containerRef.current.appendChild(script);
     };
 
-    // Load the widget immediately
-    loadTradingViewWidget();
-
-    // Cleanup function
-    return () => {
-      if (containerRef.current) {
-        containerRef.current.innerHTML = '';
+    // Load TradingView library first, then initialize widget
+    const loadScript = () => {
+      if (window.TradingView) {
+        loadTradingViewWidget();
+        return;
       }
+
+      const tvScript = document.createElement('script');
+      tvScript.src = 'https://s3.tradingview.com/tv.js';
+      tvScript.async = true;
+      tvScript.onload = () => {
+        setTimeout(loadTradingViewWidget, 100);
+      };
+      document.head.appendChild(tvScript);
+    };
+
+    const timer = setTimeout(loadScript, 500);
+
+    return () => {
+      clearTimeout(timer);
     };
   }, [width, height, colorTheme, backgroundColor]);
 
   return (
-    <div className="w-full flex justify-center">
+    <div className="w-full">
       <div 
-        ref={containerRef} 
+        ref={containerRef}
         className="tradingview-widget-container"
         style={{ 
-          width: `${width}px`, 
+          width: '100%',
           height: `${height}px`,
-          minHeight: `${height}px`
+          minHeight: `${height}px`,
+          backgroundColor: backgroundColor,
+          borderRadius: '8px',
+          overflow: 'hidden'
         }}
       />
     </div>
