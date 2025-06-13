@@ -33,6 +33,7 @@ const PerformanceReportsPage = () => {
   
   const profitableInvestors = investors.filter(inv => inv.currentBalance > inv.initialDeposit).length;
   const winRate = investors.length > 0 ? (profitableInvestors / investors.length) * 100 : 0;
+  const avgPositionSize = investors.length > 0 ? totalAssets / investors.length : 0;
   
   // Transaction metrics
   const totalEarnings = transactions
@@ -82,239 +83,260 @@ const PerformanceReportsPage = () => {
     <div className="space-y-6">
       {/* Key Performance Indicators */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-blue-700 font-semibold text-sm">Total AUM</p>
-              <p className="text-blue-900 text-2xl font-bold">${totalAssets.toLocaleString()}</p>
-              <p className="text-blue-600 text-xs mt-1">Assets Under Management</p>
+        <div className="bg-white rounded-lg border border-gray-300 shadow-sm">
+          <div className="p-6">
+            <div className="border-b border-gray-200 pb-3 mb-3">
+              <p className="text-gray-600 font-medium text-sm uppercase tracking-wider">TOTAL AUM</p>
             </div>
-            <div className="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center">
-              <DollarSign className="text-blue-700" size={24} />
+            <div>
+              <p className="text-gray-900 text-3xl font-bold">${totalAssets.toLocaleString()}</p>
+              <p className="text-gray-500 text-sm mt-1">Assets Under Management</p>
             </div>
           </div>
-        </Card>
+        </div>
 
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-green-700 font-semibold text-sm">Average ROI</p>
-              <p className="text-green-900 text-2xl font-bold">{averageROI.toFixed(2)}%</p>
-              <p className="text-green-600 text-xs mt-1">Return on Investment</p>
+        <div className="bg-white rounded-lg border border-gray-300 shadow-sm">
+          <div className="p-6">
+            <div className="border-b border-gray-200 pb-3 mb-3">
+              <p className="text-gray-600 font-medium text-sm uppercase tracking-wider">AVERAGE ROI</p>
             </div>
-            <div className="w-12 h-12 bg-green-200 rounded-full flex items-center justify-center">
-              <TrendingUp className="text-green-700" size={24} />
+            <div>
+              <p className="text-gray-900 text-3xl font-bold">{averageROI.toFixed(2)}%</p>
+              <p className="text-gray-500 text-sm mt-1">Return on Investment</p>
             </div>
           </div>
-        </Card>
+        </div>
 
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-purple-700 font-semibold text-sm">Win Rate</p>
-              <p className="text-purple-900 text-2xl font-bold">{winRate.toFixed(1)}%</p>
-              <p className="text-purple-600 text-xs mt-1">Profitable Accounts</p>
+        <div className="bg-white rounded-lg border border-gray-300 shadow-sm">
+          <div className="p-6">
+            <div className="border-b border-gray-200 pb-3 mb-3">
+              <p className="text-gray-600 font-medium text-sm uppercase tracking-wider">WIN RATE</p>
             </div>
-            <div className="w-12 h-12 bg-purple-200 rounded-full flex items-center justify-center">
-              <Target className="text-purple-700" size={24} />
+            <div>
+              <p className="text-gray-900 text-3xl font-bold">{winRate.toFixed(1)}%</p>
+              <p className="text-gray-500 text-sm mt-1">Profitable Accounts</p>
             </div>
           </div>
-        </Card>
+        </div>
 
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-orange-700 font-semibold text-sm">Active Clients</p>
-              <p className="text-orange-900 text-2xl font-bold">{investors.length}</p>
-              <p className="text-orange-600 text-xs mt-1">Total Investors</p>
+        <div className="bg-white rounded-lg border border-gray-300 shadow-sm">
+          <div className="p-6">
+            <div className="border-b border-gray-200 pb-3 mb-3">
+              <p className="text-gray-600 font-medium text-sm uppercase tracking-wider">ACTIVE CLIENTS</p>
             </div>
-            <div className="w-12 h-12 bg-orange-200 rounded-full flex items-center justify-center">
-              <Users className="text-orange-700" size={24} />
+            <div>
+              <p className="text-gray-900 text-3xl font-bold">{investors.length}</p>
+              <p className="text-gray-500 text-sm mt-1">Total Investors</p>
             </div>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Performance Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card title="Portfolio Performance" className="bg-white border border-gray-200">
-          <div className="h-64 flex items-center justify-center">
-            <div className="text-center">
-              <BarChart3 size={48} className="text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">Performance chart visualization</p>
-              <p className="text-sm text-gray-400">Real-time portfolio tracking</p>
+        <div className="bg-white rounded-lg border border-gray-300 shadow-sm">
+          <div className="px-6 py-4 border-b border-gray-100">
+            <h3 className="text-lg font-semibold text-gray-900 uppercase tracking-wide">PORTFOLIO PERFORMANCE</h3>
+          </div>
+          <div className="p-6">
+            <div className="h-64 flex items-center justify-center">
+              <div className="text-center">
+                <BarChart3 size={48} className="text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500 font-medium">Performance chart visualization</p>
+                <p className="text-sm text-gray-400">Real-time portfolio tracking</p>
+              </div>
             </div>
           </div>
-        </Card>
+        </div>
 
-        <Card title="Asset Allocation" className="bg-white border border-gray-200">
-          <div className="h-64 flex items-center justify-center">
-            <div className="text-center">
-              <PieChart size={48} className="text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">Asset distribution breakdown</p>
-              <div className="mt-4 flex justify-center space-x-4">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-                  <span className="text-sm">Cash: 100%</span>
+        <div className="bg-white rounded-lg border border-gray-300 shadow-sm">
+          <div className="px-6 py-4 border-b border-gray-100">
+            <h3 className="text-lg font-semibold text-gray-900 uppercase tracking-wide">ASSET ALLOCATION</h3>
+          </div>
+          <div className="p-6">
+            <div className="h-64 flex items-center justify-center">
+              <div className="text-center">
+                <PieChart size={48} className="text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500 font-medium">Asset distribution breakdown</p>
+                <div className="mt-4 flex justify-center space-x-4">
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 bg-gray-700 rounded-full mr-2"></div>
+                    <span className="text-sm font-medium">Cash: 100%</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Top Performers */}
-      <Card title="Top Performing Accounts" className="bg-white border border-gray-200">
-        <div className="space-y-4">
-          {topPerformers.length > 0 ? (
-            topPerformers.map((investor, index) => (
-              <div key={investor.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 font-bold">{index + 1}</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">{investor.name}</p>
-                    <p className="text-sm text-gray-500">{investor.country}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className={`font-bold text-lg ${investor.performance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {investor.performance >= 0 ? '+' : ''}${investor.performance.toLocaleString()}
-                  </p>
-                  <p className={`text-sm ${investor.performancePercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {investor.performancePercent >= 0 ? '+' : ''}{investor.performancePercent.toFixed(2)}%
-                  </p>
-                </div>
-              </div>
-            ))
-          ) : (
-            <p className="text-gray-500 text-center py-8">No performance data available</p>
-          )}
+      <div className="bg-white rounded-lg border border-gray-300 shadow-sm">
+        <div className="px-6 py-4 border-b border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-900 uppercase tracking-wide">TOP PERFORMING ACCOUNTS</h3>
         </div>
-      </Card>
+        <div className="p-6">
+          <div className="space-y-4">
+            {topPerformers.length > 0 ? (
+              topPerformers.map((investor, index) => (
+                <div key={investor.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-10 h-10 bg-gray-200 border border-gray-300 rounded-lg flex items-center justify-center">
+                      <span className="text-gray-700 font-bold">{index + 1}</span>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 uppercase tracking-wide">{investor.name}</p>
+                      <p className="text-sm text-gray-500 uppercase tracking-wide">{investor.country}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-lg text-gray-900">
+                      {investor.performance >= 0 ? '+' : ''}${investor.performance.toLocaleString()}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {investor.performancePercent >= 0 ? '+' : ''}{investor.performancePercent.toFixed(2)}%
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-center py-8 uppercase tracking-wide">No performance data available</p>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 
   const renderDetailedReport = () => (
     <div className="space-y-6">
       {/* Financial Metrics */}
-      <Card title="Financial Performance Metrics" className="bg-white border border-gray-200">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
-            <h3 className="text-blue-800 font-semibold mb-4">Revenue Metrics</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-blue-700">Total Deposits</span>
-                <span className="font-bold text-blue-900">${totalDeposits.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-blue-700">Total Earnings</span>
-                <span className="font-bold text-blue-900">${totalEarnings.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-blue-700">Net Growth</span>
-                <span className="font-bold text-blue-900">${totalGains.toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-green-50 p-6 rounded-xl border border-green-200">
-            <h3 className="text-green-800 font-semibold mb-4">Performance Ratios</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-green-700">ROI</span>
-                <span className="font-bold text-green-900">{averageROI.toFixed(2)}%</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-green-700">Win Rate</span>
-                <span className="font-bold text-green-900">{winRate.toFixed(1)}%</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-green-700">Avg. Account Size</span>
-                <span className="font-bold text-green-900">
-                  ${investors.length > 0 ? (totalAssets / investors.length).toFixed(0) : '0'}
-                </span>
+      <div className="bg-white rounded-lg border border-gray-300 shadow-sm">
+        <div className="px-6 py-4 border-b border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-900 uppercase tracking-wide">FINANCIAL PERFORMANCE METRICS</h3>
+        </div>
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+              <h3 className="text-gray-800 font-semibold mb-4 uppercase tracking-wide">REVENUE METRICS</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-gray-700 uppercase tracking-wide text-sm">Total Deposits</span>
+                  <span className="font-bold text-gray-900">${totalDeposits.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-700 uppercase tracking-wide text-sm">Total Earnings</span>
+                  <span className="font-bold text-gray-900">${totalEarnings.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-700 uppercase tracking-wide text-sm">Net Growth</span>
+                  <span className="font-bold text-gray-900">${totalGains.toLocaleString()}</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="bg-purple-50 p-6 rounded-xl border border-purple-200">
-            <h3 className="text-purple-800 font-semibold mb-4">Client Metrics</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-purple-700">Total Clients</span>
-                <span className="font-bold text-purple-900">{investors.length}</span>
+            <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+              <h3 className="text-gray-800 font-semibold mb-4 uppercase tracking-wide">PERFORMANCE RATIOS</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-gray-700 uppercase tracking-wide text-sm">ROI</span>
+                  <span className="font-bold text-gray-900">{averageROI.toFixed(2)}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-700 uppercase tracking-wide text-sm">Win Rate</span>
+                  <span className="font-bold text-gray-900">{winRate.toFixed(1)}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-700 uppercase tracking-wide text-sm">Avg. Account Size</span>
+                  <span className="font-bold text-gray-900">
+                    ${investors.length > 0 ? (totalAssets / investors.length).toFixed(0) : '0'}
+                  </span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-purple-700">Profitable</span>
-                <span className="font-bold text-purple-900">{profitableInvestors}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-purple-700">Retention Rate</span>
-                <span className="font-bold text-purple-900">95.2%</span>
+            </div>
+
+            <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+              <h3 className="text-gray-800 font-semibold mb-4 uppercase tracking-wide">CLIENT METRICS</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-gray-700 uppercase tracking-wide text-sm">Total Clients</span>
+                  <span className="font-bold text-gray-900">{investors.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-700 uppercase tracking-wide text-sm">Profitable</span>
+                  <span className="font-bold text-gray-900">{profitableInvestors}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-700 uppercase tracking-wide text-sm">Retention Rate</span>
+                  <span className="font-bold text-gray-900">95.2%</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </Card>
+      </div>
 
       {/* Transaction Analysis */}
-      <Card title="Transaction Analysis" className="bg-white border border-gray-200">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h4 className="font-semibold text-gray-800 mb-4">Transaction Volume</h4>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Total Transactions</span>
-                <span className="font-bold">{transactions.length}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Deposits</span>
-                <span className="font-bold text-blue-600">
-                  {transactions.filter(tx => tx.type === 'Deposit').length}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Withdrawals</span>
-                <span className="font-bold text-red-600">
-                  {transactions.filter(tx => tx.type === 'Withdrawal').length}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Earnings</span>
-                <span className="font-bold text-green-600">
-                  {transactions.filter(tx => tx.type === 'Earnings').length}
-                </span>
+      <div className="bg-white rounded-lg border border-gray-300 shadow-sm">
+        <div className="px-6 py-4 border-b border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-900 uppercase tracking-wide">TRANSACTION ANALYSIS</h3>
+        </div>
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-semibold text-gray-800 mb-4 uppercase tracking-wide">TRANSACTION VOLUME</h4>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 uppercase tracking-wide text-sm">Total Transactions</span>
+                  <span className="font-bold">{transactions.length}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 uppercase tracking-wide text-sm">Deposits</span>
+                  <span className="font-bold text-gray-900">
+                    {transactions.filter(tx => tx.type === 'Deposit').length}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 uppercase tracking-wide text-sm">Withdrawals</span>
+                  <span className="font-bold text-gray-900">
+                    {transactions.filter(tx => tx.type === 'Withdrawal').length}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 uppercase tracking-wide text-sm">Earnings</span>
+                  <span className="font-bold text-gray-900">
+                    {transactions.filter(tx => tx.type === 'Earnings').length}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div>
-            <h4 className="font-semibold text-gray-800 mb-4">Value Distribution</h4>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Total Volume</span>
-                <span className="font-bold">
-                  ${transactions.reduce((sum, tx) => sum + Math.abs(tx.amount), 0).toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Average Transaction</span>
-                <span className="font-bold">
-                  ${transactions.length > 0 ? (transactions.reduce((sum, tx) => sum + Math.abs(tx.amount), 0) / transactions.length).toFixed(2) : '0.00'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Largest Transaction</span>
-                <span className="font-bold">
-                  ${transactions.length > 0 ? Math.max(...transactions.map(tx => Math.abs(tx.amount))).toLocaleString() : '0'}
-                </span>
+            <div>
+              <h4 className="font-semibold text-gray-800 mb-4 uppercase tracking-wide">VALUE DISTRIBUTION</h4>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 uppercase tracking-wide text-sm">Total Volume</span>
+                  <span className="font-bold">
+                    ${transactions.reduce((sum, tx) => sum + Math.abs(tx.amount), 0).toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 uppercase tracking-wide text-sm">Average Transaction</span>
+                  <span className="font-bold">
+                    ${transactions.length > 0 ? (transactions.reduce((sum, tx) => sum + Math.abs(tx.amount), 0) / transactions.length).toFixed(2) : '0.00'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 uppercase tracking-wide text-sm">Largest Transaction</span>
+                  <span className="font-bold">
+                    ${transactions.length > 0 ? Math.max(...transactions.map(tx => Math.abs(tx.amount))).toLocaleString() : '0'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </Card>
+      </div>
     </div>
   );
 
@@ -322,78 +344,90 @@ const PerformanceReportsPage = () => {
     <DashboardLayout title="Performance & Reports">
       {/* Header Controls */}
       <div className="mb-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800">Performance & Reports</h2>
-            <p className="text-gray-600">Comprehensive analytics and performance insights</p>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Calendar size={16} className="text-gray-500" />
-              <select
-                value={selectedPeriod}
-                onChange={(e) => setSelectedPeriod(e.target.value as ReportPeriod)}
-                className="px-3 py-2 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="week">Last Week</option>
-                <option value="month">Last Month</option>
-                <option value="quarter">Last Quarter</option>
-                <option value="year">Last Year</option>
-              </select>
+        <div className="bg-white rounded-lg border border-gray-300 shadow-sm p-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 uppercase tracking-wide">PERFORMANCE & REPORTS</h2>
+              <p className="text-gray-600 uppercase tracking-wide text-sm">Comprehensive analytics and performance insights</p>
             </div>
             
-            <Button variant="outline" onClick={generateReport}>
-              <Download size={16} className="mr-2" />
-              Export Report
-            </Button>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Calendar size={16} className="text-gray-500" />
+                <select
+                  value={selectedPeriod}
+                  onChange={(e) => setSelectedPeriod(e.target.value as ReportPeriod)}
+                  className="px-3 py-2 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-gray-300 focus:border-gray-300 uppercase tracking-wide font-medium"
+                >
+                  <option value="week">LAST WEEK</option>
+                  <option value="month">LAST MONTH</option>
+                  <option value="quarter">LAST QUARTER</option>
+                  <option value="year">LAST YEAR</option>
+                </select>
+              </div>
+              
+              <button
+                onClick={generateReport}
+                className="px-4 py-2 bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors rounded-lg uppercase tracking-wide"
+              >
+                <Download size={16} className="mr-2 inline" />
+                EXPORT REPORT
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Report Type Selector */}
-      <Card className="mb-6 bg-white border border-gray-200">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <Filter size={16} className="text-gray-500" />
-            <span className="text-sm text-gray-700">Report Type:</span>
-          </div>
-          <div className="flex space-x-1">
-            {[
-              { key: 'overview', label: 'Overview', icon: <BarChart3 size={14} /> },
-              { key: 'detailed', label: 'Detailed Analysis', icon: <Activity size={14} /> },
-              { key: 'comparative', label: 'Comparative', icon: <TrendingUp size={14} /> }
-            ].map(report => (
-              <button
-                key={report.key}
-                onClick={() => setSelectedReport(report.key)}
-                className={`flex items-center space-x-2 px-4 py-2 text-sm rounded transition-colors ${
-                  selectedReport === report.key
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {report.icon}
-                <span>{report.label}</span>
-              </button>
-            ))}
+      <div className="bg-white rounded-lg border border-gray-300 shadow-sm mb-6">
+        <div className="p-6">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <Filter size={16} className="text-gray-500" />
+              <span className="text-sm text-gray-700 font-medium uppercase tracking-wide">REPORT TYPE:</span>
+            </div>
+            <div className="flex space-x-1">
+              {[
+                { key: 'overview', label: 'OVERVIEW', icon: <BarChart3 size={14} /> },
+                { key: 'detailed', label: 'DETAILED ANALYSIS', icon: <Activity size={14} /> },
+                { key: 'comparative', label: 'COMPARATIVE', icon: <TrendingUp size={14} /> }
+              ].map(report => (
+                <button
+                  key={report.key}
+                  onClick={() => setSelectedReport(report.key)}
+                  className={`flex items-center space-x-2 px-4 py-2 text-sm rounded transition-colors font-medium uppercase tracking-wide ${
+                    selectedReport === report.key
+                      ? 'bg-gray-900 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {report.icon}
+                  <span>{report.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </Card>
+      </div>
 
       {/* Report Content */}
       {selectedReport === 'overview' && renderOverviewReport()}
       {selectedReport === 'detailed' && renderDetailedReport()}
       {selectedReport === 'comparative' && (
-        <Card title="Comparative Analysis" className="bg-white border border-gray-200">
-          <div className="h-64 flex items-center justify-center">
-            <div className="text-center">
-              <TrendingUp size={48} className="text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">Comparative analysis coming soon</p>
-              <p className="text-sm text-gray-400">Period-over-period performance comparison</p>
+        <div className="bg-white rounded-lg border border-gray-300 shadow-sm">
+          <div className="px-6 py-4 border-b border-gray-100">
+            <h3 className="text-lg font-semibold text-gray-900 uppercase tracking-wide">COMPARATIVE ANALYSIS</h3>
+          </div>
+          <div className="p-6">
+            <div className="h-64 flex items-center justify-center">
+              <div className="text-center">
+                <TrendingUp size={48} className="text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500 font-medium">Comparative analysis coming soon</p>
+                <p className="text-sm text-gray-400">Period-over-period performance comparison</p>
+              </div>
             </div>
           </div>
-        </Card>
+        </div>
       )}
     </DashboardLayout>
   );
