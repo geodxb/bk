@@ -146,17 +146,14 @@ const AdminLogin = () => {
           </div>
         </form>
         
-        {/* Important Notice */}
+        {/* Important Notice - Text Removed */}
         <div className="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <div className="flex items-start space-x-3">
             <div className="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
               <span className="text-yellow-800 font-bold text-sm">!</span>
             </div>
             <div>
-              <p className="text-sm text-gray-700">
-                <span className="font-semibold">IMPORTANT:</span> Due to scheduled maintenance 
-                clients may be unable to connect through our web, mobile, and desktop trading platforms.
-              </p>
+              {/* Text content removed as requested */}
             </div>
           </div>
         </div>
