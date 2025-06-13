@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../common/Button';
 import { FirestoreService } from '../../services/firestoreService';
 import { useAuth } from '../../contexts/AuthContext';
-import { useInvestor } from '../../hooks/useFirestore';
+import { useInvestors } from '../../hooks/useFirestore';
 import { 
   DollarSign, 
   AlertCircle, 
@@ -534,20 +534,6 @@ const banksByCountry: Record<string, string[]> = {
     'Mashreq Bank Egypt',
     'Bank of Alexandria',
     'Export Development Bank of Egypt'
-  ],
-
-  // Default fallback
-  'Unknown': [
-    'Bank of America',
-    'JPMorgan Chase',
-    'Wells Fargo',
-    'Citibank',
-    'HSBC',
-    'Standard Chartered',
-    'Deutsche Bank',
-    'BNP Paribas',
-    'Santander',
-    'BBVA'
   ]
 };
 
@@ -557,7 +543,7 @@ const WithdrawalRequestForm = ({
   onSuccess 
 }: WithdrawalRequestFormProps) => {
   const { user } = useAuth();
-  const { investor } = useInvestor(user?.id || '');
+  const { investors } = useInvestors();
   
   // Form state
   const [step, setStep] = useState(1);
@@ -578,10 +564,24 @@ const WithdrawalRequestForm = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // Get investor country and account status
-  const investorCountry = investor?.country || 'Unknown';
-  const accountStatus = investor?.accountStatus || 'Active';
+  // Get investor data from the investors list
+  const currentInvestor = investors.find(inv => inv.id === user?.id);
+  
+  // Get investor country and account status with proper fallback
+  const investorCountry = currentInvestor?.country || 'Unknown';
+  const accountStatus = currentInvestor?.accountStatus || 'Active';
+  
+  // Get available banks for the investor's country
   const availableBanks = banksByCountry[investorCountry] || banksByCountry['Unknown'];
+
+  console.log('🏦 Withdrawal Form Debug:', {
+    userId: user?.id,
+    investorName,
+    investorCountry,
+    accountStatus,
+    availableBanksCount: availableBanks.length,
+    currentInvestor: currentInvestor ? 'Found' : 'Not Found'
+  });
 
   // Check account restrictions
   const isAccountClosed = accountStatus.toLowerCase().includes('closure');
@@ -839,6 +839,11 @@ const WithdrawalRequestForm = ({
         <div className="text-sm text-gray-600">
           Available: <span className="font-semibold">${currentBalance.toLocaleString()}</span>
         </div>
+      </div>
+
+      {/* Debug Info */}
+      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded text-xs">
+        <p><strong>Debug:</strong> Country: {investorCountry} | Banks Available: {availableBanks.length} | Status: {accountStatus}</p>
       </div>
 
       {/* Account Status Warning */}
