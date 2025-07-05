@@ -45,28 +45,12 @@ const DeleteInvestorModal = ({
     setError('');
     
     try {
-      // Update investor status to mark for deletion
-      await FirestoreService.updateInvestor(investor.id, {
-        accountStatus: 'Closed - Account deletion requested',
-        isActive: false,
-        deletionRequest: {
-          requestedBy: user.id,
-          requestedAt: new Date(),
-          reason: 'Account deletion requested by admin',
-          hasBalance: investor.currentBalance > 0,
-          balanceAmount: investor.currentBalance
-        }
-      });
-      
-      // Add a transaction record for the deletion request
-      await FirestoreService.addTransaction({
-        investorId: investor.id,
-        type: 'Credit',
-        amount: 0,
-        date: new Date().toISOString().split('T')[0],
-        status: 'Completed',
-        description: `Account deletion requested - ${investor.currentBalance > 0 ? 'Fund transfer initiated' : 'No balance to transfer'}`
-      });
+      // Mark investor for deletion
+      await FirestoreService.deleteInvestor(
+        investor.id, 
+        'Account deletion requested by admin', 
+        user.id
+      );
       
       setIsSuccess(true);
       
