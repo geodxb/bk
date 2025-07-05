@@ -142,11 +142,116 @@ const WithdrawalRequestForm = ({
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showBankSelection, setShowBankSelection] = useState(false);
 
-  // Simplified country handling
-  const investorCountry = investor?.country || 'Unknown';
+  // Enhanced country normalization function
+  const normalizeCountryName = (rawCountry: string | undefined): string => {
+    if (!rawCountry) return 'Unknown';
+    
+    const country = rawCountry.trim();
+    
+    // Direct exact matches first (case sensitive)
+    if (banksByCountry[country]) {
+      return country;
+    }
+    
+    // Case insensitive exact matches
+    const exactMatch = Object.keys(banksByCountry).find(
+      key => key.toLowerCase() === country.toLowerCase()
+    );
+    if (exactMatch) {
+      return exactMatch;
+    }
+    
+    // Comprehensive mapping for all variations
+    const countryMappings: Record<string, string> = {
+      // Mexico variations
+      'mexico': 'Mexico',
+      'méxico': 'Mexico',
+      'mexican': 'Mexico',
+      'mx': 'Mexico',
+      'mex': 'Mexico',
+      
+      // France variations
+      'france': 'France',
+      'french': 'France',
+      'fr': 'France',
+      'francia': 'France',
+      
+      // Switzerland variations
+      'switzerland': 'Switzerland',
+      'swiss': 'Switzerland',
+      'ch': 'Switzerland',
+      'suisse': 'Switzerland',
+      'schweiz': 'Switzerland',
+      'svizzera': 'Switzerland',
+      
+      // Saudi Arabia variations
+      'saudi arabia': 'Saudi Arabia',
+      'saudi': 'Saudi Arabia',
+      'ksa': 'Saudi Arabia',
+      'kingdom of saudi arabia': 'Saudi Arabia',
+      'sa': 'Saudi Arabia',
+      'saudiarabia': 'Saudi Arabia',
+      
+      // UAE variations
+      'united arab emirates': 'United Arab Emirates',
+      'uae': 'United Arab Emirates',
+      'emirates': 'United Arab Emirates',
+      'u.a.e': 'United Arab Emirates',
+      'u.a.e.': 'United Arab Emirates',
+      'dubai': 'United Arab Emirates',
+      'abu dhabi': 'United Arab Emirates'
+    };
+    
+    // Check lowercase mapping
+    const lowerCountry = country.toLowerCase();
+    if (countryMappings[lowerCountry]) {
+      return countryMappings[lowerCountry];
+    }
+    
+    // Partial matching for common cases
+    const lowerInput = lowerCountry;
+    
+    if (lowerInput.includes('mexico') || lowerInput.includes('méxico')) {
+      return 'Mexico';
+    }
+    if (lowerInput.includes('france') || lowerInput.includes('french')) {
+      return 'France';
+    }
+    if (lowerInput.includes('switzerland') || lowerInput.includes('swiss')) {
+      return 'Switzerland';
+    }
+    if (lowerInput.includes('saudi')) {
+      return 'Saudi Arabia';
+    }
+    if (lowerInput.includes('emirates') || lowerInput.includes('uae') || lowerInput.includes('dubai')) {
+      return 'United Arab Emirates';
+    }
+    
+    // Return original if no mapping found
+    return country;
+  };
+  
+  // Get investor country with proper normalization
+  const rawCountry = investor?.country;
+  const investorCountry = normalizeCountryName(rawCountry);
   const accountStatus = investor?.accountStatus || 'Active';
   
+  // Get available banks for the investor's country
+  const availableBanks = banksByCountry[investorCountry] || [];
+  
+  console.log('🏦 Withdrawal Form Debug:', {
+    investorId: investor?.id,
+    investorName,
+    rawCountry,
+    normalizedCountry: investorCountry,
+    availableBanksCount: availableBanks.length,
+    supportedCountries: Object.keys(banksByCountry),
+    banksByCountryKeys: Object.keys(banksByCountry),
+    isCountrySupported: banksByCountry.hasOwnProperty(investorCountry)
+  });
+
   // Check account restrictions
   const isAccountClosed = accountStatus.toLowerCase().includes('closure');
   const isAccountRestricted = accountStatus.toLowerCase().includes('restricted');
@@ -171,7 +276,7 @@ const WithdrawalRequestForm = ({
   };
 
   const getStep2ValidationError = () => {
-    if (method === 'bank' && !selectedBank) {
+    if (method === 'bank' && showBankSelection && !selectedBank) {
       return 'Please select a bank';
     }
     if (method === 'crypto' && !walletAddress.trim()) {
@@ -491,13 +596,91 @@ const WithdrawalRequestForm = ({
             </div>
           )}
 
+          {/* Bank Selection Section */}
+          {previewAmount >= 100 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium text-gray-800">Withdrawal Method</h4>
+                <span className="text-sm text-gray-600">Country: {investorCountry}</span>
+              </div>
+              
+              {availableBanks.length > 0 ? (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setShowBankSelection(!showBankSelection)}
+                    className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-gray-300 transition-colors text-left"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <Building size={20} className="text-gray-600" />
+                        <div>
+                          <p className="font-medium text-gray-900">Bank Transfer</p>
+                          <p className="text-sm text-gray-600">
+                            {selectedBank || `Select from ${availableBanks.length} available banks`}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-gray-400">
+                        {showBankSelection ? '▲' : '▼'}
+                      </div>
+                    </div>
+                  </button>
+                  
+                  {showBankSelection && (
+                    <div className="mt-3 border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
+                      {availableBanks.map((bank, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => {
+                            setSelectedBank(bank);
+                            setShowBankSelection(false);
+                          }}
+                          className={`w-full p-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${
+                            selectedBank === bank ? 'bg-blue-50 text-blue-900' : 'text-gray-700'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <Building size={16} className="text-gray-500" />
+                            <span className="font-medium">{bank}</span>
+                            {selectedBank === bank && (
+                              <CheckCircle size={16} className="text-blue-600 ml-auto" />
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
+                    <AlertCircle size={20} className="text-amber-600 mt-0.5" />
+                    <div>
+                      <h4 className="text-amber-800 font-semibold">Bank Transfer Not Available</h4>
+                      <p className="text-amber-700 text-sm mt-1">
+                        Bank withdrawals are not currently available for "{investorCountry}". 
+                        Please contact support for alternative withdrawal methods.
+                      </p>
+                      <p className="text-amber-700 text-xs mt-2">
+                        Supported countries: {Object.keys(banksByCountry).join(', ')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
             <h4 className="font-medium text-blue-800 mb-2">Processing Information</h4>
             <ul className="text-blue-700 text-sm space-y-1">
               <li>• Withdrawals are processed within 1-3 business days</li>
-              <li>• Funds will be transferred to your registered bank account</li>
+              <li>• Funds will be transferred to your selected bank account</li>
               <li>• A 15% platform commission will be deducted</li>
               <li>• Your account balance will be updated immediately</li>
+              {selectedBank && <li>• Selected bank: {selectedBank}</li>}
             </ul>
           </div>
         </div>
@@ -512,11 +695,19 @@ const WithdrawalRequestForm = ({
         <div className="flex justify-end mt-6">
           <button
             onClick={handleSubmit}
-            disabled={isLoading || !amount || parseFloat(amount) < 100 || parseFloat(amount) > currentBalance}
+            disabled={
+              isLoading || 
+              !amount || 
+              parseFloat(amount) < 100 || 
+              parseFloat(amount) > currentBalance ||
+              (availableBanks.length > 0 && !selectedBank)
+            }
             className="px-6 py-3 bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ArrowDownRight size={16} className="mr-2 inline" />
-            {isLoading ? 'Processing...' : 'Submit Withdrawal Request'}
+            {isLoading ? 'Processing...' : 
+             !selectedBank && availableBanks.length > 0 ? 'Select Bank to Continue' :
+             'Submit Withdrawal Request'}
           </button>
         </div>
       </div>
