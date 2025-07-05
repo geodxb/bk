@@ -7,15 +7,17 @@ import PerformanceChart from '../../components/common/PerformanceChart';
 import TransactionsTable from '../../components/investor/TransactionsTable';
 import WithdrawalRequestForm from '../../components/investor/WithdrawalRequestForm';
 import AddCreditModal from '../../components/admin/AddCreditModal';
+import DeleteInvestorModal from '../../components/admin/DeleteInvestorModal';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import { useInvestor, useTransactions } from '../../hooks/useFirestore';
-import { ChevronLeft, PlusCircle } from 'lucide-react';
+import { ChevronLeft, PlusCircle, AlertTriangle } from 'lucide-react';
 
 const InvestorProfile = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [addCreditModalOpen, setAddCreditModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'withdrawals' | 'performance'>('overview');
   
   const { investor: investorData, loading, error, refetch } = useInvestor(id || '');
@@ -69,6 +71,52 @@ const InvestorProfile = () => {
               initialDeposit={investorData.initialDeposit || 0}
               currentBalance={investorData.currentBalance || 0}
             />
+            
+            {/* Danger Zone */}
+            <div className="bg-white rounded-xl shadow-md overflow-hidden border border-red-200">
+              <div className="bg-red-50 px-6 py-4 border-b border-red-200">
+                <div className="flex items-center space-x-2">
+                  <AlertTriangle size={20} className="text-red-600" />
+                  <h3 className="text-lg font-semibold text-red-800">DANGER ZONE</h3>
+                </div>
+              </div>
+              <div className="p-6">
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">Delete Investor Account</h4>
+                    <p className="text-gray-600 mb-4">
+                      Permanently remove this investor from your platform. This action cannot be undone and will:
+                    </p>
+                    <ul className="text-gray-600 text-sm space-y-1 mb-4 list-disc list-inside">
+                      <li>Remove all investor data and transaction history</li>
+                      <li>Prevent the investor from accessing their account</li>
+                      <li>Block account creation for 90 days</li>
+                      <li>Initiate fund transfer process if balance exists</li>
+                    </ul>
+                    {investorData.currentBalance > 0 && (
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                        <div className="flex items-start space-x-3">
+                          <AlertTriangle size={20} className="text-amber-600 mt-0.5" />
+                          <div>
+                            <h5 className="font-semibold text-amber-800">Account Balance Warning</h5>
+                            <p className="text-amber-700 text-sm mt-1">
+                              This account has a balance of ${investorData.currentBalance.toLocaleString()}. 
+                              Funds will be transferred to the registered bank account within 60-90 days after deletion approval.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setDeleteModalOpen(true)}
+                    className="px-4 py-2 bg-red-600 text-white font-medium hover:bg-red-700 transition-colors rounded-lg"
+                  >
+                    Delete Investor Account
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         );
       case 'transactions':
@@ -340,6 +388,17 @@ const InvestorProfile = () => {
         investorName={investorData.name}
         currentBalance={investorData.currentBalance || 0}
         onSuccess={refetch}
+      />
+      
+      {/* Delete Investor Modal */}
+      <DeleteInvestorModal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        investor={investorData}
+        onSuccess={() => {
+          setDeleteModalOpen(false);
+          navigate('/admin/investors');
+        }}
       />
     </DashboardLayout>
   );

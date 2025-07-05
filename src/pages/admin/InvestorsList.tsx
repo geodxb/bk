@@ -213,18 +213,12 @@ const InvestorsListPage = () => {
       header: 'Actions',
       align: 'center' as 'center',
       render: (_: any, row: any) => (
-        <div className="space-y-1">
+        <div className="flex justify-center">
           <button
             onClick={() => navigate(`/admin/investor/${row.id}`)}
-            className="w-full px-3 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors rounded-lg"
+            className="px-3 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors rounded-lg"
           >
             View
-          </button>
-          <button
-            onClick={() => navigate(`/admin/investor/${row.id}`)}
-            className="w-full px-3 py-2 bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors rounded-lg"
-          >
-            Manage
           </button>
         </div>
       )

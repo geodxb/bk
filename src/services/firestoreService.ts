@@ -232,6 +232,29 @@ export class FirestoreService {
     }
   }
 
+  // Delete investor (mark for deletion)
+  static async deleteInvestor(id: string, reason: string, adminId: string): Promise<void> {
+    try {
+      console.log(`🔥 Firestore: Marking investor for deletion: ${id}`);
+      const docRef = doc(db, 'users', id);
+      await updateDoc(docRef, {
+        accountStatus: 'Closed - Account deletion requested',
+        isActive: false,
+        deletionRequest: {
+          requestedBy: adminId,
+          requestedAt: serverTimestamp(),
+          reason: reason,
+          status: 'Pending Review'
+        },
+        updatedAt: serverTimestamp()
+      });
+      console.log(`✅ Firestore: Successfully marked investor for deletion: ${id}`);
+    } catch (error) {
+      console.error('❌ Firestore Error: Failed to delete investor:', error);
+      throw new Error(`Failed to delete investor: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
   static async addCreditToInvestor(investorId: string, amount: number, adminId: string): Promise<void> {
     try {
       console.log(`🔥 Firestore: Adding $${amount.toLocaleString()} credit to investor: ${investorId}`);
