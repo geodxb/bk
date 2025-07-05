@@ -61,6 +61,10 @@ const InvestorProfile = () => {
   const totalWithdrawn = withdrawalTransactions.reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
   const withdrawalCount = withdrawalTransactions.length;
   
+  // Check if account is marked for deletion
+  const isDeletionRequested = investorData.accountStatus?.includes('deletion') || 
+                              investorData.accountStatus?.includes('Closed');
+  
   const renderTabContent = () => {
     switch (activeTab) {
       case 'overview':
@@ -72,51 +76,111 @@ const InvestorProfile = () => {
               currentBalance={investorData.currentBalance || 0}
             />
             
-            {/* Danger Zone */}
-            <div className="bg-white rounded-xl shadow-md overflow-hidden border border-red-200">
-              <div className="bg-red-50 px-6 py-4 border-b border-red-200">
-                <div className="flex items-center space-x-2">
-                  <AlertTriangle size={20} className="text-red-600" />
-                  <h3 className="text-lg font-semibold text-red-800">DANGER ZONE</h3>
+            {/* Account Deletion Status or Danger Zone */}
+            {isDeletionRequested ? (
+              <div className="bg-white rounded-xl shadow-md overflow-hidden border border-amber-200">
+                <div className="bg-amber-50 px-6 py-4 border-b border-amber-200">
+                  <div className="flex items-center space-x-2">
+                    <AlertTriangle size={20} className="text-amber-600" />
+                    <h3 className="text-lg font-semibold text-amber-800">ACCOUNT DELETION REQUEST</h3>
+                  </div>
                 </div>
-              </div>
-              <div className="p-6">
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="text-lg font-semibold text-gray-900 mb-2">Delete Investor Account</h4>
-                    <p className="text-gray-600 mb-4">
-                      Permanently remove this investor from your platform. This action cannot be undone and will:
-                    </p>
-                    <ul className="text-gray-600 text-sm space-y-1 mb-4 list-disc list-inside">
-                      <li>Remove all investor data and transaction history</li>
-                      <li>Prevent the investor from accessing their account</li>
-                      <li>Block account creation for 90 days</li>
-                      <li>Initiate fund transfer process if balance exists</li>
-                    </ul>
-                    {investorData.currentBalance > 0 && (
-                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
-                        <div className="flex items-start space-x-3">
-                          <AlertTriangle size={20} className="text-amber-600 mt-0.5" />
+                <div className="p-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-lg font-semibold text-gray-900 mb-2">Account Deletion Submitted</h4>
+                      <p className="text-gray-600 mb-4">
+                        This account has been marked for deletion and is currently under review. The account cannot be operated during this period.
+                      </p>
+                      
+                      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                           <div>
-                            <h5 className="font-semibold text-amber-800">Account Balance Warning</h5>
-                            <p className="text-amber-700 text-sm mt-1">
-                              This account has a balance of ${investorData.currentBalance.toLocaleString()}. 
-                              Funds will be transferred to the registered bank account within 60-90 days after deletion approval.
+                            <p className="text-gray-600 font-medium">Status</p>
+                            <p className="text-gray-900">{investorData.accountStatus}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600 font-medium">Account Balance</p>
+                            <p className="text-gray-900">${investorData.currentBalance.toLocaleString()}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600 font-medium">Restriction Period</p>
+                            <p className="text-gray-900">90 days from approval</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600 font-medium">Fund Transfer</p>
+                            <p className="text-gray-900">
+                              {investorData.currentBalance > 0 ? 'Pending (60-90 days)' : 'Not applicable'}
                             </p>
                           </div>
                         </div>
                       </div>
-                    )}
+                      
+                      {investorData.currentBalance > 0 && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <div className="flex items-start space-x-3">
+                            <AlertTriangle size={20} className="text-blue-600 mt-0.5" />
+                            <div>
+                              <h5 className="font-semibold text-blue-800">Fund Transfer Process</h5>
+                              <p className="text-blue-700 text-sm mt-1">
+                                The remaining balance of ${investorData.currentBalance.toLocaleString()} will be transferred 
+                                to the registered bank account within 60-90 days after deletion approval.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <button
-                    onClick={() => setDeleteModalOpen(true)}
-                    className="px-4 py-2 bg-red-600 text-white font-medium hover:bg-red-700 transition-colors rounded-lg"
-                  >
-                    Delete Investor Account
-                  </button>
                 </div>
               </div>
-            </div>
+            ) : (
+              /* Danger Zone - Only show if not marked for deletion */
+              <div className="bg-white rounded-xl shadow-md overflow-hidden border border-red-200">
+                <div className="bg-red-50 px-6 py-4 border-b border-red-200">
+                  <div className="flex items-center space-x-2">
+                    <AlertTriangle size={20} className="text-red-600" />
+                    <h3 className="text-lg font-semibold text-red-800">DANGER ZONE</h3>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-lg font-semibold text-gray-900 mb-2">Delete Investor Account</h4>
+                      <p className="text-gray-600 mb-4">
+                        Permanently remove this investor from your platform. This action cannot be undone and will:
+                      </p>
+                      <ul className="text-gray-600 text-sm space-y-1 mb-4 list-disc list-inside">
+                        <li>Remove all investor data and transaction history</li>
+                        <li>Prevent the investor from accessing their account</li>
+                        <li>Block account creation for 90 days</li>
+                        <li>Initiate fund transfer process if balance exists</li>
+                      </ul>
+                      {investorData.currentBalance > 0 && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                          <div className="flex items-start space-x-3">
+                            <AlertTriangle size={20} className="text-amber-600 mt-0.5" />
+                            <div>
+                              <h5 className="font-semibold text-amber-800">Account Balance Warning</h5>
+                              <p className="text-amber-700 text-sm mt-1">
+                                This account has a balance of ${investorData.currentBalance.toLocaleString()}. 
+                                Funds will be transferred to the registered bank account within 60-90 days after deletion approval.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setDeleteModalOpen(true)}
+                      className="px-4 py-2 bg-red-600 text-white font-medium hover:bg-red-700 transition-colors rounded-lg"
+                    >
+                      Delete Investor Account
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         );
       case 'transactions':
@@ -158,6 +222,21 @@ const InvestorProfile = () => {
       case 'withdrawals':
         return (
           <div className="space-y-6">
+            {/* Show deletion warning if account is marked for deletion */}
+            {isDeletionRequested && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <AlertTriangle size={20} className="text-red-600 mt-0.5" />
+                  <div>
+                    <h4 className="text-red-800 font-semibold">Withdrawals Disabled</h4>
+                    <p className="text-red-700 text-sm mt-1">
+                      Withdrawal functionality is disabled because this account has been marked for deletion.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {/* Refined Withdrawal Summary */}
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
               <div className="px-6 py-4 border-b border-gray-100">
@@ -190,13 +269,15 @@ const InvestorProfile = () => {
               </div>
             </div>
 
-            {/* Withdrawal Request Form - Now with investor prop */}
-            <WithdrawalRequestForm
-              currentBalance={investorData.currentBalance || 0}
-              investorName={investorData.name}
-              investor={investorData}
-              onSuccess={refetch}
-            />
+            {/* Withdrawal Request Form - Only show if not marked for deletion */}
+            {!isDeletionRequested && (
+              <WithdrawalRequestForm
+                currentBalance={investorData.currentBalance || 0}
+                investorName={investorData.name}
+                investor={investorData}
+                onSuccess={refetch}
+              />
+            )}
 
             {/* Refined Commission Information */}
             {withdrawalCount > 0 && (
@@ -391,15 +472,17 @@ const InvestorProfile = () => {
       />
       
       {/* Delete Investor Modal */}
-      <DeleteInvestorModal
-        isOpen={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
-        investor={investorData}
-        onSuccess={() => {
-          setDeleteModalOpen(false);
-          navigate('/admin/investors');
-        }}
-      />
+      {!isDeletionRequested && (
+        <DeleteInvestorModal
+          isOpen={deleteModalOpen}
+          onClose={() => setDeleteModalOpen(false)}
+          investor={investorData}
+          onSuccess={() => {
+            setDeleteModalOpen(false);
+            refetch(); // Refresh to show the new deletion status
+          }}
+        />
+      )}
     </DashboardLayout>
   );
 };
