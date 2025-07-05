@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import TradingViewChart from '../../components/common/TradingViewChart';
 import TradingViewTickerTape from '../../components/common/TradingViewTickerTape';
-import AlertMessages from '../../components/admin/AlertMessages';
 import { useAuth } from '../../contexts/AuthContext';
 import { useInvestors, useWithdrawalRequests, useTransactions } from '../../hooks/useFirestore';
 import { 
@@ -17,7 +16,6 @@ import {
 const AdminDashboard = () => {
   const { user } = useAuth();
   const { investors } = useInvestors();
-  const [showMessages, setShowMessages] = useState(true);
   const { withdrawalRequests } = useWithdrawalRequests();
   const { transactions } = useTransactions();
   
@@ -118,9 +116,18 @@ const AdminDashboard = () => {
 
   return (
     <DashboardLayout title="Dashboard">
-      {/* Messages Section */}
-      <div className="mb-8">
-        {showMessages && <AlertMessages />}
+      {/* Bank Withdrawal Outage Alert */}
+      <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="flex items-start space-x-3">
+          <AlertTriangle size={20} className="text-red-600 mt-0.5" />
+          <div className="flex-1">
+            <h3 className="text-red-800 font-semibold">Bank Withdrawal Service Outage</h3>
+            <p className="text-red-700 text-sm mt-1">
+              Bank withdrawals are currently inoperational due to outage. Our team is currently working on solving this issue. 
+              Please use alternative withdrawal methods or contact support for assistance.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Key Statistics Section */}

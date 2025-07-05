@@ -10,6 +10,7 @@ import {
   ChevronDown,
   Users,
   DollarSign,
+  MessageSquare,
   MessageCircle,
   HelpCircle
 } from 'lucide-react';
@@ -38,6 +39,7 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
   // Navigation items with exact structure requested
   const navItems: NavItem[] = [
     { text: 'Dashboard', path: '/admin' },
+    { text: 'Messages', path: '/admin/messages' },
     { 
       text: 'Holdings', 
       path: '/admin/investors',

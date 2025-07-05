@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Card from '../common/Card';
-import { AlertTriangle, X, MessageSquare, Shield, Clock } from 'lucide-react';
+import { AlertTriangle, X, MessageSquare, Shield, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -21,7 +21,7 @@ const AlertMessages = () => {
       title: 'Account Restrictions - Policy Violations',
       content: 'You have one or more accounts under restriction. It seems that many of them are from Mexico. These violations come from withdrawal requests made to external sources, unregistered bank accounts, bank accounts outside the registered country, or using third party custody or banks that go against the rules of the broker and breach contract regulations. If this continues, your account might be restricted and potentially deactivated. Make sure to inform your investors about this issue and ensure the contract is followed.',
       type: 'critical',
-      date: new Date().toISOString(),
+      date: new Date().toISOString().split('T')[0],
       sender: 'Affiliate Manager',
       read: false
     },
@@ -30,7 +30,7 @@ const AlertMessages = () => {
       title: 'Withdrawal Processing Delays',
       content: 'Due to increased security measures, all withdrawals are currently taking 3-5 business days to process. We appreciate your patience during this time.',
       type: 'info',
-      date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       sender: 'Operations Team',
       read: false
     },
@@ -39,10 +39,12 @@ const AlertMessages = () => {
       title: 'Commission Structure Update',
       content: 'Please be advised that the commission structure remains unchanged at 15% for all withdrawals. This rate ensures we can continue providing high-quality service and platform stability.',
       type: 'info',
-      date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       sender: 'Finance Department',
       read: true
-    }
+    },
+    // Add more messages as needed
+    // ...
   ]);
 
   const markAsRead = (id: string) => {
@@ -64,6 +66,8 @@ const AlertMessages = () => {
   };
 
   const unreadCount = messages.filter(m => !m.read).length;
+  const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
   return (
     <Card title="Messages" className="h-full">
@@ -80,18 +84,45 @@ const AlertMessages = () => {
           </div>
         </div>
         {unreadCount > 0 && (
-          <button
+          <div className="flex space-x-2">
+            <div className="flex rounded-lg overflow-hidden border border-gray-200">
+              <button
+                onClick={() => setFilter('all')}
+                className={`px-3 py-1 text-sm ${
+                  filter === 'all' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700'
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setFilter('unread')}
+                className={`px-3 py-1 text-sm ${
+                  filter === 'unread' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700'
+                }`}
+              >
+                Unread ({unreadCount})
+              </button>
+            </div>
+            <button
             onClick={markAllAsRead}
             className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded transition-colors"
           >
             Mark all read
           </button>
+          </div>
         )}
       </div>
 
       <div className="space-y-4 max-h-[600px] overflow-y-auto">
+        {filter === 'unread' && messages.filter(m => !m.read).length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-gray-500">No unread messages</p>
+          </div>
+        )}
         <AnimatePresence initial={false}>
-          {messages.map((message) => (
+          {messages
+            .filter(message => filter === 'all' || !message.read)
+            .map((message) => (
             <motion.div
               key={message.id}
               initial={{ opacity: 0, y: 10 }}
@@ -119,22 +150,33 @@ const AlertMessages = () => {
                   {message.type === 'critical' && <AlertTriangle size={16} />}
                   {message.type === 'warning' && <Clock size={16} />}
                   {message.type === 'info' && <Shield size={16} />}
-                  <span className="font-medium">{message.title}</span>
+                  <span className="font-medium truncate max-w-[200px] md:max-w-[300px]">{message.title}</span>
                 </div>
-                <button
-                  onClick={() => deleteMessage(message.id)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <X size={16} />
-                </button>
+                <div className="flex items-center space-x-2">
+                  <button onClick={() => setExpandedMessage(expandedMessage === message.id ? null : message.id)}>
+                    {expandedMessage === message.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  </button>
+                  <button
+                    onClick={() => deleteMessage(message.id)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
               </div>
-              <div className="p-4">
-                <p className="text-gray-700 mb-3 whitespace-pre-line">{message.content}</p>
+              <div className={`p-4 ${expandedMessage === message.id ? '' : 'max-h-24 overflow-hidden'}`}>
+                <p className="text-gray-700 mb-3 whitespace-pre-line">
+                  {expandedMessage === message.id 
+                    ? message.content 
+                    : message.content.length > 150 
+                      ? message.content.substring(0, 150) + '...' 
+                      : message.content}
+                </p>
                 <div className="flex justify-between items-center text-sm text-gray-500">
                   <div>
                     <span className="font-medium">{message.sender}</span>
                     <span className="mx-2">•</span>
-                    <span>{new Date(message.date).toLocaleDateString()}</span>
+                    <span>{message.date}</span>
                   </div>
                   {!message.read && (
                     <button

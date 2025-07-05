@@ -9,6 +9,7 @@ const AdminLogin = lazy(() => import('./pages/auth/AdminLogin'));
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
 const InvestorProfile = lazy(() => import('./pages/admin/InvestorProfile'));
 const InvestorsListPage = lazy(() => import('./pages/admin/InvestorsList'));
+const MessagesPage = lazy(() => import('./pages/admin/MessagesPage'));
 const WithdrawalsPage = lazy(() => import('./pages/admin/WithdrawalsPage'));
 const AnalyticsPage = lazy(() => import('./pages/admin/AnalyticsPage'));
 const SettingsPage = lazy(() => import('./pages/admin/SettingsPage'));
@@ -35,6 +36,11 @@ function App() {
         <Route path="/admin/investors" element={
           <ProtectedRoute role="admin">
             <InvestorsListPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/messages" element={
+          <ProtectedRoute role="admin">
+            <MessagesPage />
           </ProtectedRoute>
         } />
         <Route path="/admin/investor/:id" element={

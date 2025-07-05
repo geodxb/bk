@@ -46,7 +46,7 @@ const NotificationPanel = () => {
     // Add message notification for Mexico policy violation
     newNotifications.push({
       id: `message-policy-violation`,
-      type: 'message',
+      type: 'message' as 'message',
       title: 'Account Restrictions - Policy Violations',
       message: 'Multiple accounts from Mexico have policy violations. Urgent attention required.',
       timestamp: new Date(),
@@ -232,6 +232,9 @@ const NotificationPanel = () => {
                         <div className="mt-2">
                           <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full font-medium">
                             Affiliate Manager Message
+                          </span>
+                          <span className="ml-2 px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full font-medium">
+                            View in Messages Tab
                           </span>
                         </div>
                       )}
