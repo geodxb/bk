@@ -651,43 +651,4 @@ What can I assist you with today?`
 
     return quickResponses[category as keyof typeof quickResponses] || quickResponses.general;
   }
-
-  private static generateRestrictionInfo(investor: any): string {
-    if (!investor.accountStatus?.toLowerCase().includes('restricted') && 
-        !investor.accountStatus?.toLowerCase().includes('policy violation')) {
-      return `${investor.name}'s account doesn't have any restrictions. The account is in good standing with full access to all platform features.
-
-Account Status: ${investor.accountStatus || 'Active'}
-Current Balance: $${investor.currentBalance.toLocaleString()}
-
-The investor can freely:
-• Deposit additional funds
-• Execute trades
-• Request withdrawals (subject to the standard 1-3 day processing time)
-• Access all platform features
-
-Is there something specific about this account you're concerned about?`;
-    }
-
-    // For restricted accounts
-    return `${investor.name}'s account has restrictions due to policy violations. Our compliance system flagged this account for the following reasons:
-
-• Multiple withdrawal requests in a short timeframe
-• Unusual trading patterns that don't match typical investor behavior
-• Potential verification issues with submitted documents
-
-Current Status: ${investor.accountStatus}
-Restriction Date: Approximately 30 days ago
-Current Balance: $${investor.currentBalance.toLocaleString()}
-
-While under review, the account has the following limitations:
-• Withdrawals require manual approval by our compliance team
-• Processing time is extended to 5-10 business days
-• Additional verification may be requested for large transactions
-• Trading functionality remains available but is monitored
-
-These restrictions are temporary while our compliance team completes their review. The investor has been notified and asked to provide additional documentation to help resolve these issues.
-
-Would you like me to check if there's been any recent update on this review process?`;
-  }
 }
