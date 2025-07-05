@@ -18,7 +18,8 @@ import {
   XCircle,
   User,
   Phone,
-  MapPin
+  MapPin,
+  AlertTriangle
 } from 'lucide-react';
 
 interface WithdrawalRequestFormProps {
