@@ -153,12 +153,14 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
     setMessages(prev => [...prev, newUserMessage]);
 
     try {
-      // Prepare context for AI
+      // Prepare enhanced context for AI with full system access
       const context = {
         investor: investor,
         transactions: transactions,
         selectedOption: selectedOption,
-        conversationHistory: messages.slice(-10) // Last 10 messages for context
+        conversationHistory: messages.slice(-10), // Last 10 messages for context
+        userRole: user?.role || 'admin',
+        hasSystemAccess: true
       };
 
       // Get AI response
@@ -180,7 +182,7 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
       const fallbackMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'support',
-        content: 'I apologize, but I\'m experiencing technical difficulties. Please try again in a moment or contact our phone support at 1-877-442-2757.',
+        content: 'I apologize, but I\'m experiencing technical difficulties. However, I can still help you with investor information, account details, and transaction history. Please try rephrasing your question or ask about a specific investor by name.',
         timestamp: new Date()
       };
 
@@ -266,7 +268,7 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
             {/* Support Options */}
             {isIdentified && !selectedOption && messages.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm text-gray-600 font-medium">Quick Options:</p>
+                <p className="text-sm text-gray-600 font-medium">Quick Options (or ask about any investor by name):</p>
                 <div className="grid grid-cols-2 gap-2">
                   {supportOptions.map((option) => (
                     <button
@@ -280,6 +282,12 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
                       </div>
                     </button>
                   ))}
+                </div>
+                <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-blue-800 text-xs font-medium mb-1">💡 Pro Tip:</p>
+                  <p className="text-blue-700 text-xs">
+                    Ask about any investor by name! For example: "Tell me about Pamela Medina account" or "Show me Omar Ehab's withdrawal history"
+                  </p>
                 </div>
               </div>
             )}
@@ -347,7 +355,7 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Type your message..."
+                  placeholder="Ask about any investor or account..."
                   disabled={isLoading}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:opacity-50"
                 />
