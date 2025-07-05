@@ -1,10 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, MessageCircle, User, Mail, CreditCard, Loader2 } from 'lucide-react';
+import { X, Send, MessageCircle, User, Mail, CreditCard, Loader2, HelpCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useInvestor, useTransactions } from '../../hooks/useFirestore';
 import { SupportService } from '../../services/supportService';
-import { FirestoreService } from '../../services/firestoreService';
 
 interface Message {
   id: string;
@@ -41,7 +40,7 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
     { id: 'account', label: 'Account Information', icon: <User size={16} /> },
     { id: 'balance', label: 'Balance & Transactions', icon: <CreditCard size={16} /> },
     { id: 'withdrawal', label: 'Withdrawal Support', icon: <Mail size={16} /> },
-    { id: 'general', label: 'General Inquiry', icon: <MessageCircle size={16} /> }
+    { id: 'general', label: 'General Inquiry', icon: <HelpCircle size={16} /> }
   ];
 
   useEffect(() => {
@@ -54,19 +53,34 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
     if (isOpen && !isIdentified) {
       // Reset state when opening
       setIdentificationData({
-        name: '',
-        email: '',
-        clientId: ''
+        name: user?.name || '',
+        email: user?.email || '',
+        clientId: user?.id?.slice(-8) || ''
       });
       setSelectedOption(null);
       setMessages([{
         id: Date.now().toString(),
         type: 'support',
-        content: 'Welcome to Interactive Brokers Support Chat. Please introduce your name, email, and client ID to identify yourself.',
+        content: 'Welcome to Interactive Brokers Support. How can I assist you today?',
         timestamp: new Date()
       }]);
+      
+      // Auto-identify if user is logged in
+      if (user?.name && user?.email && user?.id) {
+        setTimeout(() => {
+          setIsIdentified(true);
+          setMessages(prev => [...prev, 
+            {
+              id: (Date.now() + 1).toString(),
+              type: 'support',
+              content: `Thank you ${user.name}. How can I assist you today? Please select from the options below or type your question directly.`,
+              timestamp: new Date()
+            }
+          ]);
+        }, 500);
+      }
     }
-  }, [isOpen, isIdentified]);
+  }, [isOpen, isIdentified, user]);
 
   const handleIdentification = () => {
     if (!identificationData.name || !identificationData.email || !identificationData.clientId) {
@@ -75,7 +89,7 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
 
     setIsLoading(true);
     
-    // Auto-verify credentials for now (bypassing Firebase verification)
+    // Auto-verify credentials for now
     setTimeout(() => {
       setIsIdentified(true);
       setMessages(prev => [...prev, 
@@ -88,7 +102,7 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
         {
           id: (Date.now() + 1).toString(),
           type: 'support',
-          content: `Thank you ${identificationData.name}. Your identity has been verified. How can I assist you today? Please select from the options below or type your question directly.`,
+          content: `Thank you ${identificationData.name}. How can I assist you today? Please select from the options below or type your question directly.`,
           timestamp: new Date()
         }
       ]);
@@ -96,7 +110,7 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
     }, 1000);
   };
 
-  const handleOptionSelect = (optionId: string) => {
+  const handleOptionSelect = async (optionId: string) => {
     setSelectedOption(optionId);
     const option = supportOptions.find(opt => opt.id === optionId);
     
@@ -107,32 +121,41 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
       timestamp: new Date()
     }]);
 
-    // Generate contextual response based on option
-    let contextualResponse = '';
-    switch (optionId) {
-      case 'account':
-        contextualResponse = `I can see your account details. You joined us on ${investor?.joinDate} and your account status is ${investor?.accountStatus || 'Active'}. What specific account information do you need?`;
-        break;
-      case 'balance':
-        contextualResponse = `Your current balance is $${investor?.currentBalance?.toLocaleString() || '0'}. You have ${transactions.length} transactions on record. What would you like to know about your balance or transactions?`;
-        break;
-      case 'withdrawal':
-        const withdrawals = transactions.filter(tx => tx.type === 'Withdrawal');
-        contextualResponse = `I can see you have ${withdrawals.length} withdrawal transactions. Your account allows withdrawals with a minimum of $100. How can I help with your withdrawal?`;
-        break;
-      case 'general':
-        contextualResponse = 'I\'m here to help with any questions about your Interactive Brokers account. What would you like to know?';
-        break;
-    }
+    setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      // Prepare context for AI
+      const context = {
+        investor: investor,
+        transactions: transactions,
+        selectedOption: optionId,
+        conversationHistory: messages.slice(-10), // Last 10 messages for context
+        userRole: user?.role || 'investor',
+        hasSystemAccess: true
+      };
+
+      // Get response based on selected option
+      const response = await SupportService.generateQuickResponse(optionId, context);
+
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         type: 'support',
-        content: contextualResponse,
+        content: response,
         timestamp: new Date()
       }]);
-    }, 500);
+    } catch (error) {
+      console.error('Error generating response:', error);
+      
+      // Fallback response
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        type: 'support',
+        content: 'I apologize, but I encountered an issue generating a response. How can I help you today?',
+        timestamp: new Date()
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSendMessage = async () => {
@@ -142,27 +165,24 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
     setInputMessage('');
     setIsLoading(true);
 
-    // Format user message for display
-    const formattedUserMessage = userMessage.charAt(0).toUpperCase() + userMessage.slice(1);
-    
     // Add user message
     const newUserMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
-      content: formattedUserMessage,
+      content: userMessage,
       timestamp: new Date()
     };
 
     setMessages(prev => [...prev, newUserMessage]);
 
     try {
-      // Prepare enhanced context for AI with full system access
+      // Prepare context for AI
       const context = {
         investor: investor,
         transactions: transactions,
         selectedOption: selectedOption,
         conversationHistory: messages.slice(-10), // Last 10 messages for context
-        userRole: user?.role || 'admin',
+        userRole: user?.role || 'investor',
         hasSystemAccess: true
       };
 
@@ -185,7 +205,7 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
       const fallbackMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'support',
-        content: 'I apologize, but I\'m experiencing technical difficulties. I can still help you with investor information, account details, and transaction history. Please try asking about a specific investor by name, such as "Tell me about Pamela Medina".',
+        content: 'I apologize, but I encountered an issue processing your request. Please try asking in a different way, or ask about a specific investor by name, such as "Tell me about Pamela Medina".',
         timestamp: new Date()
       };
 
@@ -226,19 +246,21 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
           className="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl flex flex-col"
         >
           {/* Header */}
-          <div className="bg-blue-600 text-white p-4 flex items-center justify-between">
+          <div className="bg-gray-900 text-white p-4 flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                <MessageCircle size={18} />
-              </div>
+              <img 
+                src="/Screenshot 2025-06-07 024813.png" 
+                alt="Interactive Brokers" 
+                className="h-8 w-auto object-contain"
+              />
               <div>
-                <h3 className="font-semibold">Interactive Brokers Support</h3>
-                <p className="text-blue-100 text-sm">Live Chat Support</p>
+                <h3 className="font-semibold">Support</h3>
+                <p className="text-gray-300 text-sm">How can we help?</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
             >
               <X size={18} />
             </button>
@@ -254,13 +276,13 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
                 <div
                   className={`max-w-[80%] p-3 rounded-lg ${
                     message.type === 'user'
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-gray-900 text-white'
                       : 'bg-gray-100 text-gray-800'
                   }`}
                 >
                   <div className="text-sm whitespace-pre-line">{message.content}</div>
                   <p className={`text-xs mt-1 ${
-                    message.type === 'user' ? 'text-blue-100' : 'text-gray-500'
+                    message.type === 'user' ? 'text-gray-300' : 'text-gray-500'
                   }`}>
                     {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
@@ -271,7 +293,7 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
             {/* Support Options */}
             {isIdentified && !selectedOption && messages.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm text-gray-600 font-medium">Quick Options (or ask about any investor by name):</p>
+                <p className="text-sm text-gray-600 font-medium">Quick Options:</p>
                 <div className="grid grid-cols-2 gap-2">
                   {supportOptions.map((option) => (
                     <button
@@ -286,9 +308,9 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
                     </button>
                   ))}
                 </div>
-                <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <p className="text-blue-800 text-xs font-medium mb-1">💡 Pro Tip:</p>
-                  <p className="text-blue-700 text-xs">
+                <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-gray-800 text-xs font-medium mb-1">Pro Tip:</p>
+                  <p className="text-gray-700 text-xs">
                     Ask about any investor by name! For example: "Tell me about Pamela Medina" or "Show me Omar Ehab's withdrawal history"
                   </p>
                 </div>
@@ -318,14 +340,14 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
                   placeholder="Full Name"
                   value={identificationData.name}
                   onChange={(e) => setIdentificationData(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-sm"
                 />
                 <input
                   type="email"
                   placeholder="Email Address"
                   value={identificationData.email}
                   onChange={(e) => setIdentificationData(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-sm"
                 />
                 <input
                   type="text"
@@ -333,12 +355,12 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
                   value={identificationData.clientId}
                   onChange={(e) => setIdentificationData(prev => ({ ...prev, clientId: e.target.value }))}
                   onKeyPress={handleKeyPress}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-sm"
                 />
                 <button
                   onClick={handleIdentification}
                   disabled={!identificationData.name || !identificationData.email || !identificationData.clientId || isLoading}
-                  className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center justify-center"
+                  className="w-full bg-gray-900 text-white py-2 px-4 rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center justify-center"
                 >
                   {isLoading ? (
                     <>
@@ -360,12 +382,12 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
                   onKeyPress={handleKeyPress}
                   placeholder="Type your question or ask about any investor..."
                   disabled={isLoading}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:opacity-50"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-sm disabled:opacity-50"
                 />
                 <button
                   onClick={handleSendMessage}
                   disabled={!inputMessage.trim() || isLoading}
-                  className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-gray-900 text-white p-2 rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Send size={16} />
                 </button>
