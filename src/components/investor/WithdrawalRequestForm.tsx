@@ -432,9 +432,9 @@ const WithdrawalRequestForm = ({
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle size={32} className="text-green-600" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Request Submitted Successfully</h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Withdrawal Request Submitted Successfully</h3>
             <p className="text-gray-600 mb-6">
-              Your withdrawal request for ${parseFloat(amount).toLocaleString()} has been submitted for processing.
+              Your withdrawal request for ${parseFloat(amount).toLocaleString()} has been submitted for approval and is now pending review.
             </p>
             
             <div className="bg-gray-50 p-4 rounded-lg mb-6 border border-gray-200">
@@ -453,17 +453,36 @@ const WithdrawalRequestForm = ({
                 </div>
                 <div>
                   <p className="text-gray-600">Status</p>
-                  <p className="font-bold text-gray-900">
-                    {isPolicyViolation ? 'Pending Manual Review' : 'Pending Approval'}
-                  </p>
+                  <p className="font-bold text-amber-600">Pending Approval</p>
                 </div>
               </div>
             </div>
             
             <div className="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-200">
               <p className="text-blue-800 text-sm">
-                <strong>New Balance:</strong> ${(currentBalance - parseFloat(amount)).toLocaleString()}
+                <strong>Updated Account Balance:</strong> ${(currentBalance - parseFloat(amount)).toLocaleString()}
               </p>
+              <p className="text-blue-700 text-xs mt-1">
+                Your account balance has been updated to reflect the withdrawal request.
+              </p>
+            </div>
+            
+            <div className="bg-amber-50 p-4 rounded-lg mb-6 border border-amber-200">
+              <div className="flex items-start space-x-3">
+                <Clock size={20} className="text-amber-600 mt-0.5" />
+                <div className="text-left">
+                  <h4 className="font-semibold text-amber-800">Processing Information</h4>
+                  <p className="text-amber-700 text-sm mt-1">
+                    {isPolicyViolation 
+                      ? 'Your request requires manual review due to account restrictions. Processing may take 5-10 business days.'
+                      : 'Your withdrawal request will be reviewed and processed within 1-3 business days.'
+                    }
+                  </p>
+                  <p className="text-amber-700 text-sm mt-1">
+                    You will be notified once the withdrawal has been approved and processed.
+                  </p>
+                </div>
+              </div>
             </div>
             
             <button
@@ -678,8 +697,8 @@ const WithdrawalRequestForm = ({
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
             <h4 className="font-medium text-blue-800 mb-2">Processing Information</h4>
             <ul className="text-blue-700 text-sm space-y-1">
-              <li>• {isPolicyViolation ? 'Manual review required - Processing time: 5-10 business days' : 'Standard processing: 1-3 business days'}</li>
-              <li>• Funds will be transferred to your selected bank account</li>
+              <li>• {isPolicyViolation ? 'Manual review required - Processing time: 5-10 business days' : 'Request will be submitted for approval - Processing time: 1-3 business days'}</li>
+              <li>• Once approved, funds will be transferred to your selected bank account</li>
               <li>• A 15% platform commission will be deducted</li>
               <li>• Your account balance will be updated immediately</li>
               {selectedBank && <li>• Selected bank: {selectedBank}</li>}
@@ -712,7 +731,7 @@ const WithdrawalRequestForm = ({
              !selectedBank && availableBanks.length > 0 ? 'Select Bank to Continue' :
              getBankFormValidationError() ? 'Complete Bank Details' :
              isPolicyViolation ? 'Submit for Manual Review' :
-             'Submit Withdrawal Request'}
+             'Submit for Approval'}
           </button>
         </div>
       </div>
