@@ -219,6 +219,22 @@ const WithdrawalsPage = () => {
     },
   ];
 
+  return (
+    <DashboardLayout>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <Card className="bg-white border border-gray-200">
+          <div className="text-center">
+            <div className="text-2xl font-semibold text-gray-900 mb-1">{pendingCount}</div>
+            <div className="text-sm text-gray-600">Pending</div>
+          </div>
+        </Card>
+        
+        <Card className="bg-white border border-gray-200">
+          <div className="text-center">
+            <div className="text-2xl font-semibold text-gray-900 mb-1">${totalPendingAmount.toLocaleString()}</div>
+            <div className="text-sm text-gray-600">Total Pending</div>
+          </div>
         </Card>
         
         <Card className="bg-white border border-gray-200">
