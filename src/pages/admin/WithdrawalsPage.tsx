@@ -203,73 +203,22 @@ const WithdrawalsPage = () => {
       header: 'Actions',
       align: 'center' as 'center',
       render: (_: any, row: any) => {
-        if (row.status !== 'Pending') {
-          return (
-            <div className="text-center space-y-1">
-              <span className="text-gray-500 text-xs">Processed</span>
-              {row.reason && (
-                <p className="text-xs text-gray-400 max-w-32 truncate">
-                  {row.reason}
-                </p>
-              )}
-            </div>
-          );
-        }
-        
         return (
-          <div className="flex space-x-2">
-            <button
-              onClick={() => openActionModal(row, 'approve')}
-              disabled={isLoading[row.id]}
-              className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
-            >
-              Approve
-            </button>
-            <button
-              onClick={() => openActionModal(row, 'reject')}
-              disabled={isLoading[row.id]}
-              className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
-            >
-              Reject
-            </button>
+          <div className="text-center">
+            <span className="text-gray-500 text-xs">
+              {row.status === 'Pending' ? 'Awaiting Review' : 'Processed'}
+            </span>
+            {row.reason && (
+              <p className="text-xs text-gray-400 max-w-32 truncate mt-1">
+                {row.reason}
+              </p>
+            )}
           </div>
         );
       },
     },
   ];
 
-  if (error) {
-    return (
-      <DashboardLayout title="Withdrawal Management">
-        <Card title="Error">
-          <div className="text-center py-8">
-            <AlertTriangle size={48} className="mx-auto text-red-500 mb-4" />
-            <p className="text-red-600 mb-4">{error}</p>
-            <Button variant="outline" onClick={refetch}>
-              Retry
-            </Button>
-          </div>
-        </Card>
-      </DashboardLayout>
-    );
-  }
-
-  return (
-    <DashboardLayout title="Withdrawal Management">
-      {/* Summary Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card className="bg-white border border-gray-200">
-          <div className="text-center">
-            <div className="text-2xl font-semibold text-gray-900 mb-1">{pendingCount}</div>
-            <div className="text-sm text-gray-600">Pending Requests</div>
-          </div>
-        </Card>
-        
-        <Card className="bg-white border border-gray-200">
-          <div className="text-center">
-            <div className="text-2xl font-semibold text-gray-900 mb-1">${totalPendingAmount.toLocaleString()}</div>
-            <div className="text-sm text-gray-600">Pending Amount</div>
-          </div>
         </Card>
         
         <Card className="bg-white border border-gray-200">
@@ -362,90 +311,6 @@ const WithdrawalsPage = () => {
           </div>
         )}
       </Card>
-
-      {/* Action Modal */}
-      <Modal
-        isOpen={showActionModal}
-        onClose={() => {
-          setShowActionModal(false);
-          setSelectedRequest(null);
-          setReason('');
-        }}
-        title={`${actionType === 'approve' ? 'Approve' : 'Reject'} Withdrawal Request`}
-        size="lg"
-      >
-        {selectedRequest && (
-          <div className="space-y-6">
-            {/* Request Summary */}
-            <div className="bg-gray-50 p-4 rounded border border-gray-200">
-              <h4 className="font-medium text-gray-900 mb-3">Request Details</h4>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-500">Investor</p>
-                  <p className="font-medium text-gray-900">{selectedRequest.investorName}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Amount</p>
-                  <p className="font-medium text-gray-900">${selectedRequest.amount.toLocaleString()}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Request Date</p>
-                  <p className="font-medium text-gray-900">{new Date(selectedRequest.date).toLocaleDateString()}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Bank/Platform</p>
-                  <p className="font-medium text-gray-900">{getBankInfo(selectedRequest.investorName)}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Reason */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {actionType === 'approve' ? 'Approval Notes' : 'Rejection Reason'} 
-                {actionType === 'reject' && <span className="text-red-500">*</span>}
-              </label>
-              <textarea
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                rows={3}
-                placeholder={
-                  actionType === 'approve' 
-                    ? 'Add any notes about this approval (optional)...'
-                    : 'Please provide a clear reason for rejection...'
-                }
-                required={actionType === 'reject'}
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex space-x-3">
-              <button
-                onClick={() => {
-                  setShowActionModal(false);
-                  setSelectedRequest(null);
-                  setReason('');
-                }}
-                className="px-4 py-2 text-sm border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleModalSubmit}
-                disabled={actionType === 'reject' && !reason.trim()}
-                className={`px-4 py-2 text-sm rounded text-white ${
-                  actionType === 'approve' 
-                    ? 'bg-green-600 hover:bg-green-700' 
-                    : 'bg-red-600 hover:bg-red-700'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                {actionType === 'approve' ? 'Approve Request' : 'Reject Request'}
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
     </DashboardLayout>
   );
 };
