@@ -4,6 +4,7 @@ import { X, Send, MessageCircle, User, Mail, CreditCard, Loader2 } from 'lucide-
 import { useAuth } from '../../contexts/AuthContext';
 import { useInvestor, useTransactions } from '../../hooks/useFirestore';
 import { SupportService } from '../../services/supportService';
+import { FirestoreService } from '../../services/firestoreService';
 
 interface Message {
   id: string;
@@ -66,34 +67,49 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
       return;
     }
 
-    // Verify client ID matches user ID (simplified verification)
-    const isValidClient = user?.id.includes(identificationData.clientId.slice(-8)) || 
-                         identificationData.clientId.includes(user?.id.slice(-8) || '');
-
-    if (isValidClient) {
-      setIsIdentified(true);
-      setMessages(prev => [...prev, 
-        {
+    // Verify credentials against Firebase
+    setIsLoading(true);
+    
+    FirestoreService.verifySupportCredentials(
+      identificationData.name,
+      identificationData.email,
+      identificationData.clientId
+    ).then(credentials => {
+      if (credentials) {
+        setIsIdentified(true);
+        setMessages(prev => [...prev, 
+          {
+            id: Date.now().toString(),
+            type: 'user',
+            content: `Name: ${identificationData.name}, Email: ${identificationData.email}, Client ID: ${identificationData.clientId}`,
+            timestamp: new Date()
+          },
+          {
+            id: (Date.now() + 1).toString(),
+            type: 'support',
+            content: `Thank you ${identificationData.name}. Your identity has been verified. How can I assist you today? Please select from the options below or type your question directly.`,
+            timestamp: new Date()
+          }
+        ]);
+      } else {
+        setMessages(prev => [...prev, {
           id: Date.now().toString(),
-          type: 'user',
-          content: `Name: ${identificationData.name}, Email: ${identificationData.email}, Client ID: ${identificationData.clientId}`,
-          timestamp: new Date()
-        },
-        {
-          id: (Date.now() + 1).toString(),
           type: 'support',
-          content: `Thank you ${identificationData.name}. Your identity has been verified. How can I assist you today? Please select from the options below or type your question directly.`,
+          content: 'I cannot verify your identity with the provided information. Please ensure all details are correct and match our records.',
           timestamp: new Date()
-        }
-      ]);
-    } else {
+        }]);
+      }
+    }).catch(error => {
+      console.error('Error verifying credentials:', error);
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         type: 'support',
-        content: 'I cannot verify your identity with the provided information. Please ensure your client ID is correct.',
+        content: 'There was an error verifying your identity. Please try again or contact phone support.',
         timestamp: new Date()
       }]);
-    }
+    }).finally(() => {
+      setIsLoading(false);
+    });
   };
 
   const handleOptionSelect = (optionId: string) => {
@@ -326,10 +342,17 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
                 />
                 <button
                   onClick={handleIdentification}
-                  disabled={!identificationData.name || !identificationData.email || !identificationData.clientId}
-                  className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                  disabled={!identificationData.name || !identificationData.email || !identificationData.clientId || isLoading}
+                  className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center justify-center"
                 >
-                  Verify Identity
+                  {isLoading ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin mr-2" />
+                      Verifying...
+                    </>
+                  ) : (
+                    'Verify Identity'
+                  )}
                 </button>
               </div>
             ) : (

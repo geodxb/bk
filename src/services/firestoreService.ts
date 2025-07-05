@@ -558,6 +558,87 @@ export class FirestoreService {
     }
   }
 
+  // Support credentials management
+  static async storeSupportCredentials(userId: string, credentials: {
+    name: string;
+    email: string;
+    clientId: string;
+  }): Promise<void> {
+    try {
+      console.log(`🔥 Firestore: Storing support credentials for user: ${userId}`);
+      const docRef = doc(db, 'supportCredentials', userId);
+      await setDoc(docRef, {
+        ...credentials,
+        userId,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      console.log(`✅ Firestore: Successfully stored support credentials for user: ${userId}`);
+    } catch (error) {
+      console.error('❌ Firestore Error: Failed to store support credentials:', error);
+      throw new Error(`Failed to store support credentials: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  static async getSupportCredentials(userId: string): Promise<any | null> {
+    try {
+      console.log(`🔥 Firestore: Fetching support credentials for user: ${userId}`);
+      const docRef = doc(db, 'supportCredentials', userId);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        console.log(`✅ Firestore: Found support credentials for user: ${userId}`);
+        return {
+          id: docSnap.id,
+          ...data,
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date()
+        };
+      }
+      
+      console.log(`⚠️ Firestore: No support credentials found for user: ${userId}`);
+      return null;
+    } catch (error) {
+      console.error('❌ Firestore Error: Failed to fetch support credentials:', error);
+      throw new Error(`Failed to retrieve support credentials: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  static async verifySupportCredentials(name: string, email: string, clientId: string): Promise<any | null> {
+    try {
+      console.log(`🔥 Firestore: Verifying support credentials for: ${name}`);
+      
+      // Query support credentials collection
+      const q = query(
+        collection(db, 'supportCredentials'),
+        where('name', '==', name),
+        where('email', '==', email),
+        where('clientId', '==', clientId)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const doc = querySnapshot.docs[0];
+        const data = doc.data();
+        console.log(`✅ Firestore: Support credentials verified for: ${name}`);
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date()
+        };
+      }
+      
+      console.log(`⚠️ Firestore: Support credentials verification failed for: ${name}`);
+      return null;
+    } catch (error) {
+      console.error('❌ Firestore Error: Failed to verify support credentials:', error);
+      throw new Error(`Failed to verify support credentials: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
   // Utility methods
   static async deleteDocument(collectionName: string, id: string): Promise<void> {
     try {
