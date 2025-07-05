@@ -3,11 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import { useWithdrawalRequests, useInvestors } from '../../hooks/useFirestore';
-import { Bell, X, DollarSign, UserCheck, AlertTriangle, CheckCircle, Users, TrendingUp } from 'lucide-react';
+import { Bell, X, DollarSign, UserCheck, AlertTriangle, CheckCircle, Users, TrendingUp, MessageSquare } from 'lucide-react';
 
 interface Notification {
   id: string;
-  type: 'withdrawal' | 'account' | 'system' | 'investor';
+  type: 'withdrawal' | 'account' | 'system' | 'investor' | 'message';
   title: string;
   message: string;
   timestamp: Date;
@@ -41,6 +41,17 @@ const NotificationPanel = () => {
         investorName: req.investorName,
         amount: req.amount
       });
+    });
+
+    // Add message notification for Mexico policy violation
+    newNotifications.push({
+      id: `message-policy-violation`,
+      type: 'message',
+      title: 'Account Restrictions - Policy Violations',
+      message: 'Multiple accounts from Mexico have policy violations. Urgent attention required.',
+      timestamp: new Date(),
+      read: false,
+      priority: 'high'
     });
 
     // Account status notifications
@@ -112,6 +123,7 @@ const NotificationPanel = () => {
       case 'withdrawal': return <DollarSign size={18} className="text-red-600" />;
       case 'account': return <UserCheck size={18} className="text-amber-600" />;
       case 'system': return <AlertTriangle size={18} className="text-blue-600" />;
+      case 'message': return <MessageSquare size={18} className="text-red-600" />;
       case 'investor': return <Users size={18} className="text-green-600" />;
       default: return <Bell size={18} className="text-gray-600" />;
     }
@@ -216,6 +228,14 @@ const NotificationPanel = () => {
                         </div>
                       )}
                       
+                      {notification.type === 'message' && (
+                        <div className="mt-2">
+                          <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full font-medium">
+                            Affiliate Manager Message
+                          </span>
+                        </div>
+                      )}
+                      
                       {notification.type === 'investor' && (
                         <div className="mt-2">
                           <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
@@ -259,8 +279,11 @@ const NotificationPanel = () => {
           <div className="grid grid-cols-3 gap-3 text-center">
             <div className="bg-red-50 rounded-lg p-3 border border-red-200">
               <p className="text-xs text-red-600 font-medium mb-1">Withdrawals</p>
-              <p className="text-lg font-bold text-red-700">
-                {notifications.filter(n => n.type === 'withdrawal').length}
+              <p className="text-lg font-bold text-red-700 flex items-center justify-center">
+                {notifications.filter(n => n.type === 'withdrawal' || n.type === 'message').length}
+                {notifications.filter(n => n.type === 'message' && !n.read).length > 0 && (
+                  <span className="ml-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                )}
               </p>
             </div>
             <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
