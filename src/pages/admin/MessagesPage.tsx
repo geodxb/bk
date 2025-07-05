@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import AlertMessages from '../components/admin/AlertMessages';
+import AlertMessages from '../../components/admin/AlertMessages';
 
 const MessagesPage = () => {
   return (

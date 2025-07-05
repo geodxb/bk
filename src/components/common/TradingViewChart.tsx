@@ -20,65 +20,98 @@ const TradingViewChart = ({
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Generate a unique ID for this widget instance
-    const widgetId = `tradingview_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    try {
+      // Generate a unique ID for this widget instance
+      const widgetId = `tradingview_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Clear any existing content
-    containerRef.current.innerHTML = '';
+      // Clear any existing content
+      containerRef.current.innerHTML = '';
 
-    // Create the widget container
-    const widgetContainer = document.createElement('div');
-    widgetContainer.className = 'tradingview-widget-container';
-    widgetContainer.style.height = height;
-    widgetContainer.style.width = width;
+      // Create the widget container
+      const widgetContainer = document.createElement('div');
+      widgetContainer.className = 'tradingview-widget-container';
+      widgetContainer.style.height = height;
+      widgetContainer.style.width = width;
 
-    // Create the main widget div
-    const widgetDiv = document.createElement('div');
-    widgetDiv.id = widgetId;
-    widgetDiv.className = 'tradingview-widget-container__widget';
-    widgetDiv.style.height = '100%';
-    widgetDiv.style.width = '100%';
+      // Create the main widget div
+      const widgetDiv = document.createElement('div');
+      widgetDiv.id = widgetId;
+      widgetDiv.className = 'tradingview-widget-container__widget';
+      widgetDiv.style.height = '100%';
+      widgetDiv.style.width = '100%';
 
-    // Create the script element
-    const script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-    script.async = true;
+      // Widget configuration
+      const config = {
+        "autosize": true,
+        "symbol": symbol,
+        "interval": interval,
+        "timezone": "Etc/UTC",
+        "theme": theme,
+        "style": "1",
+        "locale": "en",
+        "allow_symbol_change": true,
+        "support_host": "https://www.tradingview.com",
+        "container_id": widgetId,
+        "hide_top_toolbar": false,
+        "hide_legend": false,
+        "save_image": false
+      };
 
-    // Widget configuration
-    const config = {
-      "autosize": true,
-      "symbol": symbol,
-      "interval": interval,
-      "timezone": "Etc/UTC",
-      "theme": theme,
-      "style": "1",
-      "locale": "en",
-      "allow_symbol_change": true,
-      "support_host": "https://www.tradingview.com",
-      "container_id": widgetId,
-      "hide_top_toolbar": false,
-      "hide_legend": false,
-      "save_image": false
-    };
+      // Create the script element with error handling
+      const script = document.createElement('script');
+      script.type = 'text/javascript';
+      script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+      script.async = true;
+      
+      // Add error handling for script loading
+      script.onerror = () => {
+        console.warn('TradingView widget failed to load');
+        if (containerRef.current) {
+          containerRef.current.innerHTML = `
+            <div class="flex items-center justify-center h-full text-gray-400">
+              <div class="text-center">
+                <p class="text-lg mb-2">Chart temporarily unavailable</p>
+                <p class="text-sm">Please refresh the page to try again</p>
+              </div>
+            </div>
+          `;
+        }
+      };
 
-    // Set the script content
-    script.text = JSON.stringify(config);
+      // Set the script content
+      script.text = JSON.stringify(config);
 
-    // Assemble the widget (without copyright div)
-    widgetContainer.appendChild(widgetDiv);
-    widgetContainer.appendChild(script);
+      // Assemble the widget
+      widgetContainer.appendChild(widgetDiv);
+      widgetContainer.appendChild(script);
 
-    // Add to the container
-    containerRef.current.appendChild(widgetContainer);
+      // Add to the container
+      containerRef.current.appendChild(widgetContainer);
 
-    // Hide copyright text with CSS after widget loads
-    setTimeout(() => {
-      const copyrightElements = document.querySelectorAll('.tradingview-widget-copyright');
-      copyrightElements.forEach(el => {
-        (el as HTMLElement).style.display = 'none';
-      });
-    }, 2000);
+      // Hide copyright text with CSS after widget loads
+      setTimeout(() => {
+        try {
+          const copyrightElements = document.querySelectorAll('.tradingview-widget-copyright');
+          copyrightElements.forEach(el => {
+            (el as HTMLElement).style.display = 'none';
+          });
+        } catch (error) {
+          console.warn('Could not hide TradingView copyright:', error);
+        }
+      }, 2000);
+    } catch (error) {
+      console.error('Error initializing TradingView widget:', error);
+      if (containerRef.current) {
+        containerRef.current.innerHTML = `
+          <div class="flex items-center justify-center h-full text-gray-400">
+            <div class="text-center">
+              <p class="text-lg mb-2">Chart temporarily unavailable</p>
+              <p class="text-sm">Please refresh the page to try again</p>
+            </div>
+          </div>
+        `;
+      }
+    }
 
     // Cleanup function
     return () => {
