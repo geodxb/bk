@@ -16,30 +16,43 @@ export class SupportService {
   static async getChatResponse(message: string, context: ChatContext): Promise<string> {
     try {
       // Prepare system prompt with Interactive Brokers context
-      const systemPrompt = this.buildSystemPrompt(context);
       
-      // Prepare conversation history
-      const conversationMessages = context.conversationHistory.map(msg => ({
-        role: msg.type === 'user' ? 'user' : 'assistant',
-        content: msg.content
-      }));
-
-      const response = await this.openai.chat.completions.create({
-        model: 'gpt-4',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...conversationMessages,
-          { role: 'user', content: message }
-        ],
-        max_tokens: 500,
-        temperature: 0.7,
-      });
-
-      return response.choices[0]?.message?.content || 'I apologize, but I\'m having trouble processing your request. Please try again.';
+      // Simulate AI response without making actual API calls
+      return this.generateSimulatedResponse(message, context);
     } catch (error) {
       console.error('OpenAI API Error:', error);
       throw new Error('Failed to get AI response');
     }
+  }
+
+  private static generateSimulatedResponse(message: string, context: ChatContext): string {
+    const { investor, transactions } = context;
+    const lowerMessage = message.toLowerCase();
+    
+    // Basic response templates based on message content
+    if (lowerMessage.includes('withdrawal') || lowerMessage.includes('withdraw')) {
+      return `You can request a withdrawal from your account page. The minimum withdrawal amount is $100, and there is a 15% platform commission. Your current balance is $${investor?.currentBalance?.toLocaleString() || '0'}, so you can withdraw up to that amount. Withdrawals are typically processed within 1-3 business days.`;
+    }
+    
+    if (lowerMessage.includes('balance') || lowerMessage.includes('account balance')) {
+      return `Your current account balance is $${investor?.currentBalance?.toLocaleString() || '0'}. Your initial deposit was $${investor?.initialDeposit?.toLocaleString() || '0'}, and you've made ${transactions.filter(tx => tx.type === 'Withdrawal').length} withdrawals to date.`;
+    }
+    
+    if (lowerMessage.includes('transaction') || lowerMessage.includes('history')) {
+      const recentTransaction = transactions[0];
+      return `You have ${transactions.length} transactions on record. Your most recent transaction was a ${recentTransaction?.type || 'deposit'} of $${Math.abs(recentTransaction?.amount || 0).toLocaleString()} on ${recentTransaction?.date || 'recent date'}.`;
+    }
+    
+    if (lowerMessage.includes('account') || lowerMessage.includes('status')) {
+      return `Your account is currently ${investor?.accountStatus || 'Active'}. You've been with Interactive Brokers since ${investor?.joinDate || 'your join date'}. Is there anything specific about your account you'd like to know?`;
+    }
+    
+    if (lowerMessage.includes('help') || lowerMessage.includes('support')) {
+      return `I'm here to help with any questions about your Interactive Brokers account. You can ask about your balance, transactions, withdrawals, or account status. What specific assistance do you need today?`;
+    }
+    
+    // Default response
+    return `Thank you for your message. I'm here to help with your Interactive Brokers account. To better assist you, could you please provide more details about your inquiry? You can ask about your balance, transactions, withdrawals, or account status.`;
   }
 
   private static buildSystemPrompt(context: ChatContext): string {
