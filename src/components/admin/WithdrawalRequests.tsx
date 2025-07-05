@@ -128,36 +128,17 @@ const WithdrawalRequests = () => {
     {
       key: 'actions',
       header: 'Actions',
-      render: (_: any, row: any) => {
-        if (row.status !== 'Pending') {
-          return (
-            <div className="text-center">
-              <span className="text-gray-500 text-sm">Processed</span>
-              {row.processedAt && (
-                <p className="text-xs text-gray-400">
-                  {new Date(row.processedAt).toLocaleDateString()}
-                </p>
-              )}
-            </div>
-          );
-        }
-        
+      render: (_: any, row: any) => {        
         return (
-          <div className="flex space-x-2">
-            <Button
-              variant="success"
-              size="sm"
-              onClick={() => openReasonModal(row, 'approve')}
-              isLoading={isLoading[row.id]}
-              disabled={isLoading[row.id]}
-            >
-              <CheckCircle size={14} className="mr-1" />
-              Approve
-            </Button>
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() => openReasonModal(row, 'reject')}
+          <div className="text-center">
+            <span className="text-gray-500 text-xs">
+              {row.status === 'Pending' ? 'Awaiting Review' : 'Processed'}
+            </span>
+            {row.reason && (
+              <p className="text-xs text-gray-400 max-w-32 truncate mt-1">
+                {row.reason}
+              </p>
+            )}
               isLoading={isLoading[row.id]}
               disabled={isLoading[row.id]}
             >

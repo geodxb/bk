@@ -3,7 +3,7 @@ import Card from '../common/Card';
 import Table from '../common/Table';
 import Button from '../common/Button';
 import Modal from '../common/Modal';
-import { TrendingUp, TrendingDown, LogIn, ArrowDownRight, CheckCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, LogIn, ArrowDownRight, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useTransactions } from '../../hooks/useFirestore';
 import { FirestoreService } from '../../services/firestoreService';
 import { useAuth } from '../../contexts/AuthContext';
@@ -439,10 +439,15 @@ const TransactionsTable = ({ investorId, filterType, onTransactionUpdate }: Tran
         {selectedTransaction && (
           <div className="space-y-4">
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-              <h4 className="font-medium text-amber-800 mb-2">Withdrawal Cancellation</h4>
-              <p className="text-amber-700 text-sm">
-                Are you sure you want to cancel this withdrawal request? The funds will be credited back to your account balance.
-              </p>
+              <div className="flex items-start space-x-3">
+                <AlertTriangle size={20} className="text-amber-600 mt-0.5" />
+                <div>
+                  <h4 className="font-medium text-amber-800 mb-2">Withdrawal Cancellation</h4>
+                  <p className="text-amber-700 text-sm">
+                    Are you sure you want to cancel this withdrawal request? The funds will be credited back to your account balance.
+                  </p>
+                </div>
+              </div>
             </div>
             
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
