@@ -15,13 +15,16 @@ import {
   Copy,
   Clock,
   Shield,
-  XCircle
+  XCircle,
+  User,
+  Phone,
+  MapPin
 } from 'lucide-react';
 
 interface WithdrawalRequestFormProps {
   currentBalance: number;
   investorName: string;
-  investor: Investor; // New prop to receive investor data
+  investor: Investor;
   onSuccess?: () => void;
 }
 
@@ -29,7 +32,7 @@ type WithdrawalMethod = 'bank' | 'crypto' | 'credit_card';
 type CryptoType = 'BTC' | 'ETH' | 'XRP' | 'USDT';
 type USDTNetwork = 'TRC20' | 'ERC20' | 'BEP20';
 
-// Focused bank data for the 5 specified countries only
+// Enhanced bank data for the 5 specified countries
 const banksByCountry: Record<string, string[]> = {
   'Mexico': [
     'Santander México',
@@ -118,31 +121,72 @@ const banksByCountry: Record<string, string[]> = {
   ]
 };
 
+// Bank form fields for each country
+const bankFormFields: Record<string, any> = {
+  'Mexico': {
+    fields: [
+      { name: 'accountHolderName', label: 'Account Holder Name', type: 'text', required: true },
+      { name: 'accountNumber', label: 'Account Number (CLABE)', type: 'text', required: true, maxLength: 18 },
+      { name: 'bankBranch', label: 'Bank Branch', type: 'text', required: false },
+      { name: 'phoneNumber', label: 'Phone Number', type: 'tel', required: true }
+    ],
+    currency: 'MXN'
+  },
+  'France': {
+    fields: [
+      { name: 'accountHolderName', label: 'Account Holder Name', type: 'text', required: true },
+      { name: 'iban', label: 'IBAN', type: 'text', required: true, maxLength: 34 },
+      { name: 'bic', label: 'BIC/SWIFT Code', type: 'text', required: true, maxLength: 11 },
+      { name: 'address', label: 'Address', type: 'text', required: true }
+    ],
+    currency: 'EUR'
+  },
+  'Switzerland': {
+    fields: [
+      { name: 'accountHolderName', label: 'Account Holder Name', type: 'text', required: true },
+      { name: 'iban', label: 'IBAN', type: 'text', required: true, maxLength: 21 },
+      { name: 'bic', label: 'BIC/SWIFT Code', type: 'text', required: true, maxLength: 11 },
+      { name: 'address', label: 'Address', type: 'text', required: true }
+    ],
+    currency: 'CHF'
+  },
+  'Saudi Arabia': {
+    fields: [
+      { name: 'accountHolderName', label: 'Account Holder Name', type: 'text', required: true },
+      { name: 'iban', label: 'IBAN', type: 'text', required: true, maxLength: 24 },
+      { name: 'swiftCode', label: 'SWIFT Code', type: 'text', required: true, maxLength: 11 },
+      { name: 'phoneNumber', label: 'Phone Number', type: 'tel', required: true }
+    ],
+    currency: 'SAR'
+  },
+  'United Arab Emirates': {
+    fields: [
+      { name: 'accountHolderName', label: 'Account Holder Name', type: 'text', required: true },
+      { name: 'iban', label: 'IBAN', type: 'text', required: true, maxLength: 23 },
+      { name: 'swiftCode', label: 'SWIFT Code', type: 'text', required: true, maxLength: 11 },
+      { name: 'emiratesId', label: 'Emirates ID', type: 'text', required: true },
+      { name: 'phoneNumber', label: 'Phone Number', type: 'tel', required: true }
+    ],
+    currency: 'AED'
+  }
+};
+
 const WithdrawalRequestForm = ({ 
   currentBalance, 
   investorName,
-  investor, // Use the investor prop instead of hooks
+  investor,
   onSuccess 
 }: WithdrawalRequestFormProps) => {
   // Form state
-  const [step, setStep] = useState(1);
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState<WithdrawalMethod>('bank');
   const [selectedBank, setSelectedBank] = useState('');
-  const [selectedCrypto, setSelectedCrypto] = useState<CryptoType>('BTC');
-  const [selectedNetwork, setSelectedNetwork] = useState<USDTNetwork>('TRC20');
-  const [walletAddress, setWalletAddress] = useState('');
-  const [creditCardData, setCreditCardData] = useState({
-    number: '',
-    expiry: '',
-    cvv: '',
-    name: ''
-  });
+  const [bankFormData, setBankFormData] = useState<Record<string, string>>({});
+  const [showBankForm, setShowBankForm] = useState(false);
   
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [showBankSelection, setShowBankSelection] = useState(false);
 
   // Enhanced country normalization function
   const normalizeCountryName = (rawCountry: string | undefined): string => {
@@ -165,163 +209,89 @@ const WithdrawalRequestForm = ({
     
     // Comprehensive mapping for all variations
     const countryMappings: Record<string, string> = {
-      // Mexico variations
-      'mexico': 'Mexico',
-      'méxico': 'Mexico',
-      'mexican': 'Mexico',
-      'mx': 'Mexico',
-      'mex': 'Mexico',
-      
-      // France variations
-      'france': 'France',
-      'french': 'France',
-      'fr': 'France',
-      'francia': 'France',
-      
-      // Switzerland variations
-      'switzerland': 'Switzerland',
-      'swiss': 'Switzerland',
-      'ch': 'Switzerland',
-      'suisse': 'Switzerland',
-      'schweiz': 'Switzerland',
-      'svizzera': 'Switzerland',
-      
-      // Saudi Arabia variations
-      'saudi arabia': 'Saudi Arabia',
-      'saudi': 'Saudi Arabia',
-      'ksa': 'Saudi Arabia',
-      'kingdom of saudi arabia': 'Saudi Arabia',
-      'sa': 'Saudi Arabia',
-      'saudiarabia': 'Saudi Arabia',
-      
-      // UAE variations
-      'united arab emirates': 'United Arab Emirates',
-      'uae': 'United Arab Emirates',
-      'emirates': 'United Arab Emirates',
-      'u.a.e': 'United Arab Emirates',
-      'u.a.e.': 'United Arab Emirates',
-      'dubai': 'United Arab Emirates',
-      'abu dhabi': 'United Arab Emirates'
+      'mexico': 'Mexico', 'méxico': 'Mexico', 'mexican': 'Mexico', 'mx': 'Mexico', 'mex': 'Mexico',
+      'france': 'France', 'french': 'France', 'fr': 'France', 'francia': 'France',
+      'switzerland': 'Switzerland', 'swiss': 'Switzerland', 'ch': 'Switzerland', 'suisse': 'Switzerland',
+      'saudi arabia': 'Saudi Arabia', 'saudi': 'Saudi Arabia', 'ksa': 'Saudi Arabia', 'sa': 'Saudi Arabia',
+      'united arab emirates': 'United Arab Emirates', 'uae': 'United Arab Emirates', 'emirates': 'United Arab Emirates', 'dubai': 'United Arab Emirates'
     };
     
-    // Check lowercase mapping
     const lowerCountry = country.toLowerCase();
     if (countryMappings[lowerCountry]) {
       return countryMappings[lowerCountry];
     }
     
-    // Partial matching for common cases
-    const lowerInput = lowerCountry;
-    
-    if (lowerInput.includes('mexico') || lowerInput.includes('méxico')) {
-      return 'Mexico';
-    }
-    if (lowerInput.includes('france') || lowerInput.includes('french')) {
-      return 'France';
-    }
-    if (lowerInput.includes('switzerland') || lowerInput.includes('swiss')) {
-      return 'Switzerland';
-    }
-    if (lowerInput.includes('saudi')) {
-      return 'Saudi Arabia';
-    }
-    if (lowerInput.includes('emirates') || lowerInput.includes('uae') || lowerInput.includes('dubai')) {
-      return 'United Arab Emirates';
-    }
-    
-    // Return original if no mapping found
     return country;
   };
   
-  // Get investor country with proper normalization
-  const rawCountry = investor?.country;
-  const investorCountry = normalizeCountryName(rawCountry);
+  // Get investor country and account status
+  const investorCountry = normalizeCountryName(investor?.country);
   const accountStatus = investor?.accountStatus || 'Active';
   
-  // Get available banks for the investor's country
+  // Get available banks and form fields for the investor's country
   const availableBanks = banksByCountry[investorCountry] || [];
-  
-  console.log('🏦 Withdrawal Form Debug:', {
-    investorId: investor?.id,
-    investorName,
-    rawCountry,
-    normalizedCountry: investorCountry,
-    availableBanksCount: availableBanks.length,
-    supportedCountries: Object.keys(banksByCountry),
-    banksByCountryKeys: Object.keys(banksByCountry),
-    isCountrySupported: banksByCountry.hasOwnProperty(investorCountry)
-  });
+  const countryBankFields = bankFormFields[investorCountry];
 
-  // Check account restrictions
-  const isAccountClosed = accountStatus.toLowerCase().includes('closure');
-  const isAccountRestricted = accountStatus.toLowerCase().includes('restricted');
-  const isAccountActive = !isAccountClosed && !isAccountRestricted;
+  // Enhanced account restriction checking
+  const isAccountClosed = accountStatus.toLowerCase().includes('closed') || 
+                         accountStatus.toLowerCase().includes('deletion');
+  const isPolicyViolation = accountStatus.toLowerCase().includes('policy violation') ||
+                           accountStatus.toLowerCase().includes('restricted');
+  const isPermanentlyClosed = accountStatus.toLowerCase().includes('permanently closed') ||
+                             accountStatus.toLowerCase().includes('permanent');
 
-  // Validation functions that return error messages instead of setting state
+  // Validation functions
   const getAmountValidationError = () => {
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) {
       return 'Please enter a valid amount';
     }
-    
     if (numAmount > currentBalance) {
       return 'Withdrawal amount cannot exceed your current balance';
     }
-    
     if (numAmount < 100) {
       return 'Minimum withdrawal amount is $100';
     }
+    return '';
+  };
+
+  const getBankFormValidationError = () => {
+    if (!selectedBank) {
+      return 'Please select a bank';
+    }
+    
+    if (countryBankFields) {
+      for (const field of countryBankFields.fields) {
+        if (field.required && !bankFormData[field.name]?.trim()) {
+          return `Please enter ${field.label}`;
+        }
+      }
+    }
     
     return '';
   };
 
-  const getStep2ValidationError = () => {
-    if (method === 'bank' && showBankSelection && !selectedBank) {
-      return 'Please select a bank';
-    }
-    if (method === 'crypto' && !walletAddress.trim()) {
-      return 'Please enter your wallet address';
-    }
-    if (method === 'credit_card' && (!creditCardData.number || !creditCardData.expiry || !creditCardData.cvv || !creditCardData.name)) {
-      return 'Please fill in all credit card details';
-    }
-    return '';
-  };
-
-  const handleNext = () => {
-    if (step === 1) {
-      const amountError = getAmountValidationError();
-      if (amountError) {
-        setError(amountError);
-        return;
-      }
-      setError('');
-      setStep(2);
-    } else if (step === 2) {
-      const step2Error = getStep2ValidationError();
-      if (step2Error) {
-        setError(step2Error);
-        return;
-      }
-      setError('');
-      setStep(3);
-    }
+  const handleBankFormChange = (fieldName: string, value: string) => {
+    setBankFormData(prev => ({
+      ...prev,
+      [fieldName]: value
+    }));
   };
 
   const handleSubmit = async () => {
     if (!investor) return;
     
-    // Final validation
+    // Validation
     const amountError = getAmountValidationError();
-    const step2Error = getStep2ValidationError();
+    const bankError = method === 'bank' ? getBankFormValidationError() : '';
     
     if (amountError) {
       setError(amountError);
       return;
     }
     
-    if (step2Error) {
-      setError(step2Error);
+    if (bankError) {
+      setError(bankError);
       return;
     }
     
@@ -332,56 +302,36 @@ const WithdrawalRequestForm = ({
       const commissionAmount = withdrawalAmount * 0.15;
       const newBalance = currentBalance - withdrawalAmount;
       
-      // Create withdrawal details based on method
-      let withdrawalDetails = {
-        method,
-        amount: withdrawalAmount,
-        commission: commissionAmount,
-        netAmount: withdrawalAmount - commissionAmount
-      };
-
-      if (method === 'bank') {
-        withdrawalDetails = {
-          ...withdrawalDetails,
-          bank: selectedBank,
-          country: investorCountry
-        };
-      } else if (method === 'crypto') {
-        withdrawalDetails = {
-          ...withdrawalDetails,
-          crypto: selectedCrypto,
-          network: selectedCrypto === 'USDT' ? selectedNetwork : undefined,
-          walletAddress
-        };
-      } else if (method === 'credit_card') {
-        withdrawalDetails = {
-          ...withdrawalDetails,
-          cardLast4: creditCardData.number.slice(-4),
-          cardName: creditCardData.name
-        };
-      }
-      
-      // 1. Update investor balance
+      // Update investor balance
       await FirestoreService.updateInvestorBalance(investor.id, newBalance);
       
-      // 2. Add withdrawal request
+      // Add withdrawal request
       await FirestoreService.addWithdrawalRequest(
         investor.id,
         investorName,
         withdrawalAmount
       );
       
-      // 3. Add withdrawal transaction
+      // Determine status based on account restrictions
+      let transactionStatus = 'Pending';
+      let description = `Withdrawal via ${method}`;
+      
+      if (isPolicyViolation) {
+        transactionStatus = 'Pending Review';
+        description += ' - Manual review required due to policy violation';
+      }
+      
+      // Add withdrawal transaction
       await FirestoreService.addTransaction({
         investorId: investor.id,
         type: 'Withdrawal',
         amount: -withdrawalAmount,
         date: new Date().toISOString().split('T')[0],
-        status: isAccountRestricted ? 'Pending Review' : 'Pending',
-        description: `Withdrawal via ${method} - ${isAccountRestricted ? 'Manual review required' : 'Processing'}`
+        status: transactionStatus,
+        description: description
       });
       
-      // 4. Add commission record
+      // Add commission record
       await FirestoreService.addCommission({
         investorId: investor.id,
         investorName: investorName,
@@ -406,20 +356,12 @@ const WithdrawalRequestForm = ({
   };
 
   const handleReset = () => {
-    setStep(1);
     setAmount('');
-    setMethod('bank');
     setSelectedBank('');
-    setSelectedCrypto('BTC');
-    setSelectedNetwork('TRC20');
-    setWalletAddress('');
-    setCreditCardData({ number: '', expiry: '', cvv: '', name: '' });
+    setBankFormData({});
+    setShowBankForm(false);
     setError('');
     setIsSuccess(false);
-  };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
   };
 
   // Calculate preview
@@ -427,24 +369,48 @@ const WithdrawalRequestForm = ({
   const commissionPreview = previewAmount * 0.15;
   const netAmount = previewAmount - commissionPreview;
 
-  // Check if step 1 is valid for button state
-  const isStep1Valid = amount && !getAmountValidationError();
-
-  // Account status messages
-  if (isAccountClosed) {
+  // Account status messages - Enhanced for different violation types
+  if (isPermanentlyClosed) {
     return (
-      <div className="bg-white border border-gray-300 rounded-lg shadow-sm">
-        <div className="px-6 py-4 border-b border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 uppercase tracking-wide">WITHDRAWAL NOT AVAILABLE</h3>
+      <div className="bg-white border border-red-300 rounded-lg shadow-sm">
+        <div className="px-6 py-4 border-b border-red-200 bg-red-50">
+          <h3 className="text-lg font-semibold text-red-900">ACCOUNT PERMANENTLY CLOSED</h3>
         </div>
         <div className="p-6">
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <div className="flex items-start space-x-3">
-              <XCircle size={20} className="text-red-600 mt-0.5" />
+              <XCircle size={24} className="text-red-600 mt-0.5" />
               <div>
-                <h3 className="text-red-800 font-semibold mb-2 uppercase tracking-wide">WITHDRAWAL NOT AVAILABLE</h3>
+                <h3 className="text-red-800 font-semibold mb-2">WITHDRAWALS NOT AVAILABLE</h3>
+                <p className="text-red-700 text-sm mb-3">
+                  This account has been permanently closed due to policy violations. No withdrawals can be processed.
+                </p>
                 <p className="text-red-700 text-sm">
-                  A withdrawal cannot be performed as your account will be deposited using the same method you used to make your first deposit or we will use the bank information provided during sign up.
+                  Only account closure procedures are available. Please contact support for assistance with account closure.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isAccountClosed) {
+    return (
+      <div className="bg-white border border-amber-300 rounded-lg shadow-sm">
+        <div className="px-6 py-4 border-b border-amber-200 bg-amber-50">
+          <h3 className="text-lg font-semibold text-amber-900">ACCOUNT CLOSURE IN PROGRESS</h3>
+        </div>
+        <div className="p-6">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
+            <div className="flex items-start space-x-3">
+              <AlertTriangle size={24} className="text-amber-600 mt-0.5" />
+              <div>
+                <h3 className="text-amber-800 font-semibold mb-2">WITHDRAWAL NOT AVAILABLE</h3>
+                <p className="text-amber-700 text-sm">
+                  This account is scheduled for closure. Withdrawals will be processed using the same method 
+                  used for your initial deposit or transferred to the bank information provided during registration.
                 </p>
               </div>
             </div>
@@ -487,7 +453,7 @@ const WithdrawalRequestForm = ({
                 <div>
                   <p className="text-gray-600">Status</p>
                   <p className="font-bold text-gray-900">
-                    {isAccountRestricted ? 'Pending Review' : 'Pending Approval'}
+                    {isPolicyViolation ? 'Pending Manual Review' : 'Pending Approval'}
                   </p>
                 </div>
               </div>
@@ -526,8 +492,24 @@ const WithdrawalRequestForm = ({
       </div>
 
       <div className="p-6">
-        {/* Simplified Single Form */}
+        {/* Policy Violation Warning */}
+        {isPolicyViolation && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start space-x-3">
+              <AlertTriangle size={20} className="text-red-600 mt-0.5" />
+              <div>
+                <h4 className="text-red-800 font-semibold">Manual Review Required</h4>
+                <p className="text-red-700 text-sm mt-1">
+                  Due to policy violations on your account, all withdrawal requests require manual review. 
+                  Processing may take additional time and approval is not guaranteed.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="space-y-6">
+          {/* Amount Input */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Withdrawal Amount (USD)
@@ -596,60 +578,78 @@ const WithdrawalRequestForm = ({
             </div>
           )}
 
-          {/* Bank Selection Section */}
+          {/* Bank Selection and Form */}
           {previewAmount >= 100 && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="font-medium text-gray-800">Withdrawal Method</h4>
+                <h4 className="font-medium text-gray-800">Bank Information</h4>
                 <span className="text-sm text-gray-600">Country: {investorCountry}</span>
               </div>
               
               {availableBanks.length > 0 ? (
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setShowBankSelection(!showBankSelection)}
-                    className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-gray-300 transition-colors text-left"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Building size={20} className="text-gray-600" />
-                        <div>
-                          <p className="font-medium text-gray-900">Bank Transfer</p>
-                          <p className="text-sm text-gray-600">
-                            {selectedBank || `Select from ${availableBanks.length} available banks`}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-gray-400">
-                        {showBankSelection ? '▲' : '▼'}
-                      </div>
-                    </div>
-                  </button>
-                  
-                  {showBankSelection && (
-                    <div className="mt-3 border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
+                <div className="space-y-4">
+                  {/* Bank Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Select Bank
+                    </label>
+                    <select
+                      value={selectedBank}
+                      onChange={(e) => {
+                        setSelectedBank(e.target.value);
+                        setShowBankForm(!!e.target.value);
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Choose your bank...</option>
                       {availableBanks.map((bank, index) => (
-                        <button
-                          key={index}
-                          type="button"
-                          onClick={() => {
-                            setSelectedBank(bank);
-                            setShowBankSelection(false);
-                          }}
-                          className={`w-full p-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${
-                            selectedBank === bank ? 'bg-blue-50 text-blue-900' : 'text-gray-700'
-                          }`}
-                        >
-                          <div className="flex items-center space-x-3">
-                            <Building size={16} className="text-gray-500" />
-                            <span className="font-medium">{bank}</span>
-                            {selectedBank === bank && (
-                              <CheckCircle size={16} className="text-blue-600 ml-auto" />
-                            )}
-                          </div>
-                        </button>
+                        <option key={index} value={bank}>{bank}</option>
                       ))}
+                    </select>
+                  </div>
+
+                  {/* Bank Form */}
+                  {showBankForm && selectedBank && countryBankFields && (
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                      <h5 className="font-medium text-gray-800 mb-4">
+                        Bank Account Details for {selectedBank}
+                      </h5>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {countryBankFields.fields.map((field: any) => (
+                          <div key={field.name} className={field.name === 'address' ? 'md:col-span-2' : ''}>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              {field.label} {field.required && <span className="text-red-500">*</span>}
+                            </label>
+                            <div className="relative">
+                              {field.name === 'accountHolderName' && (
+                                <User size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                              )}
+                              {field.name === 'phoneNumber' && (
+                                <Phone size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                              )}
+                              {field.name === 'address' && (
+                                <MapPin size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                              )}
+                              <input
+                                type={field.type}
+                                value={bankFormData[field.name] || ''}
+                                onChange={(e) => handleBankFormChange(field.name, e.target.value)}
+                                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                  ['accountHolderName', 'phoneNumber', 'address'].includes(field.name) ? 'pl-9' : ''
+                                }`}
+                                placeholder={field.label}
+                                maxLength={field.maxLength}
+                                required={field.required}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
+                        <p className="text-blue-800 text-sm">
+                          <strong>Currency:</strong> Funds will be converted to {countryBankFields.currency} at current exchange rates.
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -673,10 +673,11 @@ const WithdrawalRequestForm = ({
             </div>
           )}
 
+          {/* Processing Information */}
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
             <h4 className="font-medium text-blue-800 mb-2">Processing Information</h4>
             <ul className="text-blue-700 text-sm space-y-1">
-              <li>• Withdrawals are processed within 1-3 business days</li>
+              <li>• {isPolicyViolation ? 'Manual review required - Processing time: 5-10 business days' : 'Standard processing: 1-3 business days'}</li>
               <li>• Funds will be transferred to your selected bank account</li>
               <li>• A 15% platform commission will be deducted</li>
               <li>• Your account balance will be updated immediately</li>
@@ -684,6 +685,7 @@ const WithdrawalRequestForm = ({
             </ul>
           </div>
         </div>
+
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center mt-4">
             <AlertCircle size={16} className="mr-2" />
@@ -700,13 +702,15 @@ const WithdrawalRequestForm = ({
               !amount || 
               parseFloat(amount) < 100 || 
               parseFloat(amount) > currentBalance ||
-              (availableBanks.length > 0 && !selectedBank)
+              (availableBanks.length > 0 && (!selectedBank || !showBankForm || getBankFormValidationError()))
             }
             className="px-6 py-3 bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ArrowDownRight size={16} className="mr-2 inline" />
             {isLoading ? 'Processing...' : 
              !selectedBank && availableBanks.length > 0 ? 'Select Bank to Continue' :
+             getBankFormValidationError() ? 'Complete Bank Details' :
+             isPolicyViolation ? 'Submit for Manual Review' :
              'Submit Withdrawal Request'}
           </button>
         </div>
