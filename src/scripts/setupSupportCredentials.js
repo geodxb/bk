@@ -1,6 +1,6 @@
 // Script to set up support credentials in Firebase
-import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+const { initializeApp } = require('firebase/app');
+const { getFirestore, doc, setDoc, serverTimestamp } = require('firebase/firestore');
 
 const firebaseConfig = {
   apiKey: "AIzaSyDb2i4UdzhB6ChT30ljwRXSIjBM8LMT318",
@@ -40,8 +40,11 @@ async function setupSupportCredentials() {
       clientId: credentials.clientId
     });
     
+    process.exit(0);
+    
   } catch (error) {
     console.error('❌ Error setting up support credentials:', error);
+    process.exit(1);
   }
 }
 

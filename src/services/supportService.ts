@@ -66,6 +66,7 @@ IMPORTANT GUIDELINES:
 
 CLIENT ACCOUNT INFORMATION:
 - Name: ${investor?.name || 'Client'}
+- Email: ${investor?.email || 'N/A'}
 - Account Status: ${investor?.accountStatus || 'Active'}
 - Join Date: ${investor?.joinDate || 'N/A'}
 - Country: ${investor?.country || 'N/A'}

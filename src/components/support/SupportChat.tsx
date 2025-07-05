@@ -53,6 +53,12 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
   useEffect(() => {
     if (isOpen && !isIdentified) {
       // Reset state when opening
+      setIdentificationData({
+        name: '',
+        email: '',
+        clientId: ''
+      });
+      setSelectedOption(null);
       setMessages([{
         id: Date.now().toString(),
         type: 'support',
