@@ -1,6 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import SupportChat from '../support/SupportChat';
 import { 
   Menu, 
   X, 
@@ -8,7 +9,9 @@ import {
   User,
   ChevronDown,
   Users,
-  DollarSign
+  DollarSign,
+  MessageCircle,
+  HelpCircle
 } from 'lucide-react';
 import { useAuth, UserRole } from '../../contexts/AuthContext';
 
@@ -27,6 +30,7 @@ interface NavItem {
 const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [supportChatOpen, setSupportChatOpen] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -159,6 +163,15 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
 
             {/* Right Side - User Menu */}
             <div className="flex items-center space-x-4 flex-shrink-0">
+              {/* Support Chat Button */}
+              <button
+                onClick={() => setSupportChatOpen(true)}
+                className="flex items-center space-x-2 text-sm text-gray-600 hover:text-blue-600 transition-colors whitespace-nowrap"
+              >
+                <MessageCircle size={16} />
+                <span className="hidden md:inline font-medium">Support</span>
+              </button>
+
               {/* User Menu */}
               <button
                 onClick={handleLogout}
@@ -268,6 +281,16 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
 
                 <div className="px-6 py-3 mt-6 border-t border-gray-100">
                   <button
+                    onClick={() => {
+                      setSupportChatOpen(true);
+                      setSidebarOpen(false);
+                    }}
+                    className="flex items-center w-full text-gray-600 hover:text-blue-600 transition-colors mb-3"
+                  >
+                    <HelpCircle size={18} className="mr-3" />
+                    <span className="font-medium">Support Chat</span>
+                  </button>
+                  <button
                     onClick={handleLogout}
                     className="flex items-center w-full text-gray-600 hover:text-red-600 transition-colors"
                   >
@@ -296,6 +319,12 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
           {children}
         </main>
       </div>
+
+      {/* Support Chat */}
+      <SupportChat 
+        isOpen={supportChatOpen} 
+        onClose={() => setSupportChatOpen(false)} 
+      />
     </div>
   );
 };
