@@ -217,6 +217,10 @@ const InvestorProfile = () => {
               </div>
             </div>
             <TransactionsTable investorId={investorData.id} />
+            <TransactionsTable 
+              investorId={investorData.id} 
+              onTransactionUpdate={refetch}
+            />
           </div>
         );
       case 'withdrawals':
@@ -317,6 +321,7 @@ const InvestorProfile = () => {
             <TransactionsTable 
               investorId={investorData.id}
               filterType="Withdrawal"
+              onTransactionUpdate={refetch}
             />
           </div>
         );

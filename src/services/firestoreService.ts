@@ -391,6 +391,21 @@ export class FirestoreService {
     }
   }
 
+  static async updateTransaction(id: string, updates: any): Promise<void> {
+    try {
+      console.log(`🔥 Firestore: Updating transaction: ${id}`);
+      const docRef = doc(db, 'transactions', id);
+      await updateDoc(docRef, {
+        ...updates,
+        updatedAt: serverTimestamp()
+      });
+      console.log(`✅ Firestore: Successfully updated transaction: ${id}`);
+    } catch (error) {
+      console.error('❌ Firestore Error: Failed to update transaction:', error);
+      throw new Error(`Failed to update transaction: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
   // Enhanced Withdrawal Requests methods
   static async getWithdrawalRequests(): Promise<WithdrawalRequest[]> {
     try {
