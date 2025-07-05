@@ -6,7 +6,7 @@ import { Investor } from '../../types/user';
 import { 
   DollarSign, 
   AlertCircle, 
-  CheckCircle as CheckIcon,
+  CheckCircle,
   ArrowDownRight,
   Calculator,
   Building,
@@ -425,12 +425,12 @@ const WithdrawalRequestForm = ({
     return (
       <div className="bg-white border border-gray-200 rounded-lg">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">WITHDRAWAL REQUEST SUBMITTED</h3>
+          <h3 className="text-lg font-semibold text-gray-900">Withdrawal Request Submitted</h3>
         </div>
         <div className="p-6">
           <div className="text-center py-6">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckIcon size={32} className="text-green-600" />
+              <CheckCircle size={32} className="text-green-600" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Withdrawal Request Submitted Successfully</h3>
             <p className="text-gray-600 mb-6">
