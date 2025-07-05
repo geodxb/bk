@@ -1,27 +1,88 @@
 import { useState } from 'react';
 import Card from '../common/Card';
 import Table from '../common/Table';
+import Button from '../common/Button';
+import Modal from '../common/Modal';
 import { TrendingUp, TrendingDown, LogIn, ArrowDownRight, CheckCircle } from 'lucide-react';
 import { useTransactions } from '../../hooks/useFirestore';
+import { FirestoreService } from '../../services/firestoreService';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface TransactionsTableProps {
   investorId: string;
   filterType?: 'Deposit' | 'Earnings' | 'Withdrawal';
+  onTransactionUpdate?: () => void;
 }
 
-const TransactionsTable = ({ investorId, filterType }: TransactionsTableProps) => {
+const TransactionsTable = ({ investorId, filterType, onTransactionUpdate }: TransactionsTableProps) => {
+  const { user } = useAuth();
   const { transactions: allTransactions, loading, error } = useTransactions(investorId);
   const transactions = filterType 
     ? allTransactions.filter(tx => tx.type === filterType)
     : allTransactions;
     
   const [page, setPage] = useState(1);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
   const pageSize = 15;
   
   const totalPages = Math.ceil(transactions.length / pageSize);
   const startIndex = (page - 1) * pageSize;
   const endIndex = startIndex + pageSize;
   const displayedTransactions = transactions.slice(startIndex, endIndex);
+  
+  const handleCancelWithdrawal = async () => {
+    if (!selectedTransaction || !user) return;
+    
+    setIsCancelling(true);
+    
+    try {
+      // Get current investor data to update balance
+      const investor = await FirestoreService.getInvestorById(investorId);
+      if (!investor) {
+        throw new Error('Investor not found');
+      }
+      
+      // Credit the amount back to the investor's balance
+      const refundAmount = Math.abs(selectedTransaction.amount);
+      const newBalance = investor.currentBalance + refundAmount;
+      
+      // Update investor balance
+      await FirestoreService.updateInvestorBalance(investorId, newBalance);
+      
+      // Update the transaction status to cancelled
+      await FirestoreService.updateTransaction(selectedTransaction.id, {
+        status: 'Cancelled',
+        description: `${selectedTransaction.description} - Cancelled by investor`,
+        cancelledAt: new Date().toISOString(),
+        cancelledBy: user.id
+      });
+      
+      // Add a credit transaction for the refund
+      await FirestoreService.addTransaction({
+        investorId: investorId,
+        type: 'Credit',
+        amount: refundAmount,
+        date: new Date().toISOString().split('T')[0],
+        status: 'Completed',
+        description: `Refund for cancelled withdrawal - ${selectedTransaction.id.slice(-8)}`
+      });
+      
+      setCancelModalOpen(false);
+      setSelectedTransaction(null);
+      
+      // Notify parent component to refresh data
+      if (onTransactionUpdate) {
+        onTransactionUpdate();
+      }
+      
+    } catch (error) {
+      console.error('Error cancelling withdrawal:', error);
+    } finally {
+      setIsCancelling(false);
+    }
+  };
   
   const columns = [
     {
@@ -126,6 +187,36 @@ const TransactionsTable = ({ investorId, filterType }: TransactionsTableProps) =
         );
       },
     },
+    // Add actions column for withdrawal transactions
+    ...(filterType === 'Withdrawal' ? [{
+      key: 'actions',
+      header: 'Actions',
+      align: 'center' as 'center',
+      render: (_: any, row: any) => {
+        // Only show cancel button for pending withdrawals
+        if (row.status === 'Pending') {
+          return (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setSelectedTransaction(row);
+                setCancelModalOpen(true);
+              }}
+              className="text-red-600 border-red-200 hover:bg-red-50"
+            >
+              Cancel
+            </Button>
+          );
+        }
+        
+        return (
+          <span className="text-gray-500 text-xs">
+            {row.status === 'Cancelled' ? 'Cancelled' : 'Processed'}
+          </span>
+        );
+      }
+    }] : []),
     {
       key: 'description',
       header: 'Details',
@@ -335,6 +426,78 @@ const TransactionsTable = ({ investorId, filterType }: TransactionsTableProps) =
           </div>
         </div>
       )}
+      
+      {/* Cancellation Modal */}
+      <Modal
+        isOpen={cancelModalOpen}
+        onClose={() => {
+          setCancelModalOpen(false);
+          setSelectedTransaction(null);
+        }}
+        title="Cancel Withdrawal Request"
+      >
+        {selectedTransaction && (
+          <div className="space-y-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <h4 className="font-medium text-amber-800 mb-2">Withdrawal Cancellation</h4>
+              <p className="text-amber-700 text-sm">
+                Are you sure you want to cancel this withdrawal request? The funds will be credited back to your account balance.
+              </p>
+            </div>
+            
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <h4 className="font-medium text-gray-800 mb-2">Transaction Details</h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-600">Amount</p>
+                  <p className="font-semibold text-gray-900">${Math.abs(selectedTransaction.amount).toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Date</p>
+                  <p className="font-semibold text-gray-900">{new Date(selectedTransaction.date).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Status</p>
+                  <p className="font-semibold text-gray-900">{selectedTransaction.status}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Refund Amount</p>
+                  <p className="font-semibold text-green-600">${Math.abs(selectedTransaction.amount).toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-blue-800 text-sm">
+                <strong>Note:</strong> The full withdrawal amount will be credited back to your account balance immediately after cancellation.
+              </p>
+            </div>
+            
+            <div className="flex space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setCancelModalOpen(false);
+                  setSelectedTransaction(null);
+                }}
+                disabled={isCancelling}
+                className="flex-1"
+              >
+                Keep Withdrawal
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleCancelWithdrawal}
+                isLoading={isCancelling}
+                disabled={isCancelling}
+                className="flex-1"
+              >
+                {isCancelling ? 'Cancelling...' : 'Cancel Withdrawal'}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
       
       {/* Transaction Guide */}
       {!loading && transactions.length > 0 && (
