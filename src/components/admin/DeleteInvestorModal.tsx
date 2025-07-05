@@ -7,7 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Investor } from '../../types/user';
 import { 
   AlertTriangle, 
-  CheckCircle, 
+  CheckCircle as CheckIcon, 
   DollarSign, 
   Calendar,
   Shield,
@@ -102,7 +102,7 @@ const DeleteInvestorModal = ({
       >
         <div className="text-center py-8">
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle size={40} className="text-green-600" />
+            <CheckIcon size={40} className="text-green-600" />
           </div>
           <h3 className="text-2xl font-semibold text-gray-800 mb-4">
             Account Deletion Submitted for Review Successfully
