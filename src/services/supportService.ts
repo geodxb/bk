@@ -34,10 +34,10 @@ export class SupportService {
   private static extractInvestorName(message: string): string | null {
     // Enhanced name extraction patterns
     const patterns = [
-      /(?:about|information|info|details|data).*?(?:on|for|about)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
-      /([A-Z][a-z]+\s+[A-Z][a-z]+)(?:\s+account|\s+profile|\s+information)/i,
-      /(?:investor|client|user)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
-      /^([A-Z][a-z]+\s+[A-Z][a-z]+)$/i,
+      /(?:about|information|info|details|data|tell me about).*?(?:on|for|about)?\s+([A-Za-z]+(?:\s+[A-Za-z]+)*)/i,
+      /([A-Za-z]+\s+[A-Za-z]+)(?:\s+account|\s+profile|\s+information)/i,
+      /(?:investor|client|user)\s+([A-Za-z]+(?:\s+[A-Za-z]+)*)/i,
+      /^([A-Za-z]+\s+[A-Za-z]+)$/i,
       // Specific name patterns
       /pamela\s+medina/i,
       /omar\s+ehab/i,
@@ -67,7 +67,11 @@ export class SupportService {
       // Find investor by name (case-insensitive, partial match)
       const investor = allInvestors.find(inv => 
         inv.name.toLowerCase().includes(investorName.toLowerCase()) ||
-        investorName.toLowerCase().includes(inv.name.toLowerCase())
+        investorName.toLowerCase().includes(inv.name.toLowerCase()) ||
+        // Match first and last name separately
+        (investorName.split(' ').length >= 2 && 
+         inv.name.toLowerCase().includes(investorName.split(' ')[0].toLowerCase()) && 
+         inv.name.toLowerCase().includes(investorName.split(' ')[1].toLowerCase()))
       );
 
       if (!investor) {
@@ -109,16 +113,16 @@ export class SupportService {
     const performance = investor.currentBalance - investor.initialDeposit;
     const performancePercent = investor.initialDeposit > 0 ? (performance / investor.initialDeposit * 100) : 0;
 
-    return `**Complete Profile for ${investor.name}:**
+    return `I've found the complete profile for ${investor.name}:
 
-**Account Information:**
+Account Information:
 • Account Status: ${investor.accountStatus || 'Active'}
 • Member Since: ${investor.joinDate}
 • Country: ${investor.country}
 • Email: ${investor.email || 'Not provided'}
 • Phone: ${investor.phone || 'Not provided'}
 
-**Financial Summary:**
+Financial Summary:
 • Current Balance: $${investor.currentBalance.toLocaleString()}
 • Initial Deposit: $${investor.initialDeposit.toLocaleString()}
 • Total Deposits: $${totalDeposits.toLocaleString()}
@@ -126,17 +130,17 @@ export class SupportService {
 • Total Withdrawals: $${totalWithdrawals.toLocaleString()}
 • Performance: ${performance >= 0 ? '+' : ''}$${performance.toLocaleString()} (${performancePercent.toFixed(2)}%)
 
-**Transaction Activity:**
+Transaction Activity:
 • Total Transactions: ${transactions.length}
 • Recent Activity: ${transactions.length > 0 ? `Last transaction on ${transactions[0]?.date}` : 'No recent activity'}
 
-**Withdrawal History:**
+Withdrawal History:
 • Total Withdrawal Requests: ${withdrawals.length}
 • Pending Requests: ${pendingWithdrawals.length}
 • Approved Requests: ${approvedWithdrawals.length}
 • Available for Withdrawal: $${investor.currentBalance.toLocaleString()}
 
-**Bank Information:**
+Bank Information:
 ${investor.bankDetails ? `
 • Account Holder: ${investor.bankDetails.accountHolderName || 'Not provided'}
 • Bank: ${investor.bankDetails.bankName || 'Not provided'}
@@ -151,21 +155,21 @@ Is there any specific aspect of ${investor.name}'s account you'd like me to elab
     const performance = investor.currentBalance - investor.initialDeposit;
     const performancePercent = investor.initialDeposit > 0 ? (performance / investor.initialDeposit * 100) : 0;
 
-    return `**Account Information for ${investor.name}:**
+    return `Here's the account information for ${investor.name}:
 
-**Current Status:** ${investor.accountStatus || 'Active'}
-**Current Balance:** $${investor.currentBalance.toLocaleString()}
-**Initial Deposit:** $${investor.initialDeposit.toLocaleString()}
-**Account Performance:** ${performance >= 0 ? '+' : ''}$${performance.toLocaleString()} (${performancePercent.toFixed(2)}%)
+Current Status: ${investor.accountStatus || 'Active'}
+Current Balance: $${investor.currentBalance.toLocaleString()}
+Initial Deposit: $${investor.initialDeposit.toLocaleString()}
+Account Performance: ${performance >= 0 ? '+' : ''}$${performance.toLocaleString()} (${performancePercent.toFixed(2)}%)
 
-**Account Details:**
+Account Details:
 • Member since: ${investor.joinDate}
 • Country: ${investor.country}
 • Total deposits: $${totalDeposits.toLocaleString()}
 • Total earnings: $${totalEarnings.toLocaleString()}
 • Transaction count: ${transactions.length}
 
-**Contact Information:**
+Contact Information:
 • Email: ${investor.email || 'Not provided'}
 • Phone: ${investor.phone || 'Not provided'}
 
@@ -178,15 +182,15 @@ The account is ${investor.accountStatus?.includes('Active') || !investor.account
     const earnings = transactions.filter(tx => tx.type === 'Earnings');
     const withdrawals = transactions.filter(tx => tx.type === 'Withdrawal');
 
-    let response = `**Transaction History for ${investor.name}:**
+    let response = `Here's the transaction history for ${investor.name}:
 
-**Summary:**
+Summary:
 • Total Transactions: ${transactions.length}
 • Deposits: ${deposits.length} (Total: $${deposits.reduce((sum, tx) => sum + tx.amount, 0).toLocaleString()})
 • Earnings: ${earnings.length} (Total: $${earnings.reduce((sum, tx) => sum + tx.amount, 0).toLocaleString()})
 • Withdrawals: ${withdrawals.length} (Total: $${Math.abs(withdrawals.reduce((sum, tx) => sum + tx.amount, 0)).toLocaleString()})
 
-**Recent Transactions:**`;
+Recent Transactions:`;
 
     if (recentTransactions.length > 0) {
       recentTransactions.forEach((tx, index) => {
@@ -208,14 +212,14 @@ The account is ${investor.accountStatus?.includes('Active') || !investor.account
     const approvedWithdrawals = withdrawals.filter(w => w.status === 'Approved');
     const rejectedWithdrawals = withdrawals.filter(w => w.status === 'Rejected');
 
-    let response = `**Withdrawal Information for ${investor.name}:**
+    let response = `Here's the withdrawal information for ${investor.name}:
 
-**Current Status:**
+Current Status:
 • Available Balance: $${investor.currentBalance.toLocaleString()}
 • Minimum Withdrawal: $100
 • Commission Rate: 15%
 
-**Withdrawal History:**
+Withdrawal History:
 • Total Withdrawal Requests: ${withdrawals.length}
 • Total Amount Withdrawn: $${totalWithdrawn.toLocaleString()}
 • Pending Requests: ${pendingWithdrawals.length}
@@ -223,7 +227,7 @@ The account is ${investor.accountStatus?.includes('Active') || !investor.account
 • Rejected Requests: ${rejectedWithdrawals.length}`;
 
     if (pendingWithdrawals.length > 0) {
-      response += `\n\n**Pending Withdrawals:**`;
+      response += `\n\nPending Withdrawals:`;
       pendingWithdrawals.forEach((w, index) => {
         response += `\n${index + 1}. $${w.amount.toLocaleString()} - Requested on ${w.date}`;
       });
@@ -231,7 +235,7 @@ The account is ${investor.accountStatus?.includes('Active') || !investor.account
 
     if (withdrawalTransactions.length > 0) {
       const recentWithdrawals = withdrawalTransactions.slice(0, 3);
-      response += `\n\n**Recent Withdrawal Transactions:**`;
+      response += `\n\nRecent Withdrawal Transactions:`;
       recentWithdrawals.forEach((tx, index) => {
         response += `\n${index + 1}. $${Math.abs(tx.amount).toLocaleString()} - ${tx.status} (${tx.date})`;
       });
@@ -239,7 +243,7 @@ The account is ${investor.accountStatus?.includes('Active') || !investor.account
 
     // Check account restrictions
     if (investor.accountStatus?.includes('Restricted') || investor.accountStatus?.includes('Closed')) {
-      response += `\n\n⚠️ **Note:** This account has restrictions that may affect withdrawal processing.`;
+      response += `\n\nNote: This account has restrictions that may affect withdrawal processing.`;
     }
 
     response += `\n\nIs there a specific withdrawal you need assistance with?`;
@@ -274,20 +278,20 @@ The account is ${investor.accountStatus?.includes('Active') || !investor.account
     // Default response with examples
     return `Thank you for your message. I can help you with:
 
-• **Investor Information**: Ask about any investor by name (e.g., "Tell me about Pamela Medina account")
-• **Account Details**: Balance, status, and performance information
-• **Transaction History**: Deposits, earnings, and withdrawal records
-• **Withdrawal Support**: Processing status and requirements
+• Investor Information: Ask about any investor by name (e.g., "Tell me about Pamela Medina")
+• Account Details: Balance, status, and performance information
+• Transaction History: Deposits, earnings, and withdrawal records
+• Withdrawal Support: Processing status and requirements
 
 What specific information would you like me to help you with today?`;
   }
 
   static async generateQuickResponse(category: string, context: ChatContext): Promise<string> {
     const quickResponses = {
-      account: `I can see your account is in ${context.investor?.accountStatus || 'Active'} status. You've been with us since ${context.investor?.joinDate}. I can also provide detailed information about any investor by name. What specific account information do you need?`,
-      balance: `Your current account balance is $${context.investor?.currentBalance?.toLocaleString() || '0'}. You have ${context.transactions.length} transactions on record. I can also look up balance information for any investor. How can I help with balance or transaction history?`,
-      withdrawal: `I can assist with withdrawal information for any investor account. The minimum withdrawal amount is $100. Would you like to check withdrawal status for a specific investor or initiate a withdrawal?`,
-      general: `I'm here to help with any questions about Interactive Brokers accounts. You can ask about specific investors by name, check account balances, review transaction history, or get withdrawal information. What can I assist you with today?`
+      account: `I can see your account is in ${context.investor?.accountStatus || 'Active'} status. You've been with us since ${context.investor?.joinDate}.\n\nI can provide detailed information about any investor by name. What specific account information do you need?`,
+      balance: `Your current account balance is $${context.investor?.currentBalance?.toLocaleString() || '0'}. You have ${context.transactions.length} transactions on record.\n\nI can also look up balance information for any investor. How can I help with balance or transaction history?`,
+      withdrawal: `I can assist with withdrawal information for any investor account. The minimum withdrawal amount is $100 and there is a 15% platform commission.\n\nWould you like to check withdrawal status for a specific investor or get information about initiating a withdrawal?`,
+      general: `I'm here to help with any questions about Interactive Brokers accounts.\n\nYou can ask about specific investors by name, check account balances, review transaction history, or get withdrawal information.\n\nWhat can I assist you with today?`
     };
 
     return quickResponses[category as keyof typeof quickResponses] || quickResponses.general;

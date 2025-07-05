@@ -142,11 +142,14 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
     setInputMessage('');
     setIsLoading(true);
 
+    // Format user message for display
+    const formattedUserMessage = userMessage.charAt(0).toUpperCase() + userMessage.slice(1);
+    
     // Add user message
     const newUserMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
-      content: userMessage,
+      content: formattedUserMessage,
       timestamp: new Date()
     };
 
@@ -182,7 +185,7 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
       const fallbackMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'support',
-        content: 'I apologize, but I\'m experiencing technical difficulties. However, I can still help you with investor information, account details, and transaction history. Please try rephrasing your question or ask about a specific investor by name.',
+        content: 'I apologize, but I\'m experiencing technical difficulties. I can still help you with investor information, account details, and transaction history. Please try asking about a specific investor by name, such as "Tell me about Pamela Medina".',
         timestamp: new Date()
       };
 
@@ -255,7 +258,7 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
                       : 'bg-gray-100 text-gray-800'
                   }`}
                 >
-                  <p className="text-sm">{message.content}</p>
+                  <div className="text-sm whitespace-pre-line">{message.content}</div>
                   <p className={`text-xs mt-1 ${
                     message.type === 'user' ? 'text-blue-100' : 'text-gray-500'
                   }`}>
@@ -286,7 +289,7 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
                 <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                   <p className="text-blue-800 text-xs font-medium mb-1">💡 Pro Tip:</p>
                   <p className="text-blue-700 text-xs">
-                    Ask about any investor by name! For example: "Tell me about Pamela Medina account" or "Show me Omar Ehab's withdrawal history"
+                    Ask about any investor by name! For example: "Tell me about Pamela Medina" or "Show me Omar Ehab's withdrawal history"
                   </p>
                 </div>
               </div>
@@ -355,7 +358,7 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Ask about any investor or account..."
+                  placeholder="Type your question or ask about any investor..."
                   disabled={isLoading}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:opacity-50"
                 />
