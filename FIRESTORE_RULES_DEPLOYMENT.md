@@ -1,7 +1,13 @@
 # Fix Firestore Permissions Error
 
 ## Problem
-The application is showing "Missing or insufficient permissions" because the Firestore security rules haven't been deployed to your Firebase project.
+The application is showing "Missing or insufficient permissions" because the Firestore security rules haven't been deployed to your Firebase project. This error occurs when trying to read/write user data from Firestore.
+
+## Quick Status Check
+If you're seeing this error, it means:
+- ❌ Firestore security rules are not deployed
+- ❌ Admin user document may not exist in Firestore
+- ❌ Authentication user may not be created
 
 ## Solution: Deploy Rules via Firebase Console
 

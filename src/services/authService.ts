@@ -44,26 +44,62 @@ export class AuthService {
         };
       } else {
         console.log('⚠️ User document not found in Firestore, creating admin user...');
-        // Create admin user document if it doesn't exist
-        const adminData = {
-          name: 'Cristian Rolando Dorao',
-          email: firebaseUser.email,
-          role: 'admin',
-          profilePic: '',
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
-        
-        await setDoc(doc(db, 'users', firebaseUser.uid), adminData);
-        console.log('✅ Admin user document created');
-        
-        return {
-          id: firebaseUser.uid,
-          ...adminData
-        };
+        try {
+          // Create admin user document if it doesn't exist
+          const adminData = {
+            name: 'Cristian Rolando Dorao',
+            email: firebaseUser.email,
+            role: 'admin' as UserRole,
+            profilePic: '',
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+          
+          await setDoc(doc(db, 'users', firebaseUser.uid), adminData);
+          console.log('✅ Admin user document created');
+          
+          return {
+            id: firebaseUser.uid,
+            ...adminData
+          };
+        } catch (createError: any) {
+          console.error('❌ Failed to create user document:', createError.message);
+          
+          if (createError.code === 'permission-denied' || createError.message?.includes('Missing or insufficient permissions')) {
+            console.error('🚨 FIRESTORE PERMISSIONS ERROR:');
+            console.error('📋 Cannot create user document due to missing Firestore rules.');
+            console.error('📖 Please follow the instructions in FIRESTORE_RULES_DEPLOYMENT.md');
+            console.error('🔗 Firebase Console: https://console.firebase.google.com/project/blackbull-4b009/firestore/rules');
+            
+            // Return fallback admin user for the specific admin email
+            if (firebaseUser.email === 'crisdoraodxb@gmail.com') {
+              console.log('🔧 Using fallback admin user data');
+              return {
+                id: firebaseUser.uid,
+                name: 'Cristian Rolando Dorao',
+                email: firebaseUser.email || '',
+                role: 'admin' as UserRole,
+                profilePic: '',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              };
+            }
+          }
+          
+          throw createError;
+        }
       }
     } catch (error: any) {
       console.error('❌ Firebase authentication error:', error);
+      
+      // Handle Firestore permission errors during sign in
+      if (error.code === 'permission-denied' || error.message?.includes('Missing or insufficient permissions')) {
+        console.error('🚨 FIRESTORE PERMISSIONS ERROR DURING SIGN IN:');
+        console.error('📋 The Firestore security rules need to be deployed manually.');
+        console.error('📖 Please follow the instructions in FIRESTORE_RULES_DEPLOYMENT.md');
+        console.error('🔗 Firebase Console: https://console.firebase.google.com/project/blackbull-4b009/firestore/rules');
+        throw new Error('Database permissions not configured. Please contact administrator.');
+      }
       
       // Handle specific Firebase auth errors
       if (error.code === 'auth/user-not-found') {
@@ -160,7 +196,30 @@ export class AuthService {
       
       return null;
     } catch (error) {
-      console.error('❌ Get current user error:', error);
+      console.error('❌ Get current user error:', error.message);
+      
+      // Handle Firestore permission errors specifically
+      if (error.code === 'permission-denied' || error.message?.includes('Missing or insufficient permissions')) {
+        console.error('🚨 FIRESTORE PERMISSIONS ERROR:');
+        console.error('📋 The Firestore security rules need to be deployed manually.');
+        console.error('📖 Please follow the instructions in FIRESTORE_RULES_DEPLOYMENT.md');
+        console.error('🔗 Firebase Console: https://console.firebase.google.com/project/blackbull-4b009/firestore/rules');
+        
+        // For now, return a basic user object to prevent app crash
+        if (firebaseUser.email === 'crisdoraodxb@gmail.com') {
+          console.log('🔧 Using fallback admin user data');
+          return {
+            id: firebaseUser.uid,
+            name: 'Cristian Rolando Dorao',
+            email: firebaseUser.email || '',
+            role: 'admin' as UserRole,
+            profilePic: '',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+        }
+      }
+      
       return null;
     }
   }
@@ -170,8 +229,14 @@ export class AuthService {
     return onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
         console.log('🔄 Auth state changed: User logged in');
-        const user = await this.getCurrentUser();
-        callback(user);
+        try {
+          const user = await this.getCurrentUser();
+          callback(user);
+        } catch (error: any) {
+          console.error('❌ Error in auth state change:', error.message);
+          // Still call callback with null to prevent hanging
+          callback(null);
+        }
       } else {
         console.log('🔄 Auth state changed: User logged out');
         callback(null);
