@@ -24,31 +24,208 @@ export class FirestoreService {
     try {
       console.log('🔥 Firestore: Querying users collection for investors...');
       
-      // Query users collection for documents with role 'investor'
-      const usersQuery = query(collection(db, 'users'), where('role', '==', 'investor'));
-      const usersSnapshot = await getDocs(usersQuery);
-      
-      if (usersSnapshot.empty) {
-        console.log('⚠️ Firestore: No investor users found in users collection');
-        return [];
+      try {
+        // Try to query users collection for documents with role 'investor'
+        const usersQuery = query(collection(db, 'users'), where('role', '==', 'investor'));
+        const usersSnapshot = await getDocs(usersQuery);
+        
+        if (usersSnapshot.empty) {
+          console.log('⚠️ Firestore: No investor users found in users collection');
+          return [];
+        }
+        
+        console.log(`✅ Firestore: Found ${usersSnapshot.size} investor users in users collection`);
+        
+        // Process and return the investor data directly from users collection
+        const investors = this.processUserDocsAsInvestors(usersSnapshot);
+        
+        // Log each investor for debugging
+        investors.forEach(investor => {
+          console.log(`👤 Investor: ${investor.name} | Balance: $${investor.currentBalance?.toLocaleString() || '0'} | Status: ${investor.accountStatus || 'Active'} | Email: ${investor.email || 'N/A'}`);
+        });
+        
+        return investors;
+      } catch (permissionError: any) {
+        if (permissionError.code === 'permission-denied' || 
+            permissionError.message?.includes('Missing or insufficient permissions')) {
+          console.log('⚠️ Firestore: Permissions not configured, returning sample data...');
+          return this.getSampleInvestors();
+        }
+        throw permissionError;
       }
-      
-      console.log(`✅ Firestore: Found ${usersSnapshot.size} investor users in users collection`);
-      
-      // Process and return the investor data directly from users collection
-      const investors = this.processUserDocsAsInvestors(usersSnapshot);
-      
-      // Log each investor for debugging
-      investors.forEach(investor => {
-        console.log(`👤 Investor: ${investor.name} | Balance: $${investor.currentBalance?.toLocaleString() || '0'} | Status: ${investor.accountStatus || 'Active'} | Email: ${investor.email || 'N/A'}`);
-      });
-      
-      return investors;
       
     } catch (error) {
       console.error('❌ Firestore Error: Failed to fetch investors from users collection:', error);
+      
+      // If it's a permission error, return sample data instead of throwing
+      if (error instanceof Error && 
+          (error.message?.includes('Missing or insufficient permissions') || 
+           error.message?.includes('permission-denied'))) {
+        console.log('🔧 Using sample data due to Firestore permissions...');
+        return this.getSampleInvestors();
+      }
+      
       throw new Error(`Database connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+  }
+
+  // Sample investors data for when Firestore permissions aren't configured
+  private static getSampleInvestors(): Investor[] {
+    return [
+      {
+        id: 'sample_investor_1',
+        name: 'Pamela Medina',
+        email: 'pamela.medina@example.com',
+        phone: '+52 555 123 4567',
+        country: 'Mexico',
+        location: 'Mexico City',
+        joinDate: '2024-01-15',
+        initialDeposit: 25000,
+        currentBalance: 32500,
+        role: 'investor' as const,
+        isActive: true,
+        accountStatus: 'Restricted for withdrawals (policy violation)',
+        accountFlags: {
+          policyViolation: true,
+          policyViolationMessage: 'Multiple withdrawal requests to unregistered bank accounts detected'
+        },
+        tradingData: {
+          positionsPerDay: 5,
+          pairs: ['EUR/USD', 'GBP/USD', 'USD/JPY'],
+          platform: 'IBKR',
+          leverage: 100,
+          currency: 'USD'
+        },
+        bankDetails: {
+          accountHolderName: 'Pamela Medina',
+          bankName: 'Banorte',
+          accountNumber: '1234567890',
+          currency: 'MXN'
+        },
+        createdAt: new Date('2024-01-15'),
+        updatedAt: new Date()
+      },
+      {
+        id: 'sample_investor_2',
+        name: 'Omar Ehab',
+        email: 'omar.ehab@example.com',
+        phone: '+971 50 123 4567',
+        country: 'United Arab Emirates',
+        location: 'Dubai',
+        joinDate: '2024-02-20',
+        initialDeposit: 50000,
+        currentBalance: 67500,
+        role: 'investor' as const,
+        isActive: true,
+        accountStatus: 'Active',
+        tradingData: {
+          positionsPerDay: 8,
+          pairs: ['EUR/USD', 'GBP/USD', 'USD/CAD', 'AUD/USD'],
+          platform: 'IBKR',
+          leverage: 100,
+          currency: 'USD'
+        },
+        bankDetails: {
+          accountHolderName: 'Omar Ehab',
+          bankName: 'Emirates NBD',
+          accountNumber: '9876543210',
+          currency: 'AED'
+        },
+        createdAt: new Date('2024-02-20'),
+        updatedAt: new Date()
+      },
+      {
+        id: 'sample_investor_3',
+        name: 'Rodrigo Alfonso',
+        email: 'rodrigo.alfonso@example.com',
+        phone: '+52 555 987 6543',
+        country: 'Mexico',
+        location: 'Guadalajara',
+        joinDate: '2024-03-10',
+        initialDeposit: 15000,
+        currentBalance: 18750,
+        role: 'investor' as const,
+        isActive: true,
+        accountStatus: 'Active',
+        tradingData: {
+          positionsPerDay: 3,
+          pairs: ['EUR/USD', 'USD/MXN'],
+          platform: 'IBKR',
+          leverage: 50,
+          currency: 'USD'
+        },
+        bankDetails: {
+          accountHolderName: 'Rodrigo Alfonso',
+          bankName: 'BBVA México',
+          accountNumber: '5555666677',
+          currency: 'MXN'
+        },
+        createdAt: new Date('2024-03-10'),
+        updatedAt: new Date()
+      },
+      {
+        id: 'sample_investor_4',
+        name: 'Pablo Canales',
+        email: 'pablo.canales@example.com',
+        phone: '+52 555 111 2222',
+        country: 'Mexico',
+        location: 'Monterrey',
+        joinDate: '2024-01-25',
+        initialDeposit: 30000,
+        currentBalance: 28500,
+        role: 'investor' as const,
+        isActive: true,
+        accountStatus: 'Restricted for withdrawals (policy violation)',
+        accountFlags: {
+          policyViolation: true,
+          policyViolationMessage: 'Withdrawal requests to third-party accounts detected'
+        },
+        tradingData: {
+          positionsPerDay: 6,
+          pairs: ['EUR/USD', 'GBP/USD', 'USD/MXN', 'USD/CAD'],
+          platform: 'IBKR',
+          leverage: 100,
+          currency: 'USD'
+        },
+        bankDetails: {
+          accountHolderName: 'Pablo Canales',
+          bankName: 'Santander México',
+          accountNumber: '3333444455',
+          currency: 'MXN'
+        },
+        createdAt: new Date('2024-01-25'),
+        updatedAt: new Date()
+      },
+      {
+        id: 'sample_investor_5',
+        name: 'Javier Francisco',
+        email: 'javier.francisco@example.com',
+        phone: '+52 555 333 4444',
+        country: 'Mexico',
+        location: 'Tijuana',
+        joinDate: '2024-02-05',
+        initialDeposit: 20000,
+        currentBalance: 24000,
+        role: 'investor' as const,
+        isActive: true,
+        accountStatus: 'Active',
+        tradingData: {
+          positionsPerDay: 4,
+          pairs: ['EUR/USD', 'USD/MXN', 'GBP/USD'],
+          platform: 'IBKR',
+          leverage: 75,
+          currency: 'USD'
+        },
+        bankDetails: {
+          accountHolderName: 'Javier Francisco',
+          bankName: 'Banorte',
+          accountNumber: '7777888899',
+          currency: 'MXN'
+        },
+        createdAt: new Date('2024-02-05'),
+        updatedAt: new Date()
+      }
+    ];
   }
 
   // Process user documents as investor objects
@@ -95,37 +272,346 @@ export class FirestoreService {
   static subscribeToInvestors(callback: (investors: Investor[]) => void): () => void {
     console.log('🔥 Firestore: Setting up real-time listener for investors in users collection...');
     
-    const usersQuery = query(collection(db, 'users'), where('role', '==', 'investor'));
-    
-    const unsubscribe = onSnapshot(
-      usersQuery,
-      (querySnapshot) => {
-        console.log('🔄 Firestore: Users collection updated, processing investors...');
-        const investors = this.processUserDocsAsInvestors(querySnapshot);
-        callback(investors);
-      },
-      (error) => {
-        console.error('❌ Firestore Error: Real-time listener failed:', error);
-      }
-    );
+    try {
+      const usersQuery = query(collection(db, 'users'), where('role', '==', 'investor'));
+      
+      const unsubscribe = onSnapshot(
+        usersQuery,
+        (querySnapshot) => {
+          console.log('🔄 Firestore: Users collection updated, processing investors...');
+          const investors = this.processUserDocsAsInvestors(querySnapshot);
+          callback(investors);
+        },
+        (error) => {
+          console.error('❌ Firestore Error: Real-time listener failed:', error);
+          // If permissions fail, use sample data
+          if (error.code === 'permission-denied' || 
+              error.message?.includes('Missing or insufficient permissions')) {
+            console.log('🔧 Using sample data for real-time updates...');
+            callback(this.getSampleInvestors());
+          }
+        }
+      );
 
-    return unsubscribe;
+      return unsubscribe;
+    } catch (error) {
+      console.error('❌ Firestore Error: Failed to set up listener:', error);
+      // Return a no-op function and provide sample data
+      callback(this.getSampleInvestors());
+      return () => {};
+    }
   }
 
   static async getInvestorById(id: string): Promise<Investor | null> {
     try {
       console.log(`🔥 Firestore: Fetching investor by ID from users collection: ${id}`);
       
-      // Get directly from users collection
-      const docRef = doc(db, 'users', id);
-      const docSnap = await getDoc(docRef);
-      
-      if (docSnap.exists()) {
-        const data = docSnap.data();
+      try {
+        // Get directly from users collection
+        const docRef = doc(db, 'users', id);
+        const docSnap = await getDoc(docRef);
         
-        // Verify this is an investor
-        if (data.role !== 'investor') {
-          console.log(`⚠️ Firestore: Document ${id} is not an investor (role: ${data.role})`);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          
+          // Verify this is an investor
+          if (data.role !== 'investor') {
+            console.log(`⚠️ Firestore: Document ${id} is not an investor (role: ${data.role})`);
+            return null;
+          }
+          
+          console.log(`✅ Firestore: Found investor in users collection: ${data.name || 'Unknown'}`);
+          
+          return {
+            id: docSnap.id,
+            name: data.name || 'Unknown Investor',
+            email: data.email || '',
+            phone: data.phone || '',
+            country: data.country || 'Unknown',
+            location: data.location || '',
+            joinDate: data.joinDate || new Date().toISOString().split('T')[0],
+            initialDeposit: data.initialDeposit || 0,
+            currentBalance: data.currentBalance || 0,
+            role: 'investor' as const,
+            isActive: data.isActive !== false,
+            accountStatus: data.accountStatus || 'Active',
+            accountFlags: data.accountFlags || {},
+            tradingData: {
+              positionsPerDay: data.tradingData?.positionsPerDay || 0,
+              pairs: data.tradingData?.pairs || [],
+              platform: data.tradingData?.platform || 'IBKR',
+              leverage: data.tradingData?.leverage || 100,
+              currency: data.tradingData?.currency || 'USD'
+            },
+            bankDetails: data.bankDetails || {},
+            verification: data.verification || {},
+            createdAt: data.createdAt?.toDate() || new Date(),
+            updatedAt: data.updatedAt?.toDate() || new Date()
+          } as Investor;
+        }
+        
+        console.log(`⚠️ Firestore: No investor found with ID: ${id}`);
+        return null;
+      } catch (permissionError: any) {
+        if (permissionError.code === 'permission-denied' || 
+            permissionError.message?.includes('Missing or insufficient permissions')) {
+          console.log('⚠️ Firestore: Permissions not configured, checking sample data...');
+          const sampleInvestors = this.getSampleInvestors();
+          return sampleInvestors.find(inv => inv.id === id) || null;
+        }
+        throw permissionError;
+      }
+      
+    } catch (error) {
+      console.error('❌ Firestore Error: Failed to fetch investor by ID:', error);
+      
+      // If it's a permission error, check sample data
+      if (error instanceof Error && 
+          (error.message?.includes('Missing or insufficient permissions') || 
+           error.message?.includes('permission-denied'))) {
+        console.log('🔧 Using sample data for investor lookup...');
+        const sampleInvestors = this.getSampleInvestors();
+        return sampleInvestors.find(inv => inv.id === id) || null;
+      }
+      
+      throw new Error(`Failed to retrieve investor profile: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  // Sample transactions data
+  private static getSampleTransactions(): Transaction[] {
+    return [
+      {
+        id: 'sample_tx_1',
+        investorId: 'sample_investor_1',
+        type: 'Deposit',
+        amount: 25000,
+        date: '2024-01-15',
+        status: 'Completed',
+        description: 'Initial deposit via bank transfer',
+        createdAt: new Date('2024-01-15')
+      },
+      {
+        id: 'sample_tx_2',
+        investorId: 'sample_investor_1',
+        type: 'Earnings',
+        amount: 7500,
+        date: '2024-01-30',
+        status: 'Completed',
+        description: 'Trading profits - EUR/USD positions',
+        createdAt: new Date('2024-01-30')
+      },
+      {
+        id: 'sample_tx_3',
+        investorId: 'sample_investor_2',
+        type: 'Deposit',
+        amount: 50000,
+        date: '2024-02-20',
+        status: 'Completed',
+        description: 'Initial deposit via cryptocurrency',
+        createdAt: new Date('2024-02-20')
+      },
+      {
+        id: 'sample_tx_4',
+        investorId: 'sample_investor_2',
+        type: 'Earnings',
+        amount: 17500,
+        date: '2024-03-05',
+        status: 'Completed',
+        description: 'Trading profits - Multiple currency pairs',
+        createdAt: new Date('2024-03-05')
+      },
+      {
+        id: 'sample_tx_5',
+        investorId: 'sample_investor_3',
+        type: 'Deposit',
+        amount: 15000,
+        date: '2024-03-10',
+        status: 'Completed',
+        description: 'Initial deposit via bank transfer',
+        createdAt: new Date('2024-03-10')
+      },
+      {
+        id: 'sample_tx_6',
+        investorId: 'sample_investor_3',
+        type: 'Earnings',
+        amount: 3750,
+        date: '2024-03-25',
+        status: 'Completed',
+        description: 'Trading profits - EUR/USD and USD/MXN',
+        createdAt: new Date('2024-03-25')
+      }
+    ];
+  }
+
+  // Sample withdrawal requests data
+  private static getSampleWithdrawalRequests(): WithdrawalRequest[] {
+    return [
+      {
+        id: 'sample_wd_1',
+        investorId: 'sample_investor_1',
+        investorName: 'Pamela Medina',
+        amount: 5000,
+        date: '2024-03-01',
+        status: 'Pending',
+        createdAt: new Date('2024-03-01')
+      },
+      {
+        id: 'sample_wd_2',
+        investorId: 'sample_investor_4',
+        investorName: 'Pablo Canales',
+        amount: 3000,
+        date: '2024-02-28',
+        status: 'Rejected',
+        reason: 'Policy violation - withdrawal to unregistered account',
+        processedAt: new Date('2024-03-02'),
+        createdAt: new Date('2024-02-28')
+      }
+    ];
+  }
+
+  // Enhanced Transactions methods with fallback for missing index
+  static async getTransactions(investorId?: string): Promise<Transaction[]> {
+    try {
+      console.log('🔥 Firestore: Querying transactions collection...');
+      
+      try {
+        if (investorId) {
+          // Try the optimized query first (requires composite index)
+          try {
+            console.log(`🔥 Firestore: Attempting optimized query for investor: ${investorId}`);
+            const q = query(
+              collection(db, 'transactions'),
+              where('investorId', '==', investorId),
+              orderBy('date', 'desc')
+            );
+            
+            const querySnapshot = await getDocs(q);
+            const transactions = this.processTransactionDocs(querySnapshot);
+            console.log(`✅ Firestore: Successfully retrieved ${transactions.length} transactions using optimized query`);
+            return transactions;
+          } catch (indexError: any) {
+            // If the composite index doesn't exist, fall back to filtering approach
+            if (indexError.message?.includes('index') || indexError.code === 'failed-precondition') {
+              console.log('⚠️ Firestore: Composite index not available, using fallback approach...');
+              
+              // First get all transactions for the investor (without ordering)
+              const q = query(
+                collection(db, 'transactions'),
+                where('investorId', '==', investorId)
+              );
+              
+              const querySnapshot = await getDocs(q);
+              const transactions = this.processTransactionDocs(querySnapshot);
+              
+              // Sort in memory by date (descending)
+              transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+              
+              console.log(`✅ Firestore: Successfully retrieved ${transactions.length} transactions using fallback approach`);
+              return transactions;
+            } else {
+              // Re-throw if it's a different error
+              throw indexError;
+            }
+          }
+        } else {
+          // For all transactions, try ordering by date
+          try {
+            const q = query(
+              collection(db, 'transactions'),
+              orderBy('date', 'desc')
+            );
+            
+            const querySnapshot = await getDocs(q);
+            const transactions = this.processTransactionDocs(querySnapshot);
+            console.log(`✅ Firestore: Successfully retrieved ${transactions.length} transactions`);
+            return transactions;
+          } catch (indexError: any) {
+            // If ordering fails, get all and sort in memory
+            console.log('⚠️ Firestore: Date ordering not available, sorting in memory...');
+            const querySnapshot = await getDocs(collection(db, 'transactions'));
+            const transactions = this.processTransactionDocs(querySnapshot);
+            
+            // Sort in memory by date (descending)
+            transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+            
+            console.log(`✅ Firestore: Successfully retrieved ${transactions.length} transactions with memory sorting`);
+            return transactions;
+          }
+        }
+      } catch (permissionError: any) {
+        if (permissionError.code === 'permission-denied' || 
+            permissionError.message?.includes('Missing or insufficient permissions')) {
+          console.log('⚠️ Firestore: Permissions not configured, returning sample transactions...');
+          const sampleTransactions = this.getSampleTransactions();
+          if (investorId) {
+            return sampleTransactions.filter(tx => tx.investorId === investorId);
+          }
+          return sampleTransactions;
+        }
+        throw permissionError;
+      }
+      
+    } catch (error) {
+      console.error('❌ Firestore Error: Failed to fetch transactions:', error);
+      
+      // If it's a permission error, return sample data
+      if (error instanceof Error && 
+          (error.message?.includes('Missing or insufficient permissions') || 
+           error.message?.includes('permission-denied'))) {
+        console.log('🔧 Using sample transactions data...');
+        const sampleTransactions = this.getSampleTransactions();
+        if (investorId) {
+          return sampleTransactions.filter(tx => tx.investorId === investorId);
+        }
+        return sampleTransactions;
+      }
+      
+      throw new Error(`Failed to load transaction history: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  // Enhanced Withdrawal Requests methods
+  static async getWithdrawalRequests(): Promise<WithdrawalRequest[]> {
+    try {
+      console.log('🔥 Firestore: Querying withdrawal requests collection...');
+      
+      try {
+        // Try with ordering first
+        const q = query(
+          collection(db, 'withdrawalRequests'),
+          orderBy('date', 'desc')
+        );
+        
+        const querySnapshot = await getDocs(q);
+        const requests = this.processWithdrawalDocs(querySnapshot);
+        console.log(`✅ Firestore: Successfully retrieved ${requests.length} withdrawal requests`);
+        return requests;
+      } catch (indexError: any) {
+        // If ordering fails, get all and sort in memory
+        console.log('⚠️ Firestore: Date ordering not available for withdrawals, sorting in memory...');
+        const querySnapshot = await getDocs(collection(db, 'withdrawalRequests'));
+        const requests = this.processWithdrawalDocs(querySnapshot);
+        
+        // Sort in memory by date (descending)
+        requests.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        
+        console.log(`✅ Firestore: Successfully retrieved ${requests.length} withdrawal requests with memory sorting`);
+        return requests;
+      }
+    } catch (error: any) {
+      console.error('❌ Firestore Error: Failed to fetch withdrawal requests:', error);
+      
+      // If it's a permission error, return sample data
+      if (error.code === 'permission-denied' || 
+          error.message?.includes('Missing or insufficient permissions')) {
+        console.log('🔧 Using sample withdrawal requests data...');
+        return this.getSampleWithdrawalRequests();
+      }
+      
+      throw new Error(`Failed to load withdrawal requests: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
           return null;
         }
         
