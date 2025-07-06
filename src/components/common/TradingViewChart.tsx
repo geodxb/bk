@@ -54,12 +54,6 @@ const TradingViewTickerTape = ({
     // Generate a unique widget ID to prevent conflicts
     const widgetId = `tradingview_widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Generate a unique widget ID to prevent conflicts
-    const widgetId = `tradingview_widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-    // Generate a unique widget ID to prevent conflicts
-    const widgetId = `tradingview_widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
     // Clear any existing content
     containerRef.current.innerHTML = '';
 
@@ -68,18 +62,15 @@ const TradingViewTickerTape = ({
     widgetContainer.className = 'tradingview-widget-container';
     widgetContainer.style.height = '100%';
     widgetContainer.style.width = '100%';
-    widgetContainer.style.height = '100%';
-    widgetContainer.style.width = '100%';
 
     // Create the main widget div
     const widgetDiv = document.createElement('div');
     widgetDiv.className = 'tradingview-widget-container__widget';
     widgetDiv.id = widgetId;
     widgetDiv.style.height = '100%';
+
     // Widget configuration
     const config = {
-      container_id: widgetId,
-      container_id: widgetId,
       container_id: widgetId,
       symbols,
       showSymbolLogo,
@@ -89,28 +80,6 @@ const TradingViewTickerTape = ({
       locale,
       width: '100%',
       height: '100%'
-      width: '100%',
-      height: '100%'
-    };
-
-    // Create the script element with error handling
-    const script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js';
-    script.async = true;
-    
-    // Add error handling for script loading
-    script.onerror = () => {
-      console.warn('TradingView ticker tape widget failed to load');
-      if (containerRef.current) {
-        containerRef.current.innerHTML = `
-          <div class="flex items-center justify-center h-full text-gray-400">
-            <div class="text-center">
-              <p class="text-sm">Market data temporarily unavailable</p>
-            </div>
-          </div>
-        `;
-      }
     };
 
     // Create the script element with error handling
@@ -152,11 +121,8 @@ const TradingViewTickerTape = ({
         });
       } catch (error) {
         console.warn('Could not hide TradingView copyright:', error);
-      } catch (error) {
-        console.warn('Could not hide TradingView copyright:', error);
       }
-    }
-    )
+    }, 1000);
 
     // Cleanup function
     return () => {
