@@ -1,152 +1,213 @@
-import { useEffect, useRef } from 'react';
+import { 
+  collection, 
+  doc, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  getDocs, 
+  getDoc, 
+  query, 
+  where, 
+  orderBy, 
+  onSnapshot,
+  Timestamp,
+  writeBatch
+} from 'firebase/firestore';
+import { db } from '../lib/firebase';
+import { Investor } from '../types/investor';
+import { Transaction } from '../types/transaction';
+import { WithdrawalRequest } from '../types/withdrawal';
 
-interface TradingViewTickerTapeProps {
-  symbols?: Array<{
-    proName: string;
-    title?: string;
-    description?: string;
-  }>;
-  showSymbolLogo?: boolean;
-  isTransparent?: boolean;
-  displayMode?: 'adaptive' | 'regular' | 'compact';
-  colorTheme?: 'light' | 'dark';
-  locale?: string;
-}
-
-const TradingViewTickerTape = ({
-  symbols = [
-    {
-      "proName": "FX_IDC:EURUSD",
-      "title": "EUR to USD"
-    },
-    {
-      "proName": "BITSTAMP:BTCUSD",
-      "title": "Bitcoin"
-    },
-    {
-      "proName": "BITSTAMP:ETHUSD",
-      "title": "Ethereum"
-    },
-    {
-      "description": "XAUUSD",
-      "proName": "FOREXCOM:XAUUSD"
-    },
-    {
-      "description": "EURUSD",
-      "proName": "FX:EURUSD"
-    },
-    {
-      "description": "GBPUSD",
-      "proName": "OANDA:GBPUSD"
+export class FirestoreService {
+  // Generic CRUD operations
+  static async create(collectionName: string, data: any) {
+    try {
+      const docRef = await addDoc(collection(db, collectionName), {
+        ...data,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
+      });
+      console.log(`✅ Document created in ${collectionName}:`, docRef.id);
+      return docRef.id;
+    } catch (error) {
+      console.error(`❌ Error creating document in ${collectionName}:`, error);
+      throw error;
     }
-  ],
-  showSymbolLogo = true,
-  isTransparent = false,
-  displayMode = 'adaptive',
-  colorTheme = 'dark',
-  locale = 'en'
-}: TradingViewTickerTapeProps) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+  }
 
-  useEffect(() => {
-    if (!containerRef.current) return;
+  static async update(collectionName: string, id: string, data: any) {
+    try {
+      await updateDoc(doc(db, collectionName, id), {
+        ...data,
+        updatedAt: Timestamp.now()
+      });
+      console.log(`✅ Document updated in ${collectionName}:`, id);
+    } catch (error) {
+      console.error(`❌ Error updating document in ${collectionName}:`, error);
+      throw error;
+    }
+  }
 
-    // Generate a unique widget ID to prevent conflicts
-    const widgetId = `tradingview_widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  static async delete(collectionName: string, id: string) {
+    try {
+      await deleteDoc(doc(db, collectionName, id));
+      console.log(`✅ Document deleted from ${collectionName}:`, id);
+    } catch (error) {
+      console.error(`❌ Error deleting document from ${collectionName}:`, error);
+      throw error;
+    }
+  }
 
-    // Generate a unique widget ID to prevent conflicts
-    const widgetId = `tradingview_widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  static async getAll(collectionName: string) {
+    try {
+      const querySnapshot = await getDocs(collection(db, collectionName));
+      const documents = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      console.log(`✅ Retrieved ${documents.length} documents from ${collectionName}`);
+      return documents;
+    } catch (error) {
+      console.error(`❌ Error getting documents from ${collectionName}:`, error);
+      throw error;
+    }
+  }
 
-    // Clear any existing content
-    containerRef.current.innerHTML = '';
-
-    // Create the widget container
-    const widgetContainer = document.createElement('div');
-    widgetContainer.className = 'tradingview-widget-container';
-    widgetContainer.style.height = '100%';
-    widgetContainer.style.width = '100%';
-
-    // Create the main widget div
-    const widgetDiv = document.createElement('div');
-    widgetDiv.className = 'tradingview-widget-container__widget';
-    widgetDiv.id = widgetId;
-    widgetDiv.style.height = '100%';
-    widgetDiv.style.width = '100%';
-    widgetDiv.id = widgetId;
-
-    // Widget configuration
-    const config = {
-      container_id: widgetId,
-      container_id: widgetId,
-      symbols,
-      showSymbolLogo,
-      isTransparent,
-      displayMode,
-      colorTheme,
-      locale,
-      width: '100%',
-      height: '100%'
-    };
-
-    // Create the script element with error handling
-    const script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js';
-    script.async = true;
-    
-    // Add error handling for script loading
-    script.onerror = () => {
-      console.warn('TradingView ticker tape widget failed to load');
-      if (containerRef.current) {
-        containerRef.current.innerHTML = `
-          <div class="flex items-center justify-center h-full text-gray-400">
-            <div class="text-center">
-              <p class="text-sm">Market data temporarily unavailable</p>
-            </div>
-          </div>
-        `;
+  static async getById(collectionName: string, id: string) {
+    try {
+      const docSnap = await getDoc(doc(db, collectionName, id));
+      if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() };
+      } else {
+        console.log(`❌ No document found in ${collectionName} with id:`, id);
+        return null;
       }
-    };
+    } catch (error) {
+      console.error(`❌ Error getting document from ${collectionName}:`, error);
+      throw error;
+    }
+  }
 
-    // Set the script content
-    script.text = JSON.stringify(config);
+  // Real-time listeners
+  static onSnapshot(collectionName: string, callback: (data: any[]) => void) {
+    try {
+      const unsubscribe = onSnapshot(collection(db, collectionName), (snapshot) => {
+        const documents = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        callback(documents);
+      });
+      return unsubscribe;
+    } catch (error) {
+      console.error(`❌ Error setting up listener for ${collectionName}:`, error);
+      throw error;
+    }
+  }
 
-    // Assemble the widget (without copyright div)
-    widgetContainer.appendChild(widgetDiv);
-    widgetContainer.appendChild(script);
+  // Investor-specific operations
+  static async createInvestor(investorData: Omit<Investor, 'id'>) {
+    return this.create('investors', investorData);
+  }
 
-    // Add to the container
-    containerRef.current.appendChild(widgetContainer);
+  static async updateInvestor(id: string, data: Partial<Investor>) {
+    return this.update('investors', id, data);
+  }
 
-    // Hide copyright text with CSS after widget loads
-    const hideTimeout = setTimeout(() => {
-      try {
-        const copyrightElements = document.querySelectorAll('.tradingview-widget-copyright');
-        copyrightElements.forEach(el => {
-          (el as HTMLElement).style.display = 'none';
+  static async deleteInvestor(id: string) {
+    return this.delete('investors', id);
+  }
+
+  static async getInvestors() {
+    return this.getAll('investors');
+  }
+
+  static async getInvestorById(id: string) {
+    return this.getById('investors', id);
+  }
+
+  // Transaction-specific operations
+  static async createTransaction(transactionData: Omit<Transaction, 'id'>) {
+    return this.create('transactions', transactionData);
+  }
+
+  static async updateTransaction(id: string, data: Partial<Transaction>) {
+    return this.update('transactions', id, data);
+  }
+
+  static async getTransactions() {
+    return this.getAll('transactions');
+  }
+
+  static async getTransactionsByInvestor(investorId: string) {
+    try {
+      const q = query(
+        collection(db, 'transactions'),
+        where('investorId', '==', investorId),
+        orderBy('createdAt', 'desc')
+      );
+      const querySnapshot = await getDocs(q);
+      const transactions = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      return transactions;
+    } catch (error) {
+      console.error('❌ Error getting transactions by investor:', error);
+      throw error;
+    }
+  }
+
+  // Withdrawal request operations
+  static async createWithdrawalRequest(requestData: Omit<WithdrawalRequest, 'id'>) {
+    return this.create('withdrawalRequests', requestData);
+  }
+
+  static async updateWithdrawalRequest(id: string, data: Partial<WithdrawalRequest>) {
+    return this.update('withdrawalRequests', id, data);
+  }
+
+  static async getWithdrawalRequests() {
+    return this.getAll('withdrawalRequests');
+  }
+
+  static async getWithdrawalRequestsByInvestor(investorId: string) {
+    try {
+      const q = query(
+        collection(db, 'withdrawalRequests'),
+        where('investorId', '==', investorId),
+        orderBy('createdAt', 'desc')
+      );
+      const querySnapshot = await getDocs(q);
+      const requests = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      return requests;
+    } catch (error) {
+      console.error('❌ Error getting withdrawal requests by investor:', error);
+      throw error;
+    }
+  }
+
+  // Batch operations
+  static async batchUpdate(updates: Array<{ collection: string; id: string; data: any }>) {
+    try {
+      const batch = writeBatch(db);
+      
+      updates.forEach(({ collection: collectionName, id, data }) => {
+        const docRef = doc(db, collectionName, id);
+        batch.update(docRef, {
+          ...data,
+          updatedAt: Timestamp.now()
         });
-      } catch (error) {
-        console.warn('Could not hide TradingView copyright:', error);
-      }
+      });
+
+      await batch.commit();
+      console.log(`✅ Batch update completed for ${updates.length} documents`);
+    } catch (error) {
+      console.error('❌ Error in batch update:', error);
+      throw error;
     }
-    )
-
-    // Cleanup function
-    return () => {
-      clearTimeout(hideTimeout);
-      if (containerRef.current) {
-        containerRef.current.innerHTML = '';
-      }
-    };
-  }, [symbols, showSymbolLogo, isTransparent, displayMode, colorTheme, locale]);
-
-  return (
-    <div 
-      ref={containerRef}
-      className="w-full"
-      style={{ minHeight: '60px' }}
-    />
-  );
-};
-
-export default TradingViewTickerTape;
+  }
+}

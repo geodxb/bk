@@ -54,9 +54,6 @@ const TradingViewTickerTape = ({
     // Generate a unique widget ID to prevent conflicts
     const widgetId = `tradingview_widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Generate a unique widget ID to prevent conflicts
-    const widgetId = `tradingview_widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
     // Clear any existing content
     containerRef.current.innerHTML = '';
 
@@ -72,11 +69,9 @@ const TradingViewTickerTape = ({
     widgetDiv.id = widgetId;
     widgetDiv.style.height = '100%';
     widgetDiv.style.width = '100%';
-    widgetDiv.id = widgetId;
 
     // Widget configuration
     const config = {
-      container_id: widgetId,
       container_id: widgetId,
       symbols,
       showSymbolLogo,
@@ -128,8 +123,7 @@ const TradingViewTickerTape = ({
       } catch (error) {
         console.warn('Could not hide TradingView copyright:', error);
       }
-    }
-    )
+    }, 1000);
 
     // Cleanup function
     return () => {
