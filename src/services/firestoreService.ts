@@ -1,1130 +1,149 @@
-import { 
-  collection, 
-  doc, 
-  getDocs, 
-  getDoc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  where, 
-  orderBy, 
-  limit,
-  serverTimestamp,
-  Timestamp,
-  setDoc,
-  onSnapshot
-} from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import { Investor, Transaction, WithdrawalRequest } from '../types/user';
+import { useEffect, useRef } from 'react';
 
-export class FirestoreService {
-  // Enhanced Investors methods - now properly syncing from users collection
-  static async getInvestors(): Promise<Investor[]> {
-    try {
-      console.log('🔥 Firestore: Querying users collection for investors...');
-      
-      try {
-        // Try to query users collection for documents with role 'investor'
-        const usersQuery = query(collection(db, 'users'), where('role', '==', 'investor'));
-        const usersSnapshot = await getDocs(usersQuery);
-        
-        if (usersSnapshot.empty) {
-          console.log('⚠️ Firestore: No investor users found in users collection');
-          return [];
-        }
-        
-        console.log(`✅ Firestore: Found ${usersSnapshot.size} investor users in users collection`);
-        
-        // Process and return the investor data directly from users collection
-        const investors = this.processUserDocsAsInvestors(usersSnapshot);
-        
-        // Log each investor for debugging
-        investors.forEach(investor => {
-          console.log(`👤 Investor: ${investor.name} | Balance: $${investor.currentBalance?.toLocaleString() || '0'} | Status: ${investor.accountStatus || 'Active'} | Email: ${investor.email || 'N/A'}`);
-        });
-        
-        return investors;
-      } catch (permissionError: any) {
-        if (permissionError.code === 'permission-denied' || 
-            permissionError.message?.includes('Missing or insufficient permissions')) {
-          console.log('⚠️ Firestore: Permissions not configured, returning sample data...');
-          return this.getSampleInvestors();
-        }
-        throw permissionError;
-      }
-      
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to fetch investors from users collection:', error);
-      
-      // If it's a permission error, return sample data instead of throwing
-      if (error instanceof Error && 
-          (error.message?.includes('Missing or insufficient permissions') || 
-           error.message?.includes('permission-denied'))) {
-        console.log('🔧 Using sample data due to Firestore permissions...');
-        return this.getSampleInvestors();
-      }
-      
-      throw new Error(`Database connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  // Sample investors data for when Firestore permissions aren't configured
-  private static getSampleInvestors(): Investor[] {
-    return [
-      {
-        id: 'sample_investor_1',
-        name: 'Pamela Medina',
-        email: 'pamela.medina@example.com',
-        phone: '+52 555 123 4567',
-        country: 'Mexico',
-        location: 'Mexico City',
-        joinDate: '2024-01-15',
-        initialDeposit: 25000,
-        currentBalance: 32500,
-        role: 'investor' as const,
-        isActive: true,
-        accountStatus: 'Restricted for withdrawals (policy violation)',
-        accountFlags: {
-          policyViolation: true,
-          policyViolationMessage: 'Multiple withdrawal requests to unregistered bank accounts detected'
-        },
-        tradingData: {
-          positionsPerDay: 5,
-          pairs: ['EUR/USD', 'GBP/USD', 'USD/JPY'],
-          platform: 'IBKR',
-          leverage: 100,
-          currency: 'USD'
-        },
-        bankDetails: {
-          accountHolderName: 'Pamela Medina',
-          bankName: 'Banorte',
-          accountNumber: '1234567890',
-          currency: 'MXN'
-        },
-        createdAt: new Date('2024-01-15'),
-        updatedAt: new Date()
-      },
-      {
-        id: 'sample_investor_2',
-        name: 'Omar Ehab',
-        email: 'omar.ehab@example.com',
-        phone: '+971 50 123 4567',
-        country: 'United Arab Emirates',
-        location: 'Dubai',
-        joinDate: '2024-02-20',
-        initialDeposit: 50000,
-        currentBalance: 67500,
-        role: 'investor' as const,
-        isActive: true,
-        accountStatus: 'Active',
-        tradingData: {
-          positionsPerDay: 8,
-          pairs: ['EUR/USD', 'GBP/USD', 'USD/CAD', 'AUD/USD'],
-          platform: 'IBKR',
-          leverage: 100,
-          currency: 'USD'
-        },
-        bankDetails: {
-          accountHolderName: 'Omar Ehab',
-          bankName: 'Emirates NBD',
-          accountNumber: '9876543210',
-          currency: 'AED'
-        },
-        createdAt: new Date('2024-02-20'),
-        updatedAt: new Date()
-      },
-      {
-        id: 'sample_investor_3',
-        name: 'Rodrigo Alfonso',
-        email: 'rodrigo.alfonso@example.com',
-        phone: '+52 555 987 6543',
-        country: 'Mexico',
-        location: 'Guadalajara',
-        joinDate: '2024-03-10',
-        initialDeposit: 15000,
-        currentBalance: 18750,
-        role: 'investor' as const,
-        isActive: true,
-        accountStatus: 'Active',
-        tradingData: {
-          positionsPerDay: 3,
-          pairs: ['EUR/USD', 'USD/MXN'],
-          platform: 'IBKR',
-          leverage: 50,
-          currency: 'USD'
-        },
-        bankDetails: {
-          accountHolderName: 'Rodrigo Alfonso',
-          bankName: 'BBVA México',
-          accountNumber: '5555666677',
-          currency: 'MXN'
-        },
-        createdAt: new Date('2024-03-10'),
-        updatedAt: new Date()
-      },
-      {
-        id: 'sample_investor_4',
-        name: 'Pablo Canales',
-        email: 'pablo.canales@example.com',
-        phone: '+52 555 111 2222',
-        country: 'Mexico',
-        location: 'Monterrey',
-        joinDate: '2024-01-25',
-        initialDeposit: 30000,
-        currentBalance: 28500,
-        role: 'investor' as const,
-        isActive: true,
-        accountStatus: 'Restricted for withdrawals (policy violation)',
-        accountFlags: {
-          policyViolation: true,
-          policyViolationMessage: 'Withdrawal requests to third-party accounts detected'
-        },
-        tradingData: {
-          positionsPerDay: 6,
-          pairs: ['EUR/USD', 'GBP/USD', 'USD/MXN', 'USD/CAD'],
-          platform: 'IBKR',
-          leverage: 100,
-          currency: 'USD'
-        },
-        bankDetails: {
-          accountHolderName: 'Pablo Canales',
-          bankName: 'Santander México',
-          accountNumber: '3333444455',
-          currency: 'MXN'
-        },
-        createdAt: new Date('2024-01-25'),
-        updatedAt: new Date()
-      },
-      {
-        id: 'sample_investor_5',
-        name: 'Javier Francisco',
-        email: 'javier.francisco@example.com',
-        phone: '+52 555 333 4444',
-        country: 'Mexico',
-        location: 'Tijuana',
-        joinDate: '2024-02-05',
-        initialDeposit: 20000,
-        currentBalance: 24000,
-        role: 'investor' as const,
-        isActive: true,
-        accountStatus: 'Active',
-        tradingData: {
-          positionsPerDay: 4,
-          pairs: ['EUR/USD', 'USD/MXN', 'GBP/USD'],
-          platform: 'IBKR',
-          leverage: 75,
-          currency: 'USD'
-        },
-        bankDetails: {
-          accountHolderName: 'Javier Francisco',
-          bankName: 'Banorte',
-          accountNumber: '7777888899',
-          currency: 'MXN'
-        },
-        createdAt: new Date('2024-02-05'),
-        updatedAt: new Date()
-      }
-    ];
-  }
-
-  // Process user documents as investor objects
-  private static processUserDocsAsInvestors(usersSnapshot: any): Investor[] {
-    const investors = usersSnapshot.docs.map((doc: any) => {
-      const data = doc.data();
-      console.log(`📄 Processing user document as investor: ${doc.id} - ${data.name || 'Unknown'}`);
-      
-      return {
-        id: doc.id,
-        // Map all the fields from your users collection structure
-        name: data.name || 'Unknown Investor',
-        email: data.email || '',
-        phone: data.phone || '',
-        country: data.country || 'Unknown',
-        location: data.location || '',
-        joinDate: data.joinDate || new Date().toISOString().split('T')[0],
-        initialDeposit: data.initialDeposit || 0,
-        currentBalance: data.currentBalance || 0,
-        role: 'investor' as const,
-        isActive: data.isActive !== false,
-        accountStatus: data.accountStatus || 'Active',
-        accountFlags: data.accountFlags || {},
-        tradingData: {
-          positionsPerDay: data.tradingData?.positionsPerDay || 0,
-          pairs: data.tradingData?.pairs || [],
-          platform: data.tradingData?.platform || 'IBKR',
-          leverage: data.tradingData?.leverage || 100,
-          currency: data.tradingData?.currency || 'USD'
-        },
-        bankDetails: data.bankDetails || {},
-        verification: data.verification || {},
-        // Handle timestamps properly
-        createdAt: data.createdAt?.toDate() || new Date(),
-        updatedAt: data.updatedAt?.toDate() || new Date()
-      };
-    }) as Investor[];
-    
-    console.log(`✅ Firestore: Successfully processed ${investors.length} investor records from users collection`);
-    return investors;
-  }
-
-  // Real-time listener for investors from users collection
-  static subscribeToInvestors(callback: (investors: Investor[]) => void): () => void {
-    console.log('🔥 Firestore: Setting up real-time listener for investors in users collection...');
-    
-    try {
-      const usersQuery = query(collection(db, 'users'), where('role', '==', 'investor'));
-      
-      const unsubscribe = onSnapshot(
-        usersQuery,
-        (querySnapshot) => {
-          console.log('🔄 Firestore: Users collection updated, processing investors...');
-          const investors = this.processUserDocsAsInvestors(querySnapshot);
-          callback(investors);
-        },
-        (error) => {
-          console.error('❌ Firestore Error: Real-time listener failed:', error);
-          // If permissions fail, use sample data
-          if (error.code === 'permission-denied' || 
-              error.message?.includes('Missing or insufficient permissions')) {
-            console.log('🔧 Using sample data for real-time updates...');
-            callback(this.getSampleInvestors());
-          }
-        }
-      );
-
-      return unsubscribe;
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to set up listener:', error);
-      // Return a no-op function and provide sample data
-      callback(this.getSampleInvestors());
-      return () => {};
-    }
-  }
-
-  static async getInvestorById(id: string): Promise<Investor | null> {
-    try {
-      console.log(`🔥 Firestore: Fetching investor by ID from users collection: ${id}`);
-      
-      try {
-        // Get directly from users collection
-        const docRef = doc(db, 'users', id);
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          
-          // Verify this is an investor
-          if (data.role !== 'investor') {
-            console.log(`⚠️ Firestore: Document ${id} is not an investor (role: ${data.role})`);
-            return null;
-          }
-          
-          console.log(`✅ Firestore: Found investor in users collection: ${data.name || 'Unknown'}`);
-          
-          return {
-            id: docSnap.id,
-            name: data.name || 'Unknown Investor',
-            email: data.email || '',
-            phone: data.phone || '',
-            country: data.country || 'Unknown',
-            location: data.location || '',
-            joinDate: data.joinDate || new Date().toISOString().split('T')[0],
-            initialDeposit: data.initialDeposit || 0,
-            currentBalance: data.currentBalance || 0,
-            role: 'investor' as const,
-            isActive: data.isActive !== false,
-            accountStatus: data.accountStatus || 'Active',
-            accountFlags: data.accountFlags || {},
-            tradingData: {
-              positionsPerDay: data.tradingData?.positionsPerDay || 0,
-              pairs: data.tradingData?.pairs || [],
-              platform: data.tradingData?.platform || 'IBKR',
-              leverage: data.tradingData?.leverage || 100,
-              currency: data.tradingData?.currency || 'USD'
-            },
-            bankDetails: data.bankDetails || {},
-            verification: data.verification || {},
-            createdAt: data.createdAt?.toDate() || new Date(),
-            updatedAt: data.updatedAt?.toDate() || new Date()
-          } as Investor;
-        }
-        
-        console.log(`⚠️ Firestore: No investor found with ID: ${id}`);
-        return null;
-      } catch (permissionError: any) {
-        if (permissionError.code === 'permission-denied' || 
-            permissionError.message?.includes('Missing or insufficient permissions')) {
-          console.log('⚠️ Firestore: Permissions not configured, checking sample data...');
-          const sampleInvestors = this.getSampleInvestors();
-          return sampleInvestors.find(inv => inv.id === id) || null;
-        }
-        throw permissionError;
-      }
-      
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to fetch investor by ID:', error);
-      
-      // If it's a permission error, check sample data
-      if (error instanceof Error && 
-          (error.message?.includes('Missing or insufficient permissions') || 
-           error.message?.includes('permission-denied'))) {
-        console.log('🔧 Using sample data for investor lookup...');
-        const sampleInvestors = this.getSampleInvestors();
-        return sampleInvestors.find(inv => inv.id === id) || null;
-      }
-      
-      throw new Error(`Failed to retrieve investor profile: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  // Sample transactions data
-  private static getSampleTransactions(): Transaction[] {
-    return [
-      {
-        id: 'sample_tx_1',
-        investorId: 'sample_investor_1',
-        type: 'Deposit',
-        amount: 25000,
-        date: '2024-01-15',
-        status: 'Completed',
-        description: 'Initial deposit via bank transfer',
-        createdAt: new Date('2024-01-15')
-      },
-      {
-        id: 'sample_tx_2',
-        investorId: 'sample_investor_1',
-        type: 'Earnings',
-        amount: 7500,
-        date: '2024-01-30',
-        status: 'Completed',
-        description: 'Trading profits - EUR/USD positions',
-        createdAt: new Date('2024-01-30')
-      },
-      {
-        id: 'sample_tx_3',
-        investorId: 'sample_investor_2',
-        type: 'Deposit',
-        amount: 50000,
-        date: '2024-02-20',
-        status: 'Completed',
-        description: 'Initial deposit via cryptocurrency',
-        createdAt: new Date('2024-02-20')
-      },
-      {
-        id: 'sample_tx_4',
-        investorId: 'sample_investor_2',
-        type: 'Earnings',
-        amount: 17500,
-        date: '2024-03-05',
-        status: 'Completed',
-        description: 'Trading profits - Multiple currency pairs',
-        createdAt: new Date('2024-03-05')
-      },
-      {
-        id: 'sample_tx_5',
-        investorId: 'sample_investor_3',
-        type: 'Deposit',
-        amount: 15000,
-        date: '2024-03-10',
-        status: 'Completed',
-        description: 'Initial deposit via bank transfer',
-        createdAt: new Date('2024-03-10')
-      },
-      {
-        id: 'sample_tx_6',
-        investorId: 'sample_investor_3',
-        type: 'Earnings',
-        amount: 3750,
-        date: '2024-03-25',
-        status: 'Completed',
-        description: 'Trading profits - EUR/USD and USD/MXN',
-        createdAt: new Date('2024-03-25')
-      }
-    ];
-  }
-
-  // Sample withdrawal requests data
-  private static getSampleWithdrawalRequests(): WithdrawalRequest[] {
-    return [
-      {
-        id: 'sample_wd_1',
-        investorId: 'sample_investor_1',
-        investorName: 'Pamela Medina',
-        amount: 5000,
-        date: '2024-03-01',
-        status: 'Pending',
-        createdAt: new Date('2024-03-01')
-      },
-      {
-        id: 'sample_wd_2',
-        investorId: 'sample_investor_4',
-        investorName: 'Pablo Canales',
-        amount: 3000,
-        date: '2024-02-28',
-        status: 'Rejected',
-        reason: 'Policy violation - withdrawal to unregistered account',
-        processedAt: new Date('2024-03-02'),
-        createdAt: new Date('2024-02-28')
-      }
-    ];
-  }
-
-  // Enhanced Transactions methods with fallback for missing index
-  static async getTransactions(investorId?: string): Promise<Transaction[]> {
-    try {
-      console.log('🔥 Firestore: Querying transactions collection...');
-      
-      try {
-        if (investorId) {
-          // Try the optimized query first (requires composite index)
-          try {
-            console.log(`🔥 Firestore: Attempting optimized query for investor: ${investorId}`);
-            const q = query(
-              collection(db, 'transactions'),
-              where('investorId', '==', investorId),
-              orderBy('date', 'desc')
-            );
-            
-            const querySnapshot = await getDocs(q);
-            const transactions = this.processTransactionDocs(querySnapshot);
-            console.log(`✅ Firestore: Successfully retrieved ${transactions.length} transactions using optimized query`);
-            return transactions;
-          } catch (indexError: any) {
-            // If the composite index doesn't exist, fall back to filtering approach
-            if (indexError.message?.includes('index') || indexError.code === 'failed-precondition') {
-              console.log('⚠️ Firestore: Composite index not available, using fallback approach...');
-              
-              // First get all transactions for the investor (without ordering)
-              const q = query(
-                collection(db, 'transactions'),
-                where('investorId', '==', investorId)
-              );
-              
-              const querySnapshot = await getDocs(q);
-              const transactions = this.processTransactionDocs(querySnapshot);
-              
-              // Sort in memory by date (descending)
-              transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-              
-              console.log(`✅ Firestore: Successfully retrieved ${transactions.length} transactions using fallback approach`);
-              return transactions;
-            } else {
-              // Re-throw if it's a different error
-              throw indexError;
-            }
-          }
-        } else {
-          // For all transactions, try ordering by date
-          try {
-            const q = query(
-              collection(db, 'transactions'),
-              orderBy('date', 'desc')
-            );
-            
-            const querySnapshot = await getDocs(q);
-            const transactions = this.processTransactionDocs(querySnapshot);
-            console.log(`✅ Firestore: Successfully retrieved ${transactions.length} transactions`);
-            return transactions;
-          } catch (indexError: any) {
-            // If ordering fails, get all and sort in memory
-            console.log('⚠️ Firestore: Date ordering not available, sorting in memory...');
-            const querySnapshot = await getDocs(collection(db, 'transactions'));
-            const transactions = this.processTransactionDocs(querySnapshot);
-            
-            // Sort in memory by date (descending)
-            transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-            
-            console.log(`✅ Firestore: Successfully retrieved ${transactions.length} transactions with memory sorting`);
-            return transactions;
-          }
-        }
-      } catch (permissionError: any) {
-        if (permissionError.code === 'permission-denied' || 
-            permissionError.message?.includes('Missing or insufficient permissions')) {
-          console.log('⚠️ Firestore: Permissions not configured, returning sample transactions...');
-          const sampleTransactions = this.getSampleTransactions();
-          if (investorId) {
-            return sampleTransactions.filter(tx => tx.investorId === investorId);
-          }
-          return sampleTransactions;
-        }
-        throw permissionError;
-      }
-      
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to fetch transactions:', error);
-      
-      // If it's a permission error, return sample data
-      if (error instanceof Error && 
-          (error.message?.includes('Missing or insufficient permissions') || 
-           error.message?.includes('permission-denied'))) {
-        console.log('🔧 Using sample transactions data...');
-        const sampleTransactions = this.getSampleTransactions();
-        if (investorId) {
-          return sampleTransactions.filter(tx => tx.investorId === investorId);
-        }
-        return sampleTransactions;
-      }
-      
-      throw new Error(`Failed to load transaction history: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  // Enhanced Withdrawal Requests methods
-  static async getWithdrawalRequests(): Promise<WithdrawalRequest[]> {
-    try {
-      console.log('🔥 Firestore: Querying withdrawal requests collection...');
-      
-      try {
-        // Try with ordering first
-        const q = query(
-          collection(db, 'withdrawalRequests'),
-          orderBy('date', 'desc')
-        );
-        
-        const querySnapshot = await getDocs(q);
-        const requests = this.processWithdrawalDocs(querySnapshot);
-        console.log(`✅ Firestore: Successfully retrieved ${requests.length} withdrawal requests`);
-        return requests;
-      } catch (indexError: any) {
-        // If ordering fails, get all and sort in memory
-        console.log('⚠️ Firestore: Date ordering not available for withdrawals, sorting in memory...');
-        const querySnapshot = await getDocs(collection(db, 'withdrawalRequests'));
-        const requests = this.processWithdrawalDocs(querySnapshot);
-        
-        // Sort in memory by date (descending)
-        requests.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        
-        console.log(`✅ Firestore: Successfully retrieved ${requests.length} withdrawal requests with memory sorting`);
-        return requests;
-      }
-    } catch (error: any) {
-      console.error('❌ Firestore Error: Failed to fetch withdrawal requests:', error);
-      
-      // If it's a permission error, return sample data
-      if (error.code === 'permission-denied' || 
-          error.message?.includes('Missing or insufficient permissions')) {
-        console.log('🔧 Using sample withdrawal requests data...');
-        return this.getSampleWithdrawalRequests();
-      }
-      
-      throw new Error(`Failed to load withdrawal requests: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  static async createInvestor(id: string, data: any): Promise<void> {
-    try {
-      console.log(`🔥 Firestore: Creating investor profile in users collection: ${data.name || 'Unknown'}`);
-      const docRef = doc(db, 'users', id);
-      
-      const investorData = {
-        ...data,
-        role: 'investor',
-        isActive: true,
-        accountStatus: data.accountStatus || 'Active',
-        email: data.email || '',
-        phone: data.phone || '',
-        country: data.country || 'Unknown',
-        tradingData: data.tradingData || {
-          positionsPerDay: 0,
-          pairs: [],
-          platform: 'IBKR',
-          leverage: 100,
-          currency: 'USD'
-        },
-        bankDetails: data.bankDetails || {},
-        verification: data.verification || {},
-        accountFlags: data.accountFlags || {},
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      };
-      
-      await setDoc(docRef, investorData);
-      console.log(`✅ Firestore: Successfully created investor profile in users collection: ${id}`);
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to create investor:', error);
-      throw new Error(`Failed to create investor profile: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  static async updateInvestor(id: string, data: Partial<Investor>): Promise<void> {
-    try {
-      console.log(`🔥 Firestore: Updating investor in users collection: ${id}`);
-      const docRef = doc(db, 'users', id);
-      await updateDoc(docRef, {
-        ...data,
-        updatedAt: serverTimestamp()
-      });
-      console.log(`✅ Firestore: Successfully updated investor in users collection: ${id}`);
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to update investor:', error);
-      throw new Error(`Failed to update investor profile: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  static async updateInvestorBalance(id: string, newBalance: number): Promise<void> {
-    try {
-      console.log(`🔥 Firestore: Updating balance for investor ${id}: $${newBalance.toLocaleString()}`);
-      const docRef = doc(db, 'users', id);
-      await updateDoc(docRef, {
-        currentBalance: newBalance,
-        updatedAt: serverTimestamp()
-      });
-      console.log(`✅ Firestore: Successfully updated balance for investor: ${id}`);
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to update investor balance:', error);
-      throw new Error(`Failed to update account balance: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  // Delete investor (mark for deletion)
-  static async deleteInvestor(id: string, reason: string, adminId: string): Promise<void> {
-    try {
-      console.log(`🔥 Firestore: Marking investor for deletion: ${id}`);
-      const docRef = doc(db, 'users', id);
-      await updateDoc(docRef, {
-        accountStatus: 'Closed - Account deletion requested',
-        isActive: false,
-        deletionRequest: {
-          requestedBy: adminId,
-          requestedAt: serverTimestamp(),
-          reason: reason,
-          status: 'Pending Review'
-        },
-        updatedAt: serverTimestamp()
-      });
-      console.log(`✅ Firestore: Successfully marked investor for deletion: ${id}`);
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to delete investor:', error);
-      throw new Error(`Failed to delete investor: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  static async addCreditToInvestor(investorId: string, amount: number, adminId: string): Promise<void> {
-    try {
-      console.log(`🔥 Firestore: Adding $${amount.toLocaleString()} credit to investor: ${investorId}`);
-      
-      // Get current investor data from users collection
-      const investor = await this.getInvestorById(investorId);
-      if (!investor) {
-        throw new Error('Investor profile not found');
-      }
-
-      // Update balance
-      const newBalance = investor.currentBalance + amount;
-      await this.updateInvestorBalance(investorId, newBalance);
-
-      // Add transaction record
-      await this.addTransaction({
-        investorId,
-        type: 'Credit',
-        amount,
-        date: new Date().toISOString().split('T')[0],
-        status: 'Completed',
-        description: `Credit added by admin ${adminId}`
-      });
-      
-      console.log(`✅ Firestore: Successfully added credit to investor: ${investorId}`);
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to add credit to investor:', error);
-      throw new Error(`Failed to add credit: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  private static processTransactionDocs(querySnapshot: any): Transaction[] {
-    return querySnapshot.docs.map((doc: any) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        createdAt: data.createdAt?.toDate() || new Date(),
-        // Ensure required fields
-        type: data.type || 'Deposit',
-        amount: data.amount || 0,
-        status: data.status || 'Completed',
-        date: data.date || new Date().toISOString().split('T')[0],
-        description: data.description || ''
-      };
-    }) as Transaction[];
-  }
-
-  static async addTransaction(transaction: Omit<Transaction, 'id'>): Promise<void> {
-    try {
-      console.log(`🔥 Firestore: Adding ${transaction.type} transaction: $${transaction.amount.toLocaleString()}`);
-      await addDoc(collection(db, 'transactions'), {
-        ...transaction,
-        createdAt: serverTimestamp()
-      });
-      console.log(`✅ Firestore: Successfully added transaction`);
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to add transaction:', error);
-      throw new Error(`Failed to record transaction: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  static async updateTransaction(id: string, updates: any): Promise<void> {
-    try {
-      console.log(`🔥 Firestore: Updating transaction: ${id}`);
-      const docRef = doc(db, 'transactions', id);
-      await updateDoc(docRef, {
-        ...updates,
-        updatedAt: serverTimestamp()
-      });
-      console.log(`✅ Firestore: Successfully updated transaction: ${id}`);
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to update transaction:', error);
-      throw new Error(`Failed to update transaction: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  private static processWithdrawalDocs(querySnapshot: any): WithdrawalRequest[] {
-    return querySnapshot.docs.map((doc: any) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        createdAt: data.createdAt?.toDate() || new Date(),
-        processedAt: data.processedAt?.toDate() || null,
-        // Ensure required fields
-        status: data.status || 'Pending',
-        amount: data.amount || 0,
-        date: data.date || new Date().toISOString().split('T')[0],
-        investorName: data.investorName || 'Unknown Investor'
-      };
-    }) as WithdrawalRequest[];
-  }
-
-  static async addWithdrawalRequest(investorId: string, investorName: string, amount: number): Promise<void> {
-    try {
-      console.log(`🔥 Firestore: Adding withdrawal request: ${investorName} - $${amount.toLocaleString()}`);
-      await addDoc(collection(db, 'withdrawalRequests'), {
-        investorId,
-        investorName,
-        amount,
-        date: new Date().toISOString().split('T')[0],
-        status: 'Pending',
-        createdAt: serverTimestamp()
-      });
-      console.log(`✅ Firestore: Successfully added withdrawal request`);
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to add withdrawal request:', error);
-      throw new Error(`Failed to submit withdrawal request: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  static async updateWithdrawalRequest(
-    id: string, 
-    status: string, 
-    processedBy: string, 
-    reason?: string
-  ): Promise<void> {
-    try {
-      console.log(`🔥 Firestore: Updating withdrawal request ${id} to ${status}`);
-      const docRef = doc(db, 'withdrawalRequests', id);
-      await updateDoc(docRef, {
-        status,
-        processedBy,
-        processedAt: serverTimestamp(),
-        reason: reason || null,
-        updatedAt: serverTimestamp()
-      });
-
-      // If approved, create commission record
-      if (status === 'Approved') {
-        const requestDoc = await getDoc(docRef);
-        if (requestDoc.exists()) {
-          const requestData = requestDoc.data();
-          await this.addCommission({
-            investorId: requestData.investorId,
-            investorName: requestData.investorName,
-            withdrawalAmount: requestData.amount,
-            commissionRate: 15,
-            commissionAmount: requestData.amount * 0.15,
-            date: new Date().toISOString().split('T')[0],
-            status: 'Earned',
-            withdrawalId: id
-          });
-          console.log(`✅ Firestore: Created commission record for withdrawal: ${id}`);
-        }
-      }
-      
-      console.log(`✅ Firestore: Successfully updated withdrawal request: ${id}`);
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to update withdrawal request:', error);
-      throw new Error(`Failed to process withdrawal request: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  // Enhanced Commissions methods
-  static async getCommissions(): Promise<any[]> {
-    try {
-      console.log('🔥 Firestore: Querying commissions collection...');
-      
-      try {
-        // Try with ordering first
-        const q = query(
-          collection(db, 'commissions'),
-          orderBy('date', 'desc')
-        );
-        
-        const querySnapshot = await getDocs(q);
-        const commissions = this.processCommissionDocs(querySnapshot);
-        console.log(`✅ Firestore: Successfully retrieved ${commissions.length} commission records`);
-        return commissions;
-      } catch (indexError: any) {
-        // If ordering fails, get all and sort in memory
-        console.log('⚠️ Firestore: Date ordering not available for commissions, sorting in memory...');
-        const querySnapshot = await getDocs(collection(db, 'commissions'));
-        const commissions = this.processCommissionDocs(querySnapshot);
-        
-        // Sort in memory by date (descending)
-        commissions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        
-        console.log(`✅ Firestore: Successfully retrieved ${commissions.length} commission records with memory sorting`);
-        return commissions;
-      }
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to fetch commissions:', error);
-      throw new Error(`Failed to load commission data: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  private static processCommissionDocs(querySnapshot: any): any[] {
-    return querySnapshot.docs.map((doc: any) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        createdAt: data.createdAt?.toDate() || new Date(),
-        // Ensure required fields
-        commissionAmount: data.commissionAmount || 0,
-        commissionRate: data.commissionRate || 15,
-        status: data.status || 'Earned',
-        investorName: data.investorName || 'Unknown Investor'
-      };
-    });
-  }
-
-  static async addCommission(commission: any): Promise<void> {
-    try {
-      console.log(`🔥 Firestore: Adding commission: $${commission.commissionAmount.toLocaleString()}`);
-      await addDoc(collection(db, 'commissions'), {
-        ...commission,
-        createdAt: serverTimestamp()
-      });
-      console.log(`✅ Firestore: Successfully added commission record`);
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to add commission:', error);
-      throw new Error(`Failed to record commission: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  static async addCommissionWithdrawalRequest(request: any): Promise<void> {
-    try {
-      console.log(`🔥 Firestore: Adding commission withdrawal request: $${request.amount.toLocaleString()}`);
-      await addDoc(collection(db, 'commissionWithdrawals'), {
-        ...request,
-        createdAt: serverTimestamp()
-      });
-      console.log(`✅ Firestore: Successfully added commission withdrawal request`);
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to add commission withdrawal request:', error);
-      throw new Error(`Failed to submit commission withdrawal: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  // Support credentials management
-  static async storeSupportCredentials(userId: string, credentials: {
-    name: string;
-    email: string;
-    clientId: string;
-  }): Promise<void> {
-    try {
-      console.log(`🔥 Firestore: Storing support credentials for user: ${userId}`);
-      const docRef = doc(db, 'supportCredentials', userId);
-      await setDoc(docRef, {
-        ...credentials,
-        userId,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      });
-      console.log(`✅ Firestore: Successfully stored support credentials for user: ${userId}`);
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to store support credentials:', error);
-      throw new Error(`Failed to store support credentials: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  static async getSupportCredentials(userId: string): Promise<any | null> {
-    try {
-      console.log(`🔥 Firestore: Fetching support credentials for user: ${userId}`);
-      const docRef = doc(db, 'supportCredentials', userId);
-      const docSnap = await getDoc(docRef);
-      
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        console.log(`✅ Firestore: Found support credentials for user: ${userId}`);
-        return {
-          id: docSnap.id,
-          ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date()
-        };
-      }
-      
-      console.log(`⚠️ Firestore: No support credentials found for user: ${userId}`);
-      return null;
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to fetch support credentials:', error);
-      throw new Error(`Failed to retrieve support credentials: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  static async verifySupportCredentials(name: string, email: string, clientId: string): Promise<any | null> {
-    try {
-      console.log(`🔥 Firestore: Verifying support credentials for: ${name}`);
-      
-      // Query support credentials collection
-      const q = query(
-        collection(db, 'supportCredentials'),
-        where('name', '==', name),
-        where('email', '==', email),
-        where('clientId', '==', clientId)
-      );
-      
-      const querySnapshot = await getDocs(q);
-      
-      if (!querySnapshot.empty) {
-        const doc = querySnapshot.docs[0];
-        const data = doc.data();
-        console.log(`✅ Firestore: Support credentials verified for: ${name}`);
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date()
-        };
-      }
-      
-      console.log(`⚠️ Firestore: Support credentials verification failed for: ${name}`);
-      return null;
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to verify support credentials:', error);
-      throw new Error(`Failed to verify support credentials: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  // Utility methods
-  static async deleteDocument(collectionName: string, id: string): Promise<void> {
-    try {
-      console.log(`🔥 Firestore: Deleting document from ${collectionName}: ${id}`);
-      const docRef = doc(db, collectionName, id);
-      await deleteDoc(docRef);
-      console.log(`✅ Firestore: Successfully deleted document: ${id}`);
-    } catch (error) {
-      console.error(`❌ Firestore Error: Failed to delete document from ${collectionName}:`, error);
-      throw new Error(`Failed to delete record: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  static async getDocumentCount(collectionName: string): Promise<number> {
-    try {
-      console.log(`🔥 Firestore: Counting documents in ${collectionName}...`);
-      const querySnapshot = await getDocs(collection(db, collectionName));
-      const count = querySnapshot.size;
-      console.log(`✅ Firestore: Found ${count} documents in ${collectionName}`);
-      return count;
-    } catch (error) {
-      console.error(`❌ Firestore Error: Failed to count documents in ${collectionName}:`, error);
-      throw new Error(`Failed to count records: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  // Search and filtering methods
-  static async searchInvestors(searchTerm: string): Promise<Investor[]> {
-    try {
-      console.log(`🔥 Firestore: Searching investors for term: "${searchTerm}"`);
-      const investors = await this.getInvestors();
-      const filtered = investors.filter(investor => 
-        investor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        investor.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        investor.country.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      console.log(`✅ Firestore: Found ${filtered.length} matching investors`);
-      return filtered;
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to search investors:', error);
-      throw new Error(`Search failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  static async getInvestorsByStatus(status: string): Promise<Investor[]> {
-    try {
-      console.log(`🔥 Firestore: Fetching investors with status: ${status}`);
-      const q = query(
-        collection(db, 'users'),
-        where('role', '==', 'investor'),
-        where('accountStatus', '==', status)
-      );
-      
-      const querySnapshot = await getDocs(q);
-      const investors = this.processUserDocsAsInvestors(querySnapshot);
-      
-      console.log(`✅ Firestore: Found ${investors.length} investors with status: ${status}`);
-      return investors;
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to fetch investors by status:', error);
-      throw new Error(`Failed to filter by status: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  // Analytics helpers
-  static async getTotalInvestorBalance(): Promise<number> {
-    try {
-      console.log('🔥 Firestore: Calculating total investor balance...');
-      const investors = await this.getInvestors();
-      const total = investors.reduce((total, investor) => total + investor.currentBalance, 0);
-      console.log(`✅ Firestore: Total AUM: $${total.toLocaleString()}`);
-      return total;
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to calculate total investor balance:', error);
-      throw new Error(`Failed to calculate total balance: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  static async getRecentTransactions(limitCount: number = 10): Promise<Transaction[]> {
-    try {
-      console.log(`🔥 Firestore: Fetching ${limitCount} most recent transactions...`);
-      
-      try {
-        // Try with ordering and limit first
-        const q = query(
-          collection(db, 'transactions'),
-          orderBy('date', 'desc'),
-          limit(limitCount)
-        );
-        
-        const querySnapshot = await getDocs(q);
-        const transactions = this.processTransactionDocs(querySnapshot);
-        console.log(`✅ Firestore: Retrieved ${transactions.length} recent transactions`);
-        return transactions;
-      } catch (indexError: any) {
-        // If ordering fails, get all, sort in memory, and limit
-        console.log('⚠️ Firestore: Date ordering not available, using fallback approach...');
-        const querySnapshot = await getDocs(collection(db, 'transactions'));
-        const transactions = this.processTransactionDocs(querySnapshot);
-        
-        // Sort in memory by date (descending) and limit
-        transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        const limitedTransactions = transactions.slice(0, limitCount);
-        
-        console.log(`✅ Firestore: Retrieved ${limitedTransactions.length} recent transactions with fallback approach`);
-        return limitedTransactions;
-      }
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to fetch recent transactions:', error);
-      throw new Error(`Failed to load recent transactions: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
+interface TradingViewTickerTapeProps {
+  symbols?: Array<{
+    proName: string;
+    title?: string;
+    description?: string;
+  }>;
+  showSymbolLogo?: boolean;
+  isTransparent?: boolean;
+  displayMode?: 'adaptive' | 'regular' | 'compact';
+  colorTheme?: 'light' | 'dark';
+  locale?: string;
 }
+
+const TradingViewTickerTape = ({
+  symbols = [
+    {
+      "proName": "FX_IDC:EURUSD",
+      "title": "EUR to USD"
+    },
+    {
+      "proName": "BITSTAMP:BTCUSD",
+      "title": "Bitcoin"
+    },
+    {
+      "proName": "BITSTAMP:ETHUSD",
+      "title": "Ethereum"
+    },
+    {
+      "description": "XAUUSD",
+      "proName": "FOREXCOM:XAUUSD"
+    },
+    {
+      "description": "EURUSD",
+      "proName": "FX:EURUSD"
+    },
+    {
+      "description": "GBPUSD",
+      "proName": "OANDA:GBPUSD"
+    }
+  ],
+  showSymbolLogo = true,
+  isTransparent = false,
+  displayMode = 'adaptive',
+  colorTheme = 'dark',
+  locale = 'en'
+}: TradingViewTickerTapeProps) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    // Generate a unique widget ID to prevent conflicts
+    const widgetId = `tradingview_widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    // Generate a unique widget ID to prevent conflicts
+    const widgetId = `tradingview_widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    // Clear any existing content
+    containerRef.current.innerHTML = '';
+
+    // Create the widget container
+    const widgetContainer = document.createElement('div');
+    widgetContainer.className = 'tradingview-widget-container';
+    widgetContainer.style.height = '100%';
+    widgetContainer.style.width = '100%';
+
+    // Create the main widget div
+    const widgetDiv = document.createElement('div');
+    widgetDiv.className = 'tradingview-widget-container__widget';
+    widgetDiv.id = widgetId;
+    widgetDiv.style.height = '100%';
+    widgetDiv.style.width = '100%';
+    widgetDiv.id = widgetId;
+
+    // Widget configuration
+    const config = {
+      container_id: widgetId,
+      container_id: widgetId,
+      symbols,
+      showSymbolLogo,
+      isTransparent,
+      displayMode,
+      colorTheme,
+      locale,
+      width: '100%',
+      height: '100%'
+    };
+
+    // Create the script element with error handling
+    const script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js';
+    script.async = true;
+    
+    // Add error handling for script loading
+    script.onerror = () => {
+      console.warn('TradingView ticker tape widget failed to load');
+      if (containerRef.current) {
+        containerRef.current.innerHTML = `
+          <div class="flex items-center justify-center h-full text-gray-400">
+            <div class="text-center">
+              <p class="text-sm">Market data temporarily unavailable</p>
+            </div>
+          </div>
+        `;
+      }
+    };
+
+    // Set the script content
+    script.text = JSON.stringify(config);
+
+    // Assemble the widget (without copyright div)
+    widgetContainer.appendChild(widgetDiv);
+    widgetContainer.appendChild(script);
+
+    // Add to the container
+    containerRef.current.appendChild(widgetContainer);
+
+    // Hide copyright text with CSS after widget loads
+    const hideTimeout = setTimeout(() => {
+      try {
+        const copyrightElements = document.querySelectorAll('.tradingview-widget-copyright');
+        copyrightElements.forEach(el => {
+          (el as HTMLElement).style.display = 'none';
+        });
+      } catch (error) {
+        console.warn('Could not hide TradingView copyright:', error);
+
+    // Cleanup function
+    return () => {
+      clearTimeout(hideTimeout);
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
+      }
+    };
+  }, [symbols, showSymbolLogo, isTransparent, displayMode, colorTheme, locale]);
+
+  return (
+    <div 
+      ref={containerRef}
+      className="w-full"
+      style={{ minHeight: '60px' }}
+    />
+  );
+};
+
+export default TradingViewTickerTape;
