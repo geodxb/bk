@@ -51,6 +51,9 @@ const TradingViewTickerTape = ({
   useEffect(() => {
     if (!containerRef.current) return;
 
+    // Generate a unique widget ID to prevent conflicts
+    const widgetId = `tradingview_widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
     // Clear any existing content
     containerRef.current.innerHTML = '';
 
@@ -61,6 +64,7 @@ const TradingViewTickerTape = ({
     // Create the main widget div
     const widgetDiv = document.createElement('div');
     widgetDiv.className = 'tradingview-widget-container__widget';
+    widgetDiv.id = widgetId;
 
     // Create the script element
     const script = document.createElement('script');
@@ -70,6 +74,7 @@ const TradingViewTickerTape = ({
 
     // Widget configuration
     const config = {
+      container_id: widgetId,
       symbols,
       showSymbolLogo,
       isTransparent,
@@ -89,7 +94,7 @@ const TradingViewTickerTape = ({
     containerRef.current.appendChild(widgetContainer);
 
     // Hide copyright text with CSS after widget loads
-    setTimeout(() => {
+    const hideTimeout = setTimeout(() => {
       const copyrightElements = document.querySelectorAll('.tradingview-widget-copyright');
       copyrightElements.forEach(el => {
         (el as HTMLElement).style.display = 'none';
@@ -98,6 +103,7 @@ const TradingViewTickerTape = ({
 
     // Cleanup function
     return () => {
+      clearTimeout(hideTimeout);
       if (containerRef.current) {
         containerRef.current.innerHTML = '';
       }
