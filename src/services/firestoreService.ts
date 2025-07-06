@@ -127,6 +127,9 @@ const TradingViewTickerTape = ({
         });
       } catch (error) {
         console.warn('Could not hide TradingView copyright:', error);
+      }
+    }
+    )
 
     // Cleanup function
     return () => {
