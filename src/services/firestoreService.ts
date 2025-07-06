@@ -612,46 +612,6 @@ export class FirestoreService {
       throw new Error(`Failed to load withdrawal requests: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
-          return null;
-        }
-        
-        console.log(`✅ Firestore: Found investor in users collection: ${data.name || 'Unknown'}`);
-        
-        return {
-          id: docSnap.id,
-          name: data.name || 'Unknown Investor',
-          email: data.email || '',
-          phone: data.phone || '',
-          country: data.country || 'Unknown',
-          location: data.location || '',
-          joinDate: data.joinDate || new Date().toISOString().split('T')[0],
-          initialDeposit: data.initialDeposit || 0,
-          currentBalance: data.currentBalance || 0,
-          role: 'investor' as const,
-          isActive: data.isActive !== false,
-          accountStatus: data.accountStatus || 'Active',
-          accountFlags: data.accountFlags || {},
-          tradingData: {
-            positionsPerDay: data.tradingData?.positionsPerDay || 0,
-            pairs: data.tradingData?.pairs || [],
-            platform: data.tradingData?.platform || 'IBKR',
-            leverage: data.tradingData?.leverage || 100,
-            currency: data.tradingData?.currency || 'USD'
-          },
-          bankDetails: data.bankDetails || {},
-          verification: data.verification || {},
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date()
-        } as Investor;
-      }
-      
-      console.log(`⚠️ Firestore: No investor found with ID: ${id}`);
-      return null;
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to fetch investor by ID:', error);
-      throw new Error(`Failed to retrieve investor profile: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
 
   static async createInvestor(id: string, data: any): Promise<void> {
     try {
@@ -772,80 +732,6 @@ export class FirestoreService {
     }
   }
 
-  // Enhanced Transactions methods with fallback for missing index
-  static async getTransactions(investorId?: string): Promise<Transaction[]> {
-    try {
-      console.log('🔥 Firestore: Querying transactions collection...');
-      
-      if (investorId) {
-        // Try the optimized query first (requires composite index)
-        try {
-          console.log(`🔥 Firestore: Attempting optimized query for investor: ${investorId}`);
-          const q = query(
-            collection(db, 'transactions'),
-            where('investorId', '==', investorId),
-            orderBy('date', 'desc')
-          );
-          
-          const querySnapshot = await getDocs(q);
-          const transactions = this.processTransactionDocs(querySnapshot);
-          console.log(`✅ Firestore: Successfully retrieved ${transactions.length} transactions using optimized query`);
-          return transactions;
-        } catch (indexError: any) {
-          // If the composite index doesn't exist, fall back to filtering approach
-          if (indexError.message?.includes('index') || indexError.code === 'failed-precondition') {
-            console.log('⚠️ Firestore: Composite index not available, using fallback approach...');
-            
-            // First get all transactions for the investor (without ordering)
-            const q = query(
-              collection(db, 'transactions'),
-              where('investorId', '==', investorId)
-            );
-            
-            const querySnapshot = await getDocs(q);
-            const transactions = this.processTransactionDocs(querySnapshot);
-            
-            // Sort in memory by date (descending)
-            transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-            
-            console.log(`✅ Firestore: Successfully retrieved ${transactions.length} transactions using fallback approach`);
-            return transactions;
-          } else {
-            // Re-throw if it's a different error
-            throw indexError;
-          }
-        }
-      } else {
-        // For all transactions, try ordering by date
-        try {
-          const q = query(
-            collection(db, 'transactions'),
-            orderBy('date', 'desc')
-          );
-          
-          const querySnapshot = await getDocs(q);
-          const transactions = this.processTransactionDocs(querySnapshot);
-          console.log(`✅ Firestore: Successfully retrieved ${transactions.length} transactions`);
-          return transactions;
-        } catch (indexError: any) {
-          // If ordering fails, get all and sort in memory
-          console.log('⚠️ Firestore: Date ordering not available, sorting in memory...');
-          const querySnapshot = await getDocs(collection(db, 'transactions'));
-          const transactions = this.processTransactionDocs(querySnapshot);
-          
-          // Sort in memory by date (descending)
-          transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-          
-          console.log(`✅ Firestore: Successfully retrieved ${transactions.length} transactions with memory sorting`);
-          return transactions;
-        }
-      }
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to fetch transactions:', error);
-      throw new Error(`Failed to load transaction history: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
   private static processTransactionDocs(querySnapshot: any): Transaction[] {
     return querySnapshot.docs.map((doc: any) => {
       const data = doc.data();
@@ -889,40 +775,6 @@ export class FirestoreService {
     } catch (error) {
       console.error('❌ Firestore Error: Failed to update transaction:', error);
       throw new Error(`Failed to update transaction: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  // Enhanced Withdrawal Requests methods
-  static async getWithdrawalRequests(): Promise<WithdrawalRequest[]> {
-    try {
-      console.log('🔥 Firestore: Querying withdrawal requests collection...');
-      
-      try {
-        // Try with ordering first
-        const q = query(
-          collection(db, 'withdrawalRequests'),
-          orderBy('date', 'desc')
-        );
-        
-        const querySnapshot = await getDocs(q);
-        const requests = this.processWithdrawalDocs(querySnapshot);
-        console.log(`✅ Firestore: Successfully retrieved ${requests.length} withdrawal requests`);
-        return requests;
-      } catch (indexError: any) {
-        // If ordering fails, get all and sort in memory
-        console.log('⚠️ Firestore: Date ordering not available for withdrawals, sorting in memory...');
-        const querySnapshot = await getDocs(collection(db, 'withdrawalRequests'));
-        const requests = this.processWithdrawalDocs(querySnapshot);
-        
-        // Sort in memory by date (descending)
-        requests.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        
-        console.log(`✅ Firestore: Successfully retrieved ${requests.length} withdrawal requests with memory sorting`);
-        return requests;
-      }
-    } catch (error) {
-      console.error('❌ Firestore Error: Failed to fetch withdrawal requests:', error);
-      throw new Error(`Failed to load withdrawal requests: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
